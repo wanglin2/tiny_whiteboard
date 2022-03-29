@@ -31,3 +31,56 @@ export const checkIsAtSegment = (x, y, x1, y1, x2, y2, dis = 10) => {
   }
   return false;
 };
+
+// 弧度转角度
+export const radToDeg = (rad) => {
+  return rad * (180 / Math.PI);
+};
+
+// 角度转弧度
+export const degToRad = (deg) => {
+  return deg * (Math.PI / 180);
+};
+
+// 计算两个坐标相差的角度
+export const getTowPointRotate = (cx, cy, tx, ty, fx, fy) => {
+  return radToDeg(Math.atan2(ty - cy, tx - cx) - Math.atan2(fy - cy, fx - cx));
+};
+
+// 获取坐标根据指定经纬度未旋转前的坐标
+export const getUnRotatedPoint = (x, y, cx, cy, rotate) => {
+  let deg = radToDeg(Math.atan2(y - cy, x - cx));
+  let del = deg - rotate;
+  let dis = getTowPointDistance(x, y, cx, cy);
+  return {
+    x: Math.cos(degToRad(del)) * dis + cx,
+    y: Math.sin(degToRad(del)) * dis + cy,
+  };
+};
+
+// 获取元素的中心点坐标
+export const getElementCenterPos = (element) => {
+  let { x, y, width, height } = element;
+  return {
+    x: x + width / 2,
+    y: y + height / 2,
+  };
+};
+
+// 根据元素是否旋转了处理鼠标坐标，如果元素旋转了，那么鼠标坐标要反向旋转回去
+export const transformPointOnElement = (x, y, element) => {
+  // 元素旋转了，那么检测时要将鼠标的坐标旋转回去
+  if (element.rotate !== 0) {
+    let center = getElementCenterPos(element);
+    let rp = getUnRotatedPoint(x, y, center.x, center.y, element.rotate);
+    return {
+      x: rp.x,
+      y: rp.y,
+    };
+  } else {
+    return {
+      x,
+      y,
+    };
+  }
+};
