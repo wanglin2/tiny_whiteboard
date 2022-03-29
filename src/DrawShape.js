@@ -1,6 +1,7 @@
 export default class DrawShap {
-  constructor(ctx) {
+  constructor(ctx, app) {
     this.ctx = ctx;
+    this.app = app;
   }
 
   // 绘制矩形
