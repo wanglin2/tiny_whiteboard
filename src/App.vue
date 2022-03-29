@@ -1,21 +1,57 @@
-<script setup>
-// This starter template is using Vue 3 <script setup> SFCs
-// Check out https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup
-import HelloWorld from './components/HelloWorld.vue'
-</script>
-
 <template>
-  <img alt="Vue logo" src="./assets/logo.png" />
-  <HelloWorld msg="Hello Vue 3 + Vite" />
+  <div class="container">
+    <div class="toolbar">
+      <el-radio-group v-model="currentType">
+        <el-radio-button label="selection">选择</el-radio-button>
+        <el-radio-button label="rectangle">矩形</el-radio-button>
+      </el-radio-group>
+    </div>
+    <div class="canvasBox" ref="box">
+      <canvas class="canvas" ref="canvas"></canvas>
+    </div>
+  </div>
 </template>
 
-<style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
+<script setup>
+import { onMounted, ref } from "vue";
+import App from "./App.js";
+
+// 当前操作类型
+const currentType = ref("selection");
+// dom节点
+const box = ref(null);
+const canvas = ref(null);
+// 应用实例
+const app = new App();
+
+// dom元素挂载完成
+onMounted(() => {
+  app.init(box.value, canvas.value, currentType);
+});
+</script>
+
+<style lang="less" scoped>
+.container {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+
+  .toolbar {
+    position: absolute;
+    left: 50%;
+    top: 10px;
+    transform: translateX(-50%);
+    z-index: 2;
+  }
+
+  .canvasBox {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+  }
 }
 </style>
