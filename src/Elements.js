@@ -97,10 +97,16 @@ export default class Elements {
     this.activeElement.y = this.activeElement.startY + oy;
   }
 
-  // 设置激活元素尺寸
-  setActiveElementSize(width, height) {
+  // 更新激活元素尺寸
+  updateActiveElementSize(width, height) {
     this.activeElement.width = width;
     this.activeElement.height = height;
+  }
+
+  // 更新激活元素坐标
+  updateActiveElementPos(x, y) {
+    this.activeElement.x = x;
+    this.activeElement.y = y;
   }
 
   // 保存激活元素的初始角度

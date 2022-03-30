@@ -47,10 +47,21 @@ export const getTowPointRotate = (cx, cy, tx, ty, fx, fy) => {
   return radToDeg(Math.atan2(ty - cy, tx - cx) - Math.atan2(fy - cy, fx - cx));
 };
 
-// 获取坐标根据指定经纬度未旋转前的坐标
+// 获取坐标经指定中心点旋转后未旋转前的坐标
 export const getUnRotatedPoint = (x, y, cx, cy, rotate) => {
   let deg = radToDeg(Math.atan2(y - cy, x - cx));
   let del = deg - rotate;
+  let dis = getTowPointDistance(x, y, cx, cy);
+  return {
+    x: Math.cos(degToRad(del)) * dis + cx,
+    y: Math.sin(degToRad(del)) * dis + cy,
+  };
+};
+
+// 获取坐标经指定中心点旋转指定角度后的新坐标
+export const getRotatedPoint = (x, y, cx, cy, rotate) => {
+  let deg = radToDeg(Math.atan2(y - cy, x - cx));
+  let del = deg + rotate;
   let dis = getTowPointDistance(x, y, cx, cy);
   return {
     x: Math.cos(degToRad(del)) * dis + cx,
@@ -67,12 +78,10 @@ export const getElementCenterPos = (element) => {
   };
 };
 
-// 根据元素是否旋转了处理鼠标坐标，如果元素旋转了，那么鼠标坐标要反向旋转回去
-export const transformPointOnElement = (x, y, element) => {
-  // 元素旋转了，那么检测时要将鼠标的坐标旋转回去
-  if (element.rotate !== 0) {
-    let center = getElementCenterPos(element);
-    let rp = getUnRotatedPoint(x, y, center.x, center.y, element.rotate);
+// 反向旋转坐标
+export const transformPointReverseRotate = (x, y, cx, cy, rotate) => {
+  if (rotate !== 0) {
+    let rp = getUnRotatedPoint(x, y, cx, cy, rotate);
     return {
       x: rp.x,
       y: rp.y,
@@ -84,3 +93,58 @@ export const transformPointOnElement = (x, y, element) => {
     };
   }
 };
+
+// 根据元素是否旋转了处理鼠标坐标，如果元素旋转了，那么鼠标坐标要反向旋转回去
+export const transformPointOnElement = (x, y, element) => {
+  // 元素旋转了，那么检测时要将鼠标的坐标旋转回去
+  let center = getElementCenterPos(element);
+  return transformPointReverseRotate(x, y, center.x, center.y, element.rotate);
+};
+
+// 获取元素旋转后的左上角坐标
+export const getElementRotatedTopLeftPos = (element) => {
+  let center = getElementCenterPos(element);
+  return getRotatedPoint(
+    element.x,
+    element.y,
+    center.x,
+    center.y,
+    element.rotate
+  );
+};
+
+// 获取元素旋转后的右上角坐标
+export const getElementRotatedTopRightPos = (element) => {
+  let center = getElementCenterPos(element);
+  return getRotatedPoint(
+    element.x + element.width,
+    element.y,
+    center.x,
+    center.y,
+    element.rotate
+  );
+};
+
+// 获取元素旋转后的右下角坐标
+export const getElementRotatedBottomRightPos = (element) => {
+  let center = getElementCenterPos(element);
+  return getRotatedPoint(
+    element.x + element.width,
+    element.y + element.height,
+    center.x,
+    center.y,
+    element.rotate
+  );
+};
+
+// 获取元素旋转后的左下角坐标
+export const getElementRotatedBottomLeftPos = (element) => {
+    let center = getElementCenterPos(element);
+    return getRotatedPoint(
+      element.x,
+      element.y + element.height,
+      center.x,
+      center.y,
+      element.rotate
+    );
+  };

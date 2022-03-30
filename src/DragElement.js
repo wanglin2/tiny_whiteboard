@@ -9,13 +9,29 @@ export default class DragElement {
     this.ctx = ctx;
     this.app = app;
     this.drawShape = app.drawShape;
+
     this.el = null;
     this.element = null;
+
+    // 标志位
     this.isInElement = false;
     this.isInRotateBtn = false;
+    this.isInTopLeftBtn = false;
+    this.isInTopRightBtn = false;
+    this.isInBottomRightBtn = false;
+    this.isInBottomLeftBtn = false;
+
     this.offset = 5;
     this.size = 10;
-    this.circlePos = {
+
+    // 当前鼠标按住拖拽元素的点的对角点
+    this.diagonalPoint = {
+      x: 0,
+      y: 0,
+    };
+
+    // 当前鼠标按下时的坐标和拖拽元素的点的坐标差值
+    this.mousedownPosAndElementPosOffset = {
       x: 0,
       y: 0,
     };
@@ -64,34 +80,46 @@ export default class DragElement {
     this.ctx.rotate(degToRad(rotate));
     x = -width / 2;
     y = -height / 2;
+    // 主体
     this.drawShape.drawRect(x, y, width, height, {
       lineDash: [this.offset],
     });
+    // 左上角
     this.drawShape.drawRect(x - this.size, y - this.size, this.size, this.size);
+    // 右上角
     this.drawShape.drawRect(
       x + this.el.width + this.size,
       y - this.size,
       this.size,
       this.size
     );
+    // 右下角
     this.drawShape.drawRect(
       x + this.el.width + this.size,
       y + this.el.height + this.size,
       this.size,
       this.size
     );
+    // 左下角
     this.drawShape.drawRect(
       x - this.size,
       y + this.el.height + this.size,
       this.size,
       this.size
     );
+    // 旋转按钮
     this.drawShape.drawCircle(
       x + this.el.width / 2,
       y - this.size * 2,
       this.size
     );
     this.ctx.restore();
+  }
+
+  // 更新尺寸
+  updateSize(width, height) {
+    this.element.width = width;
+    this.element.height = height;
   }
 
   // 保存初始坐标
@@ -144,6 +172,58 @@ export default class DragElement {
         this.element.x + this.el.width / 2,
         this.element.y - this.size * 2
       ) <= this.size
+    );
+  }
+
+  // 检测是否在拖拽元素的左上角伸缩手柄
+  checkIsInDragElementTopLeftBtn(x, y) {
+    let rp = transformPointOnElement(x, y, this.element);
+    let _x = this.element.x - this.size;
+    let _y = this.element.y - this.size;
+    return (
+      rp.x >= _x &&
+      rp.x <= _x + this.size &&
+      rp.y >= _y &&
+      rp.y <= _y + this.size
+    );
+  }
+
+  // 检测是否在拖拽元素的右上角伸缩手柄
+  checkIsInDragElementTopRightBtn(x, y) {
+    let rp = transformPointOnElement(x, y, this.element);
+    let _x = this.element.x + this.el.width + this.size;
+    let _y = this.element.y - this.size;
+    return (
+      rp.x >= _x &&
+      rp.x <= _x + this.size &&
+      rp.y >= _y &&
+      rp.y <= _y + this.size
+    );
+  }
+
+  // 检测是否在拖拽元素的右下角伸缩手柄
+  checkIsInDragElementBottomRightBtn(x, y) {
+    let rp = transformPointOnElement(x, y, this.element);
+    let _x = this.element.x + this.el.width + this.size
+    let _y = this.element.y + this.el.height + this.size
+    return (
+      rp.x >= _x &&
+      rp.x <= _x + this.size &&
+      rp.y >= _y &&
+      rp.y <= _y + this.size
+    );
+  }
+
+  // 检测是否在拖拽元素的左下角伸缩手柄
+  checkIsInDragElementBottomLeftBtn(x, y) {
+    let rp = transformPointOnElement(x, y, this.element);
+    let _x = this.element.x - this.size
+    let _y = this.element.y + this.el.height + this.size
+    return (
+      rp.x >= _x &&
+      rp.x <= _x + this.size &&
+      rp.y >= _y &&
+      rp.y <= _y + this.size
     );
   }
 }
