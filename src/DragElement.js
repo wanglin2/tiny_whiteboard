@@ -2,7 +2,9 @@ import {
   getTowPointDistance,
   degToRad,
   transformPointOnElement,
+  checkPointIsInRectangle,
 } from "./utils";
+import { CORNERS, DRAG_ELEMENT_PARTS } from "./constants";
 
 export default class DragElement {
   constructor(ctx, app) {
@@ -14,12 +16,7 @@ export default class DragElement {
     this.element = null;
 
     // 标志位
-    this.isInElement = false;
-    this.isInRotateBtn = false;
-    this.isInTopLeftBtn = false;
-    this.isInTopRightBtn = false;
-    this.isInBottomRightBtn = false;
-    this.isInBottomLeftBtn = false;
+    this.inDragElementPart = "";
 
     this.offset = 5;
     this.size = 10;
@@ -150,80 +147,66 @@ export default class DragElement {
     this.element.rotate = this.element.startRotate + or;
   }
 
-  // 检测是否在拖拽元素内部
-  checkIsInDragElement(x, y) {
-    if (!this.element) return false;
-    let rp = transformPointOnElement(x, y, this.element);
-    return (
-      rp.x >= this.element.x &&
-      rp.x <= this.element.x + this.element.width &&
-      rp.y >= this.element.y &&
-      rp.y <= this.element.y + this.element.height
-    );
+  // 检测一个坐标在拖拽元素的哪个部分上
+  checkPointInDragElementWhere(x, y) {
+    let part = "";
+    if (this.element) {
+      // 坐标反向旋转元素的角度
+      let rp = transformPointOnElement(x, y, this.element);
+      // 在内部
+      if (checkPointIsInRectangle(rp.x, rp.y, this.element)) {
+        part = DRAG_ELEMENT_PARTS.BODY;
+      } else if (
+        getTowPointDistance(
+          rp.x,
+          rp.y,
+          this.element.x + this.el.width / 2,
+          this.element.y - this.size * 2
+        ) <= this.size
+      ) {
+        // 在旋转按钮
+        part = DRAG_ELEMENT_PARTS.ROTATE;
+      } else if (this._checkPointIsInBtn(rp.x, rp.y, CORNERS.TOP_LEFT)) {
+        // 在左上角伸缩手柄
+        part = DRAG_ELEMENT_PARTS.TOP_LEFT_BTN;
+      } else if (this._checkPointIsInBtn(rp.x, rp.y, CORNERS.TOP_RIGHT)) {
+        // 在右上角伸缩手柄
+        part = DRAG_ELEMENT_PARTS.TOP_RIGHT_BTN;
+      } else if (this._checkPointIsInBtn(rp.x, rp.y, CORNERS.BOTTOM_RIGHT)) {
+        // 在右下角伸缩手柄
+        part = DRAG_ELEMENT_PARTS.BOTTOM_RIGHT_BTN;
+      } else if (this._checkPointIsInBtn(rp.x, rp.y, CORNERS.BOTTOM_LEFT)) {
+        // 在左下角伸缩手柄
+        part = DRAG_ELEMENT_PARTS.BOTTOM_LEFT_BTN;
+      }
+    }
+    return (this.inDragElementPart = part);
   }
 
-  // 检测是否在拖拽元素的旋转按钮内部
-  checkIsInDragElementRotateBtn(x, y) {
-    let rp = transformPointOnElement(x, y, this.element);
-    return (
-      getTowPointDistance(
-        rp.x,
-        rp.y,
-        this.element.x + this.el.width / 2,
-        this.element.y - this.size * 2
-      ) <= this.size
-    );
-  }
-
-  // 检测是否在拖拽元素的左上角伸缩手柄
-  checkIsInDragElementTopLeftBtn(x, y) {
-    let rp = transformPointOnElement(x, y, this.element);
-    let _x = this.element.x - this.size;
-    let _y = this.element.y - this.size;
-    return (
-      rp.x >= _x &&
-      rp.x <= _x + this.size &&
-      rp.y >= _y &&
-      rp.y <= _y + this.size
-    );
-  }
-
-  // 检测是否在拖拽元素的右上角伸缩手柄
-  checkIsInDragElementTopRightBtn(x, y) {
-    let rp = transformPointOnElement(x, y, this.element);
-    let _x = this.element.x + this.el.width + this.size;
-    let _y = this.element.y - this.size;
-    return (
-      rp.x >= _x &&
-      rp.x <= _x + this.size &&
-      rp.y >= _y &&
-      rp.y <= _y + this.size
-    );
-  }
-
-  // 检测是否在拖拽元素的右下角伸缩手柄
-  checkIsInDragElementBottomRightBtn(x, y) {
-    let rp = transformPointOnElement(x, y, this.element);
-    let _x = this.element.x + this.el.width + this.size
-    let _y = this.element.y + this.el.height + this.size
-    return (
-      rp.x >= _x &&
-      rp.x <= _x + this.size &&
-      rp.y >= _y &&
-      rp.y <= _y + this.size
-    );
-  }
-
-  // 检测是否在拖拽元素的左下角伸缩手柄
-  checkIsInDragElementBottomLeftBtn(x, y) {
-    let rp = transformPointOnElement(x, y, this.element);
-    let _x = this.element.x - this.size
-    let _y = this.element.y + this.el.height + this.size
-    return (
-      rp.x >= _x &&
-      rp.x <= _x + this.size &&
-      rp.y >= _y &&
-      rp.y <= _y + this.size
-    );
+  // 检测坐标是否在某个拖拽按钮内
+  _checkPointIsInBtn(x, y, dir) {
+    let _x = 0;
+    let _y = 0;
+    switch (dir) {
+      case CORNERS.TOP_LEFT:
+        _x = this.element.x - this.size;
+        _y = this.element.y - this.size;
+        break;
+      case CORNERS.TOP_RIGHT:
+        _x = this.element.x + this.el.width + this.size;
+        _y = this.element.y - this.size;
+        break;
+      case CORNERS.BOTTOM_RIGHT:
+        _x = this.element.x + this.el.width + this.size;
+        _y = this.element.y + this.el.height + this.size;
+        break;
+      case CORNERS.BOTTOM_LEFT:
+        _x = this.element.x - this.size;
+        _y = this.element.y + this.el.height + this.size;
+        break;
+      default:
+        break;
+    }
+    return checkPointIsInRectangle(x, y, _x, _y, this.size, this.size);
   }
 }
