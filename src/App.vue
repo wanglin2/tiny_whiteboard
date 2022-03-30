@@ -1,7 +1,7 @@
 <template>
   <div class="container">
     <div class="toolbar">
-      <el-radio-group v-model="currentType">
+      <el-radio-group v-model="currentType" @change="onCurrentTypeChange">
         <el-radio-button label="selection">选择</el-radio-button>
         <el-radio-button label="rectangle">矩形</el-radio-button>
       </el-radio-group>
@@ -13,20 +13,34 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from "vue";
+import { onMounted, ref, watch } from "vue";
 import App from "./App.js";
 
 // 当前操作类型
 const currentType = ref("selection");
+
 // dom节点
 const box = ref(null);
 const canvas = ref(null);
+
 // 应用实例
 const app = new App();
 
+watch(currentType, () => {
+  app.updateCurrentType(currentType.value);
+});
+
+app.on("currentTypeChange", (type) => {
+  currentType.value = type;
+});
+
+const onCurrentTypeChange = () => {
+  app.clearActive();
+};
+
 // dom元素挂载完成
 onMounted(() => {
-  app.init(box.value, canvas.value, currentType);
+  app.init(box.value, canvas.value, currentType.value);
 });
 </script>
 
