@@ -4,14 +4,12 @@ import Elements from "./Elements";
 import MouseEvent from "./MouseEvent";
 import {
   getTowPointRotate,
-  getElementCenterPos,
+  getElementCenterPoint,
   transformPointReverseRotate,
-  getElementRotatedTopLeftPos,
-  getElementRotatedTopRightPos,
-  getElementRotatedBottomRightPos,
-  getElementRotatedBottomLeftPos,
+  getElementRotatedCornerPoint,
 } from "./utils";
 import EventEmitter from "eventemitter3";
+import { CORNERS, DRAG_ELEMENT_PARTS } from "./constants";
 
 export default class App extends EventEmitter {
   constructor() {
@@ -79,83 +77,182 @@ export default class App extends EventEmitter {
     this.elements.render();
   }
 
+  // 处理按下拖拽元素四个伸缩手柄事件
+  handleDragElementCornerMousedown(e, corner) {
+    let centerPos = getElementCenterPoint(this.elements.activeElement);
+    let pos = getElementRotatedCornerPoint(this.elements.activeElement, corner);
+    // 对角点的坐标
+    this.dragElement.diagonalPoint.x = 2 * centerPos.x - pos.x;
+    this.dragElement.diagonalPoint.y = 2 * centerPos.y - pos.y;
+    // 鼠标按下位置和元素的左上角坐标差值
+    this.dragElement.mousedownPosAndElementPosOffset.x = e.clientX - pos.x;
+    this.dragElement.mousedownPosAndElementPosOffset.y = e.clientY - pos.y;
+  }
+
   // 鼠标按下事件
   onMousedown(e, mouseEvent) {
     let mx = mouseEvent.mousedownPos.x;
     let my = mouseEvent.mousedownPos.y;
     // 当前存在选中及拖拽元素
     if (this.dragElement.element) {
-      // 检测是否安装了拖拽元素内部
-      if (this.dragElement.checkIsInDragElement(mx, my)) {
-        this.dragElement.isInElement = true;
+      // 按住了拖拽元素的某个部分
+      let isInDragElement = this.dragElement.checkPointInDragElementWhere(
+        mx,
+        my
+      );
+      if (isInDragElement === DRAG_ELEMENT_PARTS.BODY) {
+        // 检测是否安装了拖拽元素内部
         this.dragElement.savePos();
         this.elements.saveActiveElementPos();
-      } else if (this.dragElement.checkIsInDragElementRotateBtn(mx, my)) {
+      } else if (isInDragElement === DRAG_ELEMENT_PARTS.ROTATE) {
         // 检测是否按住了拖拽元素的旋转按钮
-        this.dragElement.isInRotateBtn = true;
         this.dragElement.saveRotate();
         this.elements.saveActiveElementRotate();
-      } else if (this.dragElement.checkIsInDragElementTopLeftBtn(mx, my)) {
+      } else if (isInDragElement === DRAG_ELEMENT_PARTS.TOP_LEFT_BTN) {
         // 检测是否按住了拖拽元素左上角拖拽手柄
-        this.dragElement.isInTopLeftBtn = true;
-        let centerPos = getElementCenterPos(this.elements.activeElement);
-        let topLeftPos = getElementRotatedTopLeftPos(
-          this.elements.activeElement
-        );
-        // 对角点的坐标
-        this.dragElement.diagonalPoint.x = 2 * centerPos.x - topLeftPos.x;
-        this.dragElement.diagonalPoint.y = 2 * centerPos.y - topLeftPos.y;
-        // 鼠标按下位置和元素的左上角坐标差值
-        this.dragElement.mousedownPosAndElementPosOffset.x =
-          e.clientX - topLeftPos.x;
-        this.dragElement.mousedownPosAndElementPosOffset.y =
-          e.clientY - topLeftPos.y;
-      } else if (this.dragElement.checkIsInDragElementTopRightBtn(mx, my)) {
+        this.handleDragElementCornerMousedown(e, CORNERS.TOP_LEFT);
+      } else if (isInDragElement === DRAG_ELEMENT_PARTS.TOP_RIGHT_BTN) {
         // 检测是否按住了拖拽元素右上角拖拽手柄
-        this.dragElement.isInTopRightBtn = true;
-        let centerPos = getElementCenterPos(this.elements.activeElement);
-        let topRightPos = getElementRotatedTopRightPos(
-          this.elements.activeElement
-        );
-        // 对角点的坐标
-        this.dragElement.diagonalPoint.x = 2 * centerPos.x - topRightPos.x;
-        this.dragElement.diagonalPoint.y = 2 * centerPos.y - topRightPos.y;
-        // 鼠标按下位置和元素的左上角坐标差值
-        this.dragElement.mousedownPosAndElementPosOffset.x =
-          e.clientX - topRightPos.x;
-        this.dragElement.mousedownPosAndElementPosOffset.y =
-          e.clientY - topRightPos.y;
-      } else if (this.dragElement.checkIsInDragElementBottomRightBtn(mx, my)) {
+        this.handleDragElementCornerMousedown(e, CORNERS.TOP_RIGHT);
+      } else if (isInDragElement === DRAG_ELEMENT_PARTS.BOTTOM_RIGHT_BTN) {
         // 检测是否按住了拖拽元素右下角拖拽手柄
-        this.dragElement.isInBottomRightBtn = true;
-        let centerPos = getElementCenterPos(this.elements.activeElement);
-        let bottomRightPos = getElementRotatedBottomRightPos(
-          this.elements.activeElement
-        );
-        // 对角点的坐标
-        this.dragElement.diagonalPoint.x = 2 * centerPos.x - bottomRightPos.x;
-        this.dragElement.diagonalPoint.y = 2 * centerPos.y - bottomRightPos.y;
-        // 鼠标按下位置和元素的左上角坐标差值
-        this.dragElement.mousedownPosAndElementPosOffset.x =
-          e.clientX - bottomRightPos.x;
-        this.dragElement.mousedownPosAndElementPosOffset.y =
-          e.clientY - bottomRightPos.y;
-      } else if (this.dragElement.checkIsInDragElementBottomLeftBtn(mx, my)) {
+        this.handleDragElementCornerMousedown(e, CORNERS.BOTTOM_RIGHT);
+      } else if (isInDragElement === DRAG_ELEMENT_PARTS.BOTTOM_LEFT_BTN) {
         // 检测是否按住了拖拽元素左下角拖拽手柄
-        this.dragElement.isInBottomLeftBtn = true;
-        let centerPos = getElementCenterPos(this.elements.activeElement);
-        let bottomRightPos = getElementRotatedBottomLeftPos(
-          this.elements.activeElement
-        );
-        // 对角点的坐标
-        this.dragElement.diagonalPoint.x = 2 * centerPos.x - bottomRightPos.x;
-        this.dragElement.diagonalPoint.y = 2 * centerPos.y - bottomRightPos.y;
-        // 鼠标按下位置和元素的左上角坐标差值
-        this.dragElement.mousedownPosAndElementPosOffset.x =
-          e.clientX - bottomRightPos.x;
-        this.dragElement.mousedownPosAndElementPosOffset.y =
-          e.clientY - bottomRightPos.y;
+        this.handleDragElementCornerMousedown(e, CORNERS.BOTTOM_LEFT);
       }
+    }
+  }
+
+  // 移动元素整体
+  handleMoveElement(offsetX, offsetY) {
+    this.dragElement.offsetPos(offsetX, offsetY);
+    this.elements.offsetActiveElementPos(offsetX, offsetY);
+    this.elements.render();
+  }
+
+  // 旋转元素
+  handleRotateElement(e, mx, my) {
+    // 获取元素中心点
+    let centerPos = getElementCenterPoint(this.elements.activeElement);
+    // 获取鼠标移动的角度
+    let rotate = getTowPointRotate(
+      centerPos.x,
+      centerPos.y,
+      e.clientX,
+      e.clientY,
+      mx,
+      my
+    );
+    this.dragElement.offsetRotate(rotate);
+    this.elements.offsetActiveElementRotate(rotate);
+    this.elements.render();
+  }
+
+  // 伸缩元素
+  handleStretchElement(e, calcSize, calcPos) {
+    let actClientX =
+      e.clientX - this.dragElement.mousedownPosAndElementPosOffset.x;
+    let actClientY =
+      e.clientY - this.dragElement.mousedownPosAndElementPosOffset.y;
+    // 新的中心点
+    let newCenter = {
+      x: (actClientX + this.dragElement.diagonalPoint.x) / 2,
+      y: (actClientY + this.dragElement.diagonalPoint.y) / 2,
+    };
+    // 获取当前鼠标位置经新的中心点反向旋转元素的角度后的坐标
+    let rp = transformPointReverseRotate(
+      actClientX,
+      actClientY,
+      newCenter.x,
+      newCenter.y,
+      this.elements.activeElement.rotate
+    );
+    let newSize = calcSize(newCenter, rp);
+    let newPos = calcPos(rp, newSize);
+    this.elements.updateActiveElementPos(newPos.x, newPos.y);
+    this.elements.updateActiveElementSize(newSize.width, newSize.height);
+    this.dragElement.create(this.elements.activeElement);
+    this.elements.render();
+  }
+
+  // 处理选择类型下的鼠标移动事件
+  handleSelectionTypeMove(e, mx, my, offsetX, offsetY) {
+    let inDragElementPart = this.dragElement.inDragElementPart;
+    // 按住了拖拽元素内部
+    if (inDragElementPart === DRAG_ELEMENT_PARTS.BODY) {
+      this.handleMoveElement(offsetX, offsetY);
+    } else if (inDragElementPart === DRAG_ELEMENT_PARTS.ROTATE) {
+      // 按住了拖拽元素的旋转按钮
+      this.handleRotateElement(e, mx, my);
+    } else if (inDragElementPart === DRAG_ELEMENT_PARTS.TOP_LEFT_BTN) {
+      // 按住左上角伸缩元素
+      this.handleStretchElement(
+        e,
+        (newCenter, rp) => {
+          return {
+            width: (newCenter.x - rp.x) * 2,
+            height: (newCenter.y - rp.y) * 2,
+          };
+        },
+        (rp, newSize) => {
+          return {
+            x: rp.x,
+            y: rp.y,
+          };
+        }
+      );
+    } else if (inDragElementPart === DRAG_ELEMENT_PARTS.TOP_RIGHT_BTN) {
+      // 按住右上角伸缩元素
+      this.handleStretchElement(
+        e,
+        (newCenter, rp) => {
+          return {
+            width: (rp.x - newCenter.x) * 2,
+            height: (newCenter.y - rp.y) * 2,
+          };
+        },
+        (rp, newSize) => {
+          return {
+            x: rp.x - newSize.width,
+            y: rp.y,
+          };
+        }
+      );
+    } else if (inDragElementPart === DRAG_ELEMENT_PARTS.BOTTOM_RIGHT_BTN) {
+      // 按住右下角伸缩元素
+      this.handleStretchElement(
+        e,
+        (newCenter, rp) => {
+          return {
+            width: (rp.x - newCenter.x) * 2,
+            height: (rp.y - newCenter.y) * 2,
+          };
+        },
+        (rp, newSize) => {
+          return {
+            x: rp.x - newSize.width,
+            y: rp.y - newSize.height,
+          };
+        }
+      );
+    } else if (inDragElementPart === DRAG_ELEMENT_PARTS.BOTTOM_LEFT_BTN) {
+      // 按住左下角伸缩元素
+      this.handleStretchElement(
+        e,
+        (newCenter, rp) => {
+          return {
+            width: (newCenter.x - rp.x) * 2,
+            height: (rp.y - newCenter.y) * 2,
+          };
+        },
+        (rp, newSize) => {
+          return {
+            x: rp.x,
+            y: rp.y - newSize.height,
+          };
+        }
+      );
     }
   }
 
@@ -170,138 +267,9 @@ export default class App extends EventEmitter {
 
       // 当前是选中模式
       if (this.currentType === "selection") {
-        // 按住了拖拽元素内部
-        if (this.dragElement.isInElement) {
-          this.dragElement.offsetPos(offsetX, offsetY);
-          this.elements.offsetActiveElementPos(offsetX, offsetY);
-          this.elements.render();
-        } else if (this.dragElement.isInRotateBtn) {
-          // 按住了拖拽元素的旋转按钮
-          // 获取元素中心点
-          let centerPos = getElementCenterPos(this.elements.activeElement);
-          // 获取鼠标移动的角度
-          let rotate = getTowPointRotate(
-            centerPos.x,
-            centerPos.y,
-            e.clientX,
-            e.clientY,
-            mx,
-            my
-          );
-          this.dragElement.offsetRotate(rotate);
-          this.elements.offsetActiveElementRotate(rotate);
-          this.elements.render();
-        } else if (this.dragElement.isInTopLeftBtn) {
-          let actClientX =
-            e.clientX - this.dragElement.mousedownPosAndElementPosOffset.x;
-          let actClientY =
-            e.clientY - this.dragElement.mousedownPosAndElementPosOffset.y;
-          // 按住了拖拽元素的左上角伸缩按钮
-          let newCenter = {
-            x: (actClientX + this.dragElement.diagonalPoint.x) / 2,
-            y: (actClientY + this.dragElement.diagonalPoint.y) / 2,
-          };
-          // 获取当前鼠标位置经新的中心点反向旋转元素的角度后的坐标
-          let rp = transformPointReverseRotate(
-            actClientX,
-            actClientY,
-            newCenter.x,
-            newCenter.y,
-            this.elements.activeElement.rotate
-          );
-          this.elements.updateActiveElementPos(rp.x, rp.y);
-          let newSize = {
-            width: (newCenter.x - rp.x) * 2,
-            height: (newCenter.y - rp.y) * 2,
-          };
-          this.elements.updateActiveElementSize(newSize.width, newSize.height);
-          this.dragElement.create(this.elements.activeElement);
-          this.elements.render();
-        } else if (this.dragElement.isInTopRightBtn) {
-          let actClientX =
-            e.clientX - this.dragElement.mousedownPosAndElementPosOffset.x;
-          let actClientY =
-            e.clientY - this.dragElement.mousedownPosAndElementPosOffset.y;
-          // 按住了拖拽元素的右上角伸缩按钮
-          let newCenter = {
-            x: (actClientX + this.dragElement.diagonalPoint.x) / 2,
-            y: (actClientY + this.dragElement.diagonalPoint.y) / 2,
-          };
-          // 获取当前鼠标位置经新的中心点反向旋转元素的角度后的坐标
-          let rp = transformPointReverseRotate(
-            actClientX,
-            actClientY,
-            newCenter.x,
-            newCenter.y,
-            this.elements.activeElement.rotate
-          );
-          let newSize = {
-            width: (rp.x - newCenter.x) * 2,
-            height: (newCenter.y - rp.y) * 2,
-          };
-          this.elements.updateActiveElementPos(rp.x - newSize.width, rp.y);
-          this.elements.updateActiveElementSize(newSize.width, newSize.height);
-          this.dragElement.create(this.elements.activeElement);
-          this.elements.render();
-        } else if (this.dragElement.isInBottomRightBtn) {
-          let actClientX =
-            e.clientX - this.dragElement.mousedownPosAndElementPosOffset.x;
-          let actClientY =
-            e.clientY - this.dragElement.mousedownPosAndElementPosOffset.y;
-          // 按住了拖拽元素的右下角伸缩按钮
-          let newCenter = {
-            x: (actClientX + this.dragElement.diagonalPoint.x) / 2,
-            y: (actClientY + this.dragElement.diagonalPoint.y) / 2,
-          };
-          // 获取当前鼠标位置经新的中心点反向旋转元素的角度后的坐标
-          let rp = transformPointReverseRotate(
-            actClientX,
-            actClientY,
-            newCenter.x,
-            newCenter.y,
-            this.elements.activeElement.rotate
-          );
-          let newSize = {
-            width: (rp.x - newCenter.x) * 2,
-            height: (rp.y - newCenter.y) * 2,
-          };
-          this.elements.updateActiveElementPos(
-            rp.x - newSize.width,
-            rp.y - newSize.height
-          );
-          this.elements.updateActiveElementSize(newSize.width, newSize.height);
-          this.dragElement.create(this.elements.activeElement);
-          this.elements.render();
-        } else if (this.dragElement.isInBottomLeftBtn) {
-          let actClientX =
-            e.clientX - this.dragElement.mousedownPosAndElementPosOffset.x;
-          let actClientY =
-            e.clientY - this.dragElement.mousedownPosAndElementPosOffset.y;
-          // 按住了拖拽元素的左下角伸缩按钮
-          let newCenter = {
-            x: (actClientX + this.dragElement.diagonalPoint.x) / 2,
-            y: (actClientY + this.dragElement.diagonalPoint.y) / 2,
-          };
-          // 获取当前鼠标位置经新的中心点反向旋转元素的角度后的坐标
-          let rp = transformPointReverseRotate(
-            actClientX,
-            actClientY,
-            newCenter.x,
-            newCenter.y,
-            this.elements.activeElement.rotate
-          );
-          let newSize = {
-            width: (newCenter.x - rp.x) * 2,
-            height: (rp.y - newCenter.y) * 2,
-          };
-          this.elements.updateActiveElementPos(rp.x, rp.y - newSize.height);
-          this.elements.updateActiveElementSize(newSize.width, newSize.height);
-          this.dragElement.create(this.elements.activeElement);
-          this.elements.render();
-        }
-      }
-      // 当前是绘制矩形模式
-      else if (this.currentType === "rectangle") {
+        this.handleSelectionTypeMove(e, mx, my, offsetX, offsetY);
+      } else if (this.currentType === "rectangle") {
+        // 当前是绘制矩形模式
         // 当前没有激活元素，那么创建一个新元素
         if (!this.elements.activeElement) {
           let element = this.elements.createRectangle(mx, my);
@@ -314,33 +282,25 @@ export default class App extends EventEmitter {
     }
   }
 
+  // 检测是否选中元素
+  checkIsActiveElement(e) {
+    // 判断是否选中元素
+    let el = this.elements.checkElementsAtPos(e.clientX, e.clientY);
+    this.elements.activeElement = el;
+    this.dragElement.create(el);
+    this.elements.render();
+  }
+
   // 鼠标松开事件
   onMouseup(e, mouseEvent) {
     this.currentType = "selection";
     this.emit("currentTypeChange", "selection");
     // 拖拽操作结束
-    let dragElementFlags = [
-      "isInElement",
-      "isInRotateBtn",
-      "isInTopLeftBtn",
-      "isInTopRightBtn",
-      "isInBottomRightBtn",
-      "isInBottomLeftBtn",
-    ];
-    let isHandleDragElement = false;
-    dragElementFlags.forEach((flag) => {
-      if (this.dragElement[flag]) {
-        isHandleDragElement = true;
-        this.dragElement[flag] = false;
-      }
-    });
-    if (!isHandleDragElement) {
+    if (this.dragElement.inDragElementPart) {
+      this.dragElement.inDragElementPart = "";
+    } else {
       this.elements.activeElement = null;
-      // 判断是否选中元素
-      let el = this.elements.checkElementsAtPos(e.clientX, e.clientY);
-      this.elements.activeElement = el;
-      this.dragElement.create(el);
-      this.elements.render();
+      this.checkIsActiveElement(e);
     }
   }
 }
