@@ -113,22 +113,20 @@ export default class DragElement {
     this.ctx.restore();
   }
 
-  // 更新尺寸
-  updateSize(width, height) {
-    this.element.width = width;
-    this.element.height = height;
+  // 将拖拽元素的位置宽高转换为内部元素的位置宽高
+  getElPosAndSizeFromDragElement(x, y, width, height) {
+    return {
+      x: x + this.offset,
+      y: y + this.offset,
+      width: width - this.offset * 2,
+      height: height - this.offset * 2,
+    };
   }
 
   // 保存初始坐标
   savePos() {
     this.element.startX = this.element.x;
     this.element.startY = this.element.y;
-  }
-
-  // 更新坐标
-  updatePos(x, y) {
-    this.element.x = x;
-    this.element.y = y;
   }
 
   // 偏移坐标
