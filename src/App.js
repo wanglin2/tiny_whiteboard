@@ -7,6 +7,7 @@ import {
   getElementCenterPoint,
   transformPointReverseRotate,
   getElementRotatedCornerPoint,
+  getTowPointDistance,
 } from "./utils";
 import EventEmitter from "eventemitter3";
 import { CORNERS, DRAG_ELEMENT_PARTS } from "./constants";
@@ -79,8 +80,8 @@ export default class App extends EventEmitter {
 
   // 处理按下拖拽元素四个伸缩手柄事件
   handleDragElementCornerMousedown(e, corner) {
-    let centerPos = getElementCenterPoint(this.elements.activeElement);
-    let pos = getElementRotatedCornerPoint(this.elements.activeElement, corner);
+    let centerPos = getElementCenterPoint(this.dragElement.element);
+    let pos = getElementRotatedCornerPoint(this.dragElement.element, corner);
     // 对角点的坐标
     this.dragElement.diagonalPoint.x = 2 * centerPos.x - pos.x;
     this.dragElement.diagonalPoint.y = 2 * centerPos.y - pos.y;
@@ -166,12 +167,24 @@ export default class App extends EventEmitter {
       actClientY,
       newCenter.x,
       newCenter.y,
-      this.elements.activeElement.rotate
+      this.dragElement.element.rotate
     );
     let newSize = calcSize(newCenter, rp);
     let newPos = calcPos(rp, newSize);
-    this.elements.updateActiveElementPos(newPos.x, newPos.y);
-    this.elements.updateActiveElementSize(newSize.width, newSize.height);
+    let activeElementNewInfo = this.dragElement.getElPosAndSizeFromDragElement(
+      newPos.x,
+      newPos.y,
+      newSize.width,
+      newSize.height
+    );
+    this.elements.updateActiveElementPos(
+      activeElementNewInfo.x,
+      activeElementNewInfo.y
+    );
+    this.elements.updateActiveElementSize(
+      activeElementNewInfo.width,
+      activeElementNewInfo.height
+    );
     this.dragElement.create(this.elements.activeElement);
     this.elements.render();
   }
@@ -272,11 +285,22 @@ export default class App extends EventEmitter {
         // 当前是绘制矩形模式
         // 当前没有激活元素，那么创建一个新元素
         if (!this.elements.activeElement) {
-          let element = this.elements.createRectangle(mx, my);
+          let element = this.elements.createElement("rectangle", mx, my);
           this.elements.addElement(element);
           this.elements.activeElement = element;
         }
         this.elements.updateActiveElementSize(offsetX, offsetY);
+        this.elements.render();
+      } else if (this.currentType === "circle") {
+        // 当前是绘制矩形模式
+        // 当前没有激活元素，那么创建一个新元素
+        if (!this.elements.activeElement) {
+          let element = this.elements.createElement("circle", mx, my);
+          this.elements.addElement(element);
+          this.elements.activeElement = element;
+        }
+        let radius = getTowPointDistance(e.clientX, e.clientY, mx, my);
+        this.elements.updateActiveElementSize(radius * 2, radius * 2);
         this.elements.render();
       }
     }

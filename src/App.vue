@@ -4,6 +4,7 @@
       <el-radio-group v-model="currentType" @change="onCurrentTypeChange">
         <el-radio-button label="selection">选择</el-radio-button>
         <el-radio-button label="rectangle">矩形</el-radio-button>
+        <el-radio-button label="circle">圆形</el-radio-button>
       </el-radio-group>
     </div>
     <div class="canvasBox" ref="box">

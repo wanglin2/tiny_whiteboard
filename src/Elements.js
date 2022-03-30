@@ -1,4 +1,10 @@
-import { checkIsAtSegment, degToRad, transformPointOnElement } from "./utils";
+import {
+  checkIsAtSegment,
+  degToRad,
+  transformPointOnElement,
+  getTowPointDistance,
+} from "./utils";
+import { HIT_DISTANCE } from "./constants";
 
 export default class Elements {
   constructor(ctx, app) {
@@ -20,6 +26,7 @@ export default class Elements {
     this.elementList.forEach((element) => {
       let { x, y, width, height, rotate } = element;
       this.ctx.save();
+      // 移动画布中点
       let cx = x + width / 2;
       let cy = y + height / 2;
       this.ctx.translate(cx, cy);
@@ -27,6 +34,9 @@ export default class Elements {
       switch (element.type) {
         case "rectangle":
           this.drawShape.drawRect(-width / 2, -height / 2, width, height);
+          break;
+        case "circle":
+          this.drawShape.drawCircle(0, 0, this.getCircleRadius(width, height));
           break;
         default:
           break;
@@ -36,10 +46,10 @@ export default class Elements {
     this.app.dragElement.render();
   }
 
-  // 创建进行元素
-  createRectangle(x, y, rotate = 0) {
+  // 创建元素
+  createElement(type, x, y, rotate = 0) {
     return {
-      type: "rectangle",
+      type,
       startX: 0,
       startY: 0,
       x,
@@ -51,6 +61,39 @@ export default class Elements {
     };
   }
 
+  // 根据宽高计算圆的半径
+  getCircleRadius(width, height) {
+    return Math.min(Math.abs(width), Math.abs(height)) / 2;
+  }
+
+  // 检测是否点击到矩形边缘
+  checkIsAtRectangleEdge(element, rp) {
+    let res = null;
+    let { x, y, width, height } = element;
+    let segments = [
+      [x, y, x + width, y],
+      [x + width, y, x + width, y + height],
+      [x + width, y + height, x, y + height],
+      [x, y + height, x, y],
+    ];
+    segments.forEach((seg) => {
+      if (res) return;
+      if (checkIsAtSegment(rp.x, rp.y, ...seg, HIT_DISTANCE)) {
+        res = element;
+      }
+    });
+    return res;
+  }
+
+  // 检测是否点击到圆的边缘
+  checkIsAtCircleEdge(element, rp) {
+    let { width, height, x, y } = element;
+    let radius = this.getCircleRadius(width, height);
+    let dis = getTowPointDistance(rp.x, rp.y, x + radius, y + radius);
+    let onCircle = dis >= radius - HIT_DISTANCE && dis <= radius + HIT_DISTANCE;
+    return onCircle ? element : null;
+  }
+
   // 检测指定位置的元素
   checkElementsAtPos(x, y) {
     let res = null;
@@ -58,28 +101,9 @@ export default class Elements {
       if (res) return;
       let rp = transformPointOnElement(x, y, element);
       if (element.type === "rectangle") {
-        let segments = [
-          [element.x, element.y, element.x + element.width, element.y],
-          [
-            element.x + element.width,
-            element.y,
-            element.x + element.width,
-            element.y + element.height,
-          ],
-          [
-            element.x + element.width,
-            element.y + element.height,
-            element.x,
-            element.y + element.height,
-          ],
-          [element.x, element.y + element.height, element.x, element.y],
-        ];
-        segments.forEach((seg) => {
-          if (res) return;
-          if (checkIsAtSegment(rp.x, rp.y, ...seg)) {
-            res = element;
-          }
-        });
+        res = this.checkIsAtRectangleEdge(element, rp);
+      } else if (element.type === "circle") {
+        res = this.checkIsAtCircleEdge(element, rp);
       }
     });
     return res;

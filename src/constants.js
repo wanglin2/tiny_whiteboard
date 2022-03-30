@@ -15,3 +15,6 @@ export const DRAG_ELEMENT_PARTS = {
   BOTTOM_RIGHT_BTN: "bottomRightBtn",
   BOTTOM_LEFT_BTN: "bottomLeftBtn",
 };
+
+// 距离10像素内都认为点击到了目标
+export const HIT_DISTANCE = 10
