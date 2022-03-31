@@ -48,19 +48,31 @@ export default class Elements {
           this.drawShape.drawCircle(0, 0, this.getCircleRadius(width, height));
           break;
         case "line":
-          let { pointArr, fictitiousPoint, offsetX, offsetY } = element;
           this.drawShape.drawLine(
-            pointArr
+            element.pointArr
               .map((point) => {
-                return [point[0] - cx - offsetX, point[1] - cy - offsetY];
+                return [point[0] - cx, point[1] - cy];
               })
               .concat(
-                pointArr.length > 0 &&
+                // 加上鼠标当前实时位置
+                element.pointArr.length > 0 &&
                   this.isCreatingElement &&
                   this.app.currentType === "line"
-                  ? [[fictitiousPoint.x - cx, fictitiousPoint.y - cy]]
+                  ? [
+                      [
+                        element.fictitiousPoint.x - cx,
+                        element.fictitiousPoint.y - cy,
+                      ],
+                    ]
                   : []
               )
+          );
+          break;
+        case "freedraw":
+          this.drawShape.drawFreeLine(
+            element.pointArr.map((point) => {
+              return [point[0] - cx, point[1] - cy, ...point.slice(2)];
+            })
           );
           break;
         default:
@@ -102,9 +114,15 @@ export default class Elements {
       // 记录初始大小，用于缩放时
       element.startWidth = 0;
       element.startHeight = 0;
-      // 记录需要反向偏移的量，用于在缩放时图形因为缩放而位置偏离拖拽框
-      element.offsetX = 0;
-      element.offsetY = 0;
+    } else if (type === "freedraw") {
+      // 记录初始点位，在拖动时
+      element.startPointArr = [];
+      // 点位
+      element.pointArr = [[x, y]]; // 第三个数字为线宽
+      element.lastLineWidth = -1; // 上一次的线宽
+      // 记录初始大小，用于缩放时
+      element.startWidth = 0;
+      element.startHeight = 0;
     }
     this.addElement(element);
     this.activeElement = element;
@@ -162,6 +180,19 @@ export default class Elements {
     return res;
   }
 
+  // 检测是否点击到自由线段边缘
+  checkIsAtFreedrawLineEdge(element, rp) {
+    let res = null;
+    element.pointArr.forEach((point) => {
+      if (res) return;
+      let dis = getTowPointDistance(rp.x, rp.y, point[0], point[1]);
+      if (dis <= HIT_DISTANCE) {
+        res = element;
+      }
+    });
+    return res;
+  }
+
   // 检测指定位置的元素
   checkElementsAtPos(x, y) {
     let res = null;
@@ -174,6 +205,8 @@ export default class Elements {
         res = this.checkIsAtCircleEdge(element, rp);
       } else if (element.type === "line") {
         res = this.checkIsAtLineEdge(element, rp);
+      } else if (element.type === "freedraw") {
+        res = this.checkIsAtFreedrawLineEdge(element, rp);
       }
     });
     return res;
@@ -181,9 +214,9 @@ export default class Elements {
 
   // 保存激活元素初始状态
   saveActiveElementState() {
-    let { rotate, x, y, pointArr, width, height } = this.activeElement;
+    let { rotate, x, y, pointArr, width, height, type } = this.activeElement;
     this.activeElement.startRotate = rotate;
-    if (this.activeElement.type === "line") {
+    if (type === "line" || type === "freedraw") {
       this.activeElement.startPointArr = deepCopy(pointArr);
       this.activeElement.startWidth = width;
       this.activeElement.startHeight = height;
@@ -196,9 +229,9 @@ export default class Elements {
   // 移动元素
   moveActiveElement(ox, oy) {
     let { type, startX, startY, startPointArr } = this.activeElement;
-    if (type === "line") {
+    if (type === "line" || type === "freedraw") {
       this.activeElement.pointArr = startPointArr.map((point) => {
-        return [point[0] + ox, point[1] + oy];
+        return [point[0] + ox, point[1] + oy, ...point.slice(2)];
       });
       this.updateActiveELementBoundingRect();
     } else {
@@ -221,19 +254,25 @@ export default class Elements {
 
   // 更新元素包围框
   updateActiveBoundingRect(x, y, width, height) {
-    if (this.activeElement.type === "line") {
+    if (
+      this.activeElement.type === "line" ||
+      this.activeElement.type === "freedraw"
+    ) {
       let { startWidth, startHeight, startPointArr } = this.activeElement;
       let scaleX = width / startWidth;
       let scaleY = height / startHeight;
       this.activeElement.pointArr = startPointArr.map((point) => {
         let nx = point[0] * scaleX;
         let ny = point[1] * scaleY;
-        return [nx, ny];
+        return [nx, ny, ...point.slice(2)];
       });
       // 放大后会偏移拖拽元素，所以计算一下元素的新包围框和拖拽元素包围框的差距，然后绘制时整体往回偏移
       let rect = getBoundingRect(this.activeElement.pointArr);
-      this.activeElement.offsetX = rect.x - x;
-      this.activeElement.offsetY = rect.y - y;
+      let offsetX = rect.x - x;
+      let offsetY = rect.y - y;
+      this.activeElement.pointArr = this.activeElement.pointArr.map((point) => {
+        return [point[0] - offsetX, point[1] - offsetY, ...point.slice(2)];
+      });
       this.updateActiveElementPos(x, y);
       this.updateActiveElementSize(width, height);
     } else {
@@ -248,8 +287,8 @@ export default class Elements {
   }
 
   // 添加坐标，具有多个坐标数据的图形，如线段、自由线
-  addActiveElementPoint(x, y) {
-    this.activeElement.pointArr.push([x, y]);
+  addActiveElementPoint(x, y, ...args) {
+    this.activeElement.pointArr.push([x, y, ...args]);
     this.updateActiveELementBoundingRect();
   }
 

@@ -1,20 +1,44 @@
+import { getTowPointDistance } from "./utils";
+
 export default class MouseEvent {
-  constructor(app, mousedownCallback, mousemoveCallback, mouseupCallback, dblclickCallback) {
+  constructor(
+    app,
+    mousedownCallback,
+    mousemoveCallback,
+    mouseupCallback,
+    dblclickCallback
+  ) {
     this.app = app;
     this.mousedownCallback = mousedownCallback;
     this.mousemoveCallback = mousemoveCallback;
     this.mouseupCallback = mouseupCallback;
     this.dblclickCallback = dblclickCallback;
+
     // 鼠标相关
     this.isMousedown = false;
+    // 按下时的鼠标位置
     this.mousedownPos = {
       x: 0,
       y: 0,
     };
+    // 鼠标当前位置和按下时位置的差值
     this.mouseOffset = {
       x: 0,
       y: 0,
     };
+    // 记录上一时刻的鼠标位置
+    this.lastPos = {
+      x: 0,
+      y: 0,
+    };
+    // 前一瞬间的鼠标移动距离
+    this.distance = 0;
+    // 记录上一时刻的时间
+    this.lastTime = Date.now();
+    // 前一瞬间的时间
+    this.duration = 0;
+    // 前一瞬间的鼠标移动速度
+    this.speed = 0;
 
     this.onMousedown = this.onMousedown.bind(this);
     this.onMousemove = this.onMousemove.bind(this);
@@ -49,12 +73,21 @@ export default class MouseEvent {
 
   // 鼠标移动事件
   onMousemove(e) {
+    let x = e.clientX;
+    let y = e.clientY;
     // 鼠标按下状态
     if (this.isMousedown) {
-      this.mouseOffset.x = e.clientX - this.mousedownPos.x;
-      this.mouseOffset.y = e.clientY - this.mousedownPos.y;
+      this.mouseOffset.x = x - this.mousedownPos.x;
+      this.mouseOffset.y = y - this.mousedownPos.y;
     }
+    let curTime = Date.now();
+    this.duration = curTime - this.lastTime;
+    this.distance = getTowPointDistance(x, y, this.lastPos.x, this.lastPos.y);
+    this.speed = this.distance / this.duration;
     this.mousemoveCallback.call(this.app, e, this);
+    this.lastTime = curTime;
+    this.lastPos.x = x;
+    this.lastPos.y = y;
   }
 
   // 鼠标松开事件
@@ -68,6 +101,6 @@ export default class MouseEvent {
 
   // 双击事件
   onDblclick(e) {
-    this.dblclickCallback.call(this.app, e, this)
+    this.dblclickCallback.call(this.app, e, this);
   }
 }
