@@ -51,7 +51,8 @@ export default class App extends EventEmitter {
       this,
       this.onMousedown,
       this.onMousemove,
-      this.onMouseup
+      this.onMouseup,
+      this.onDblclick
     );
     // 绘制图形类
     this.drawShape = new DrawShape(this.ctx, this);
@@ -88,6 +89,7 @@ export default class App extends EventEmitter {
     // 鼠标按下位置和元素的左上角坐标差值
     this.dragElement.mousedownPosAndElementPosOffset.x = e.clientX - pos.x;
     this.dragElement.mousedownPosAndElementPosOffset.y = e.clientY - pos.y;
+    this.elements.saveActiveElementState();
   }
 
   // 鼠标按下事件
@@ -104,11 +106,11 @@ export default class App extends EventEmitter {
       if (isInDragElement === DRAG_ELEMENT_PARTS.BODY) {
         // 检测是否安装了拖拽元素内部
         this.dragElement.savePos();
-        this.elements.saveActiveElementPos();
+        this.elements.saveActiveElementState();
       } else if (isInDragElement === DRAG_ELEMENT_PARTS.ROTATE) {
         // 检测是否按住了拖拽元素的旋转按钮
         this.dragElement.saveRotate();
-        this.elements.saveActiveElementRotate();
+        this.elements.saveActiveElementState();
       } else if (isInDragElement === DRAG_ELEMENT_PARTS.TOP_LEFT_BTN) {
         // 检测是否按住了拖拽元素左上角拖拽手柄
         this.handleDragElementCornerMousedown(e, CORNERS.TOP_LEFT);
@@ -128,7 +130,7 @@ export default class App extends EventEmitter {
   // 移动元素整体
   handleMoveElement(offsetX, offsetY) {
     this.dragElement.offsetPos(offsetX, offsetY);
-    this.elements.offsetActiveElementPos(offsetX, offsetY);
+    this.elements.moveActiveElement(offsetX, offsetY);
     this.elements.render();
   }
 
@@ -177,11 +179,9 @@ export default class App extends EventEmitter {
       newSize.width,
       newSize.height
     );
-    this.elements.updateActiveElementPos(
+    this.elements.updateActiveBoundingRect(
       activeElementNewInfo.x,
-      activeElementNewInfo.y
-    );
-    this.elements.updateActiveElementSize(
+      activeElementNewInfo.y,
       activeElementNewInfo.width,
       activeElementNewInfo.height
     );
@@ -285,23 +285,29 @@ export default class App extends EventEmitter {
         // 当前是绘制矩形模式
         // 当前没有激活元素，那么创建一个新元素
         if (!this.elements.activeElement) {
-          let element = this.elements.createElement("rectangle", mx, my);
-          this.elements.addElement(element);
-          this.elements.activeElement = element;
+          this.elements.createElement("rectangle", mx, my);
         }
         this.elements.updateActiveElementSize(offsetX, offsetY);
         this.elements.render();
       } else if (this.currentType === "circle") {
-        // 当前是绘制矩形模式
+        // 当前是绘制正圆模式
         // 当前没有激活元素，那么创建一个新元素
         if (!this.elements.activeElement) {
-          let element = this.elements.createElement("circle", mx, my);
-          this.elements.addElement(element);
-          this.elements.activeElement = element;
+          this.elements.createElement("circle", mx, my);
         }
         let radius = getTowPointDistance(e.clientX, e.clientY, mx, my);
         this.elements.updateActiveElementSize(radius * 2, radius * 2);
         this.elements.render();
+      }
+    } else {
+      if (this.currentType === "line") {
+        if (this.elements.activeElement) {
+          this.elements.updateActiveElementFictitiousPoint(
+            e.clientX,
+            e.clientY
+          );
+          this.elements.render();
+        }
       }
     }
   }
@@ -315,16 +321,54 @@ export default class App extends EventEmitter {
     this.elements.render();
   }
 
+  // 复位当前类型到选择模式
+  resetCurrentType() {
+    if (this.currentType !== "selection") {
+      this.currentType = "selection";
+      this.emit("currentTypeChange", "selection");
+    }
+  }
+
+  // 创建新元素完成
+  completeCreateNewElement() {
+    this.elements.isCreatingElement = false;
+    this.dragElement.reset();
+    this.dragElement.create(this.elements.activeElement);
+    this.elements.render();
+  }
+
   // 鼠标松开事件
-  onMouseup(e, mouseEvent) {
-    this.currentType = "selection";
-    this.emit("currentTypeChange", "selection");
-    // 拖拽操作结束
-    if (this.dragElement.inDragElementPart) {
-      this.dragElement.inDragElementPart = "";
+  onMouseup(e) {
+    if (this.currentType === "line") {
+      // 当前是绘制线段模式
+      // 当前没有激活元素，那么创建一个新元素
+      if (!this.elements.activeElement) {
+        this.elements.createElement("line");
+      }
+      this.elements.addActiveElementPoint(e.clientX, e.clientY);
+      this.elements.updateActiveElementFictitiousPoint(e.clientX, e.clientY);
+      this.elements.render();
     } else {
-      this.elements.activeElement = null;
-      this.checkIsActiveElement(e);
+      // 创建新元素完成
+      if (this.elements.isCreatingElement) {
+        this.resetCurrentType();
+        this.completeCreateNewElement();
+      } else if (this.dragElement.inDragElementPart) {
+        // 拖拽操作结束
+        this.dragElement.inDragElementPart = "";
+      } else {
+        // 其他情况下单击
+        this.elements.activeElement = null;
+        this.checkIsActiveElement(e);
+      }
+    }
+  }
+
+  // 鼠标双击事件
+  onDblclick() {
+    if (this.currentType === "line") {
+      this.resetCurrentType();
+      this.completeCreateNewElement();
     }
   }
 }
