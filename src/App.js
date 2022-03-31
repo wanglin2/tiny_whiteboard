@@ -298,8 +298,30 @@ export default class App extends EventEmitter {
         let radius = getTowPointDistance(e.clientX, e.clientY, mx, my);
         this.elements.updateActiveElementSize(radius * 2, radius * 2);
         this.elements.render();
+      } else if (this.currentType === "freedraw") {
+        // 当前是自由画笔模式
+        // 当前没有激活元素，那么创建一个新元素
+        if (!this.elements.activeElement) {
+          this.elements.createElement("freedraw", mx, my);
+        }
+        // 计算画笔粗细
+        let lineWidth = this.drawShape.computedLineWidthBySpeed(
+          mouseEvent.speed,
+          this.elements.activeElement.lastLineWidth
+        );
+        this.elements.activeElement.lastLineWidth = lineWidth;
+        this.elements.addActiveElementPoint(e.clientX, e.clientY, lineWidth);
+        // 绘制自由线不重绘，采用增量绘制，否则会卡顿
+        this.drawShape.drawLineSegment(
+          mouseEvent.lastPos.x,
+          mouseEvent.lastPos.y,
+          e.clientX,
+          e.clientY,
+          lineWidth
+        );
       }
     } else {
+      // 鼠标没有按下
       if (this.currentType === "line") {
         if (this.elements.activeElement) {
           this.elements.updateActiveElementFictitiousPoint(
@@ -351,8 +373,13 @@ export default class App extends EventEmitter {
     } else {
       // 创建新元素完成
       if (this.elements.isCreatingElement) {
-        this.resetCurrentType();
-        this.completeCreateNewElement();
+        if (this.currentType === "freedraw") {
+          // 自由绘画模式可以连续绘制
+          this.elements.activeElement = null;
+        } else {
+          this.resetCurrentType();
+          this.completeCreateNewElement();
+        }
       } else if (this.dragElement.inDragElementPart) {
         // 拖拽操作结束
         this.dragElement.inDragElementPart = "";

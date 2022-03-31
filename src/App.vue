@@ -6,6 +6,7 @@
         <el-radio-button label="rectangle">矩形</el-radio-button>
         <el-radio-button label="circle">圆形</el-radio-button>
         <el-radio-button label="line">线段</el-radio-button>
+        <el-radio-button label="freedraw">自由画笔</el-radio-button>
       </el-radio-group>
     </div>
     <div class="canvasBox" ref="box">
