@@ -34,6 +34,21 @@ export default class DragElement {
     };
   }
 
+  // 复位
+  reset() {
+    this.el = null;
+    this.element = null;
+    this.inDragElementPart = "";
+    this.diagonalPoint = {
+      x: 0,
+      y: 0,
+    };
+    this.mousedownPosAndElementPosOffset = {
+      x: 0,
+      y: 0,
+    };
+  }
+
   // 创建拖拽节点
   create(el) {
     if (!el) {

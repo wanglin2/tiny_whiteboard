@@ -138,5 +138,39 @@ export const checkPointIsInRectangle = (x, y, rx, ry, rw, rh) => {
     rw = element.width;
     rh = element.height;
   }
-  return (x >= rx) && (x <= (rx + rw)) && (y >= ry) && (y <= (ry + rh));
+  return x >= rx && x <= rx + rw && y >= ry && y <= ry + rh;
+};
+
+// 获取多个点的外包围框
+export const getBoundingRect = (pointArr = []) => {
+  let minX = Infinity;
+  let maxX = -Infinity;
+  let minY = Infinity;
+  let maxY = -Infinity;
+  pointArr.forEach((point) => {
+    let [x, y] = point;
+    if (x < minX) {
+      minX = x;
+    }
+    if (x > maxX) {
+      maxX = x;
+    }
+    if (y < minY) {
+      minY = y;
+    }
+    if (y > maxY) {
+      maxY = y;
+    }
+  });
+  return {
+    x: minX,
+    y: minY,
+    width: maxX - minX,
+    height: maxY - minY,
+  };
+};
+
+// 简单深拷贝
+export const deepCopy = (obj) => {
+  return JSON.parse(JSON.stringify(obj));
 };
