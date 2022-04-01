@@ -1,12 +1,17 @@
 import {
-  checkIsAtSegment,
   degToRad,
   transformPointOnElement,
-  getTowPointDistance,
   getBoundingRect,
   deepCopy,
 } from "./utils";
-import { HIT_DISTANCE } from "./constants";
+import {
+  checkIsAtRectangleEdge,
+  getCircleRadius,
+  checkIsAtCircleEdge,
+  checkIsAtLineEdge,
+  checkIsAtFreedrawLineEdge,
+  checkIsAtDiamondEdge
+} from "./checkHit";
 
 export default class Elements {
   constructor(ctx, app) {
@@ -45,7 +50,7 @@ export default class Elements {
           this.drawShape.drawRect(-width / 2, -height / 2, width, height);
           break;
         case "circle":
-          this.drawShape.drawCircle(0, 0, this.getCircleRadius(width, height));
+          this.drawShape.drawCircle(0, 0, getCircleRadius(width, height));
           break;
         case "line":
           this.drawShape.drawLine(
@@ -74,6 +79,9 @@ export default class Elements {
               return [point[0] - cx, point[1] - cy, ...point.slice(2)];
             })
           );
+          break;
+        case "diamond":
+          this.drawShape.drawDiamond(-width / 2, -height / 2, width, height);
           break;
         default:
           break;
@@ -129,70 +137,6 @@ export default class Elements {
     this.isCreatingElement = true;
   }
 
-  // 根据宽高计算圆的半径
-  getCircleRadius(width, height) {
-    return Math.min(Math.abs(width), Math.abs(height)) / 2;
-  }
-
-  // 检测是否点击到矩形边缘
-  checkIsAtRectangleEdge(element, rp) {
-    let res = null;
-    let { x, y, width, height } = element;
-    let segments = [
-      [x, y, x + width, y],
-      [x + width, y, x + width, y + height],
-      [x + width, y + height, x, y + height],
-      [x, y + height, x, y],
-    ];
-    segments.forEach((seg) => {
-      if (res) return;
-      if (checkIsAtSegment(rp.x, rp.y, ...seg, HIT_DISTANCE)) {
-        res = element;
-      }
-    });
-    return res;
-  }
-
-  // 检测是否点击到圆的边缘
-  checkIsAtCircleEdge(element, rp) {
-    let { width, height, x, y } = element;
-    let radius = this.getCircleRadius(width, height);
-    let dis = getTowPointDistance(rp.x, rp.y, x + radius, y + radius);
-    let onCircle = dis >= radius - HIT_DISTANCE && dis <= radius + HIT_DISTANCE;
-    return onCircle ? element : null;
-  }
-
-  // 检测是否点击到线段边缘
-  checkIsAtLineEdge(element, rp) {
-    let res = null;
-    let segments = [];
-    let len = element.pointArr.length;
-    let arr = element.pointArr;
-    for (let i = 0; i < len - 1; i++) {
-      segments.push([...arr[i], ...arr[i + 1]]);
-    }
-    segments.forEach((seg) => {
-      if (res) return;
-      if (checkIsAtSegment(rp.x, rp.y, ...seg, HIT_DISTANCE)) {
-        res = element;
-      }
-    });
-    return res;
-  }
-
-  // 检测是否点击到自由线段边缘
-  checkIsAtFreedrawLineEdge(element, rp) {
-    let res = null;
-    element.pointArr.forEach((point) => {
-      if (res) return;
-      let dis = getTowPointDistance(rp.x, rp.y, point[0], point[1]);
-      if (dis <= HIT_DISTANCE) {
-        res = element;
-      }
-    });
-    return res;
-  }
-
   // 检测指定位置的元素
   checkElementsAtPos(x, y) {
     let res = null;
@@ -200,14 +144,16 @@ export default class Elements {
       if (res) return;
       let rp = transformPointOnElement(x, y, element);
       if (element.type === "rectangle") {
-        res = this.checkIsAtRectangleEdge(element, rp);
+        res = checkIsAtRectangleEdge(element, rp);
       } else if (element.type === "circle") {
-        res = this.checkIsAtCircleEdge(element, rp);
+        res = checkIsAtCircleEdge(element, rp);
       } else if (element.type === "line") {
-        res = this.checkIsAtLineEdge(element, rp);
+        res = checkIsAtLineEdge(element, rp);
       } else if (element.type === "freedraw") {
-        res = this.checkIsAtFreedrawLineEdge(element, rp);
-      }
+        res = checkIsAtFreedrawLineEdge(element, rp);
+      } else if (element.type === "diamond") {
+        res = checkIsAtDiamondEdge(element, rp);
+      } 
     });
     return res;
   }
