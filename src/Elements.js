@@ -12,7 +12,7 @@ import {
   checkIsAtFreedrawLineEdge,
   checkIsAtDiamondEdge,
   checkIsAtTriangleEdge,
-  checkIsAtArrowEdge
+  checkIsAtArrowEdge,
 } from "./checkHit";
 
 export default class Elements {
