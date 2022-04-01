@@ -171,20 +171,43 @@ export default class App extends EventEmitter {
       newCenter.y,
       this.dragElement.element.rotate
     );
+    // 计算新尺寸
     let newSize = calcSize(newCenter, rp);
+    // 判断是否翻转了，不允许翻转
+    let isWidthReverse = false;
+    if (newSize.width < 0) {
+      newSize.width = 0;
+      isWidthReverse = true;
+    }
+    let isHeightReverse = false;
+    if (newSize.height < 0) {
+      newSize.height = 0;
+      isHeightReverse = true;
+    }
+    // 计算新位置
     let newPos = calcPos(rp, newSize);
+    // 元素和拖拽元素之间存在一点间距
     let activeElementNewInfo = this.dragElement.getElPosAndSizeFromDragElement(
       newPos.x,
       newPos.y,
       newSize.width,
       newSize.height
     );
+    // 如果翻转了，那么位置保持为上一次的位置
+    if (isWidthReverse) {
+      activeElementNewInfo.x = this.elements.activeElement.x;
+    }
+    if (isHeightReverse) {
+      activeElementNewInfo.y = this.elements.activeElement.y;
+    }
+    // 更新尺寸位置信息
     this.elements.updateActiveBoundingRect(
       activeElementNewInfo.x,
       activeElementNewInfo.y,
       activeElementNewInfo.width,
       activeElementNewInfo.height
     );
+    // 重新渲染拖拽元素
     this.dragElement.create(this.elements.activeElement);
     this.elements.render();
   }
@@ -208,7 +231,7 @@ export default class App extends EventEmitter {
             height: (newCenter.y - rp.y) * 2,
           };
         },
-        (rp, newSize) => {
+        (rp) => {
           return {
             x: rp.x,
             y: rp.y,
