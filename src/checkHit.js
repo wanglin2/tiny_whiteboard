@@ -85,3 +85,16 @@ export const checkIsAtTriangleEdge = (element, rp) => {
   ];
   return checkIsAtMultiSegment(segments, rp) ? element : null;
 };
+
+// 检测是否点击到箭头边缘
+export const checkIsAtArrowEdge = (element, rp) => {
+  let pointArr = element.pointArr;
+  let x = pointArr[0][0];
+  let y = pointArr[0][1];
+  let tx = pointArr[pointArr.length - 1][0];
+  let ty = pointArr[pointArr.length - 1][1];
+  let segments = [
+    [x, y, tx, ty],
+  ];
+  return checkIsAtMultiSegment(segments, rp) ? element : null;
+};

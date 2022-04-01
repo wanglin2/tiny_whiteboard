@@ -1,3 +1,5 @@
+import { degToRad, radToDeg } from "./utils";
+
 export default class DrawShap {
   constructor(ctx, app) {
     this.ctx = ctx;
@@ -74,6 +76,35 @@ export default class DrawShap {
           this.ctx.lineTo(point[0], point[1]);
         }
       });
+    });
+  }
+
+  // 绘制箭头
+  drawArrow(pointArr) {
+    let x = pointArr[0][0];
+    let y = pointArr[0][1];
+    let tx = pointArr[pointArr.length - 1][0];
+    let ty = pointArr[pointArr.length - 1][1];
+    this.drawWrap(() => {
+      this.ctx.moveTo(x, y);
+      this.ctx.lineTo(tx, ty);
+    });
+    let l = 30;
+    let deg = 30;
+    let lineDeg = radToDeg(Math.atan2(ty - y, tx - x));
+    this.drawWrap(() => {
+      let plusDeg = deg - lineDeg;
+      let _x = tx - l * Math.cos(degToRad(plusDeg));
+      let _y = ty + l * Math.sin(degToRad(plusDeg));
+      this.ctx.moveTo(_x, _y);
+      this.ctx.lineTo(tx, ty);
+    });
+    this.drawWrap(() => {
+      let plusDeg = 90 - lineDeg - deg;
+      let _x = tx - l * Math.sin(degToRad(plusDeg));
+      let _y = ty - l * Math.cos(degToRad(plusDeg));
+      this.ctx.moveTo(_x, _y);
+      this.ctx.lineTo(tx, ty);
     });
   }
 

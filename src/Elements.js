@@ -11,7 +11,8 @@ import {
   checkIsAtLineEdge,
   checkIsAtFreedrawLineEdge,
   checkIsAtDiamondEdge,
-  checkIsAtTriangleEdge
+  checkIsAtTriangleEdge,
+  checkIsAtArrowEdge
 } from "./checkHit";
 
 export default class Elements {
@@ -37,8 +38,8 @@ export default class Elements {
     this.app.clearCanvas();
     this.elementList.forEach((element) => {
       let { x, y, width, height, rotate, type } = element;
-      let halfWidth = width / 2
-      let halfHeight = height / 2
+      let halfWidth = width / 2;
+      let halfHeight = height / 2;
       // 移动画布中点到元素中心，否则旋转时中心点不对
       let cx = 0;
       let cy = 0;
@@ -89,6 +90,27 @@ export default class Elements {
         case "triangle":
           this.drawShape.drawTriangle(-halfWidth, -halfHeight, width, height);
           break;
+        case "arrow":
+          this.drawShape.drawArrow(
+            element.pointArr
+              .map((point) => {
+                return [point[0] - cx, point[1] - cy];
+              })
+              .concat(
+                // 加上鼠标当前实时位置
+                element.pointArr.length > 0 &&
+                  this.isCreatingElement &&
+                  this.app.currentType === "arrow"
+                  ? [
+                      [
+                        element.fictitiousPoint.x - cx,
+                        element.fictitiousPoint.y - cy,
+                      ],
+                    ]
+                  : []
+              )
+          );
+          break;
         default:
           break;
       }
@@ -137,6 +159,19 @@ export default class Elements {
       // 记录初始大小，用于缩放时
       element.startWidth = 0;
       element.startHeight = 0;
+    } else if (type === "arrow") {
+      // 记录初始点位，在拖动时
+      element.startPointArr = [];
+      // 点位
+      element.pointArr = [];
+      // 鼠标当前实时位置，用于在绘制时显示箭头的终点到起点的虚拟连接线
+      element.fictitiousPoint = {
+        x: 0,
+        y: 0,
+      };
+      // 记录初始大小，用于缩放时
+      element.startWidth = 0;
+      element.startHeight = 0;
     }
     this.addElement(element);
     this.activeElement = element;
@@ -161,7 +196,9 @@ export default class Elements {
         res = checkIsAtDiamondEdge(element, rp);
       } else if (element.type === "triangle") {
         res = checkIsAtTriangleEdge(element, rp);
-      } 
+      } else if (element.type === "arrow") {
+        res = checkIsAtArrowEdge(element, rp);
+      }
     });
     return res;
   }
@@ -170,7 +207,7 @@ export default class Elements {
   saveActiveElementState() {
     let { rotate, x, y, pointArr, width, height, type } = this.activeElement;
     this.activeElement.startRotate = rotate;
-    if (type === "line" || type === "freedraw") {
+    if (type === "line" || type === "freedraw" || type === "arrow") {
       this.activeElement.startPointArr = deepCopy(pointArr);
       this.activeElement.startWidth = width;
       this.activeElement.startHeight = height;
@@ -183,7 +220,7 @@ export default class Elements {
   // 移动元素
   moveActiveElement(ox, oy) {
     let { type, startX, startY, startPointArr } = this.activeElement;
-    if (type === "line" || type === "freedraw") {
+    if (type === "line" || type === "freedraw" || type === "arrow") {
       this.activeElement.pointArr = startPointArr.map((point) => {
         return [point[0] + ox, point[1] + oy, ...point.slice(2)];
       });
@@ -208,10 +245,8 @@ export default class Elements {
 
   // 更新元素包围框
   updateActiveBoundingRect(x, y, width, height) {
-    if (
-      this.activeElement.type === "line" ||
-      this.activeElement.type === "freedraw"
-    ) {
+    let { type } = this.activeElement;
+    if (type === "line" || type === "freedraw" || type === "arrow") {
       let { startWidth, startHeight, startPointArr } = this.activeElement;
       let scaleX = width / startWidth;
       let scaleY = height / startHeight;
