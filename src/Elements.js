@@ -10,7 +10,8 @@ import {
   checkIsAtCircleEdge,
   checkIsAtLineEdge,
   checkIsAtFreedrawLineEdge,
-  checkIsAtDiamondEdge
+  checkIsAtDiamondEdge,
+  checkIsAtTriangleEdge
 } from "./checkHit";
 
 export default class Elements {
@@ -36,18 +37,20 @@ export default class Elements {
     this.app.clearCanvas();
     this.elementList.forEach((element) => {
       let { x, y, width, height, rotate, type } = element;
-      this.ctx.save();
+      let halfWidth = width / 2
+      let halfHeight = height / 2
       // 移动画布中点到元素中心，否则旋转时中心点不对
       let cx = 0;
       let cy = 0;
-      cx = x + width / 2;
-      cy = y + height / 2;
+      cx = x + halfWidth;
+      cy = y + halfHeight;
+      this.ctx.save();
       this.ctx.translate(cx, cy);
       this.ctx.rotate(degToRad(rotate));
       // 画布中心点修改了，所以元素的坐标也要相应修改
       switch (type) {
         case "rectangle":
-          this.drawShape.drawRect(-width / 2, -height / 2, width, height);
+          this.drawShape.drawRect(-halfWidth, -halfHeight, width, height);
           break;
         case "circle":
           this.drawShape.drawCircle(0, 0, getCircleRadius(width, height));
@@ -81,7 +84,10 @@ export default class Elements {
           );
           break;
         case "diamond":
-          this.drawShape.drawDiamond(-width / 2, -height / 2, width, height);
+          this.drawShape.drawDiamond(-halfWidth, -halfHeight, width, height);
+          break;
+        case "triangle":
+          this.drawShape.drawTriangle(-halfWidth, -halfHeight, width, height);
           break;
         default:
           break;
@@ -153,6 +159,8 @@ export default class Elements {
         res = checkIsAtFreedrawLineEdge(element, rp);
       } else if (element.type === "diamond") {
         res = checkIsAtDiamondEdge(element, rp);
+      } else if (element.type === "triangle") {
+        res = checkIsAtTriangleEdge(element, rp);
       } 
     });
     return res;
