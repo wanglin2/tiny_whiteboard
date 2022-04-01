@@ -319,6 +319,14 @@ export default class App extends EventEmitter {
           e.clientY,
           lineWidth
         );
+      } else if (this.currentType === "diamond") {
+        // 当前是绘制菱形模式
+        // 当前没有激活元素，那么创建一个新元素
+        if (!this.elements.activeElement) {
+          this.elements.createElement("diamond", mx, my);
+        }
+        this.elements.updateActiveElementSize(offsetX, offsetY);
+        this.elements.render();
       }
     } else {
       // 鼠标没有按下

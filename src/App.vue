@@ -4,6 +4,8 @@
       <el-radio-group v-model="currentType" @change="onCurrentTypeChange">
         <el-radio-button label="selection">选择</el-radio-button>
         <el-radio-button label="rectangle">矩形</el-radio-button>
+        <el-radio-button label="diamond">菱形</el-radio-button>
+        <el-radio-button label="triangle">三角形</el-radio-button>
         <el-radio-button label="circle">圆形</el-radio-button>
         <el-radio-button label="line">线段</el-radio-button>
         <el-radio-button label="freedraw">自由画笔</el-radio-button>

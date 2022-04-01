@@ -21,7 +21,6 @@ export default class DrawShap {
     this.setStyle();
     fn();
     this.ctx.stroke();
-    this.ctx.closePath();
     this.ctx.restore();
   }
 
@@ -32,6 +31,17 @@ export default class DrawShap {
       if (styles.lineDash) {
         this.ctx.setLineDash(styles.lineDash);
       }
+    });
+  }
+
+  // 绘制菱形
+  drawDiamond(x, y, width, height) {
+    this.drawWrap(() => {
+      this.ctx.moveTo(x + width / 2, y);
+      this.ctx.lineTo(x + width, y + height / 2);
+      this.ctx.lineTo(x + width / 2, y + height);
+      this.ctx.lineTo(x, y + height / 2);
+      this.ctx.closePath();
     });
   }
 
