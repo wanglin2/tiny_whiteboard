@@ -270,9 +270,10 @@ export default class App extends EventEmitter {
   }
 
   // 如果当前不存在激活元素，那么就新建一个元素
-  ensureCreateElement(type, x, y) {
+  ensureCreateElement(type, x, y, callback = () => {}) {
     if (!this.elements.activeElement) {
-      this.elements.createElement(type, x, y);
+      let element = this.elements.createElement(type, x, y);
+      callback(element);
     }
   }
 
@@ -327,6 +328,13 @@ export default class App extends EventEmitter {
         this.ensureCreateElement("triangle", mx, my);
         this.elements.updateActiveElementSize(offsetX, offsetY);
         this.elements.render();
+      } else if (this.currentType === "arrow") {
+        // 当前是绘制箭头模式
+        this.ensureCreateElement("arrow", mx, my, () => {
+          this.elements.addActiveElementPoint(mx, my);
+        });
+        this.elements.updateActiveElementFictitiousPoint(e.clientX, e.clientY);
+        this.elements.render();
       }
     } else {
       // 鼠标没有按下
@@ -375,6 +383,10 @@ export default class App extends EventEmitter {
       this.elements.addActiveElementPoint(e.clientX, e.clientY);
       this.elements.updateActiveElementFictitiousPoint(e.clientX, e.clientY);
       this.elements.render();
+    } else if (this.currentType === "arrow") {
+      this.elements.addActiveElementPoint(e.clientX, e.clientY);
+      this.resetCurrentType();
+      this.completeCreateNewElement();
     } else {
       // 创建新元素完成
       if (this.elements.isCreatingElement) {
