@@ -45,6 +45,16 @@ export default class DrawShap {
     });
   }
 
+  // 绘制三角形
+  drawTriangle(x, y, width, height) {
+    this.drawWrap(() => {
+      this.ctx.moveTo(x + width / 2, y);
+      this.ctx.lineTo(x + width, y + height);
+      this.ctx.lineTo(x, y + height);
+      this.ctx.closePath();
+    });
+  }
+
   // 绘制圆形
   drawCircle(x, y, r) {
     this.drawWrap(() => {

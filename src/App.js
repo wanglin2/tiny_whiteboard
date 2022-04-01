@@ -269,6 +269,13 @@ export default class App extends EventEmitter {
     }
   }
 
+  // 如果当前不存在激活元素，那么就新建一个元素
+  ensureCreateElement(type, x, y) {
+    if (!this.elements.activeElement) {
+      this.elements.createElement(type, x, y);
+    }
+  }
+
   // 鼠标移动事件
   onMousemove(e, mouseEvent) {
     // 鼠标按下状态
@@ -283,27 +290,18 @@ export default class App extends EventEmitter {
         this.handleSelectionTypeMove(e, mx, my, offsetX, offsetY);
       } else if (this.currentType === "rectangle") {
         // 当前是绘制矩形模式
-        // 当前没有激活元素，那么创建一个新元素
-        if (!this.elements.activeElement) {
-          this.elements.createElement("rectangle", mx, my);
-        }
+        this.ensureCreateElement("rectangle", mx, my);
         this.elements.updateActiveElementSize(offsetX, offsetY);
         this.elements.render();
       } else if (this.currentType === "circle") {
         // 当前是绘制正圆模式
-        // 当前没有激活元素，那么创建一个新元素
-        if (!this.elements.activeElement) {
-          this.elements.createElement("circle", mx, my);
-        }
+        this.ensureCreateElement("circle", mx, my);
         let radius = getTowPointDistance(e.clientX, e.clientY, mx, my);
         this.elements.updateActiveElementSize(radius * 2, radius * 2);
         this.elements.render();
       } else if (this.currentType === "freedraw") {
         // 当前是自由画笔模式
-        // 当前没有激活元素，那么创建一个新元素
-        if (!this.elements.activeElement) {
-          this.elements.createElement("freedraw", mx, my);
-        }
+        this.ensureCreateElement("freedraw", mx, my);
         // 计算画笔粗细
         let lineWidth = this.drawShape.computedLineWidthBySpeed(
           mouseEvent.speed,
@@ -321,10 +319,12 @@ export default class App extends EventEmitter {
         );
       } else if (this.currentType === "diamond") {
         // 当前是绘制菱形模式
-        // 当前没有激活元素，那么创建一个新元素
-        if (!this.elements.activeElement) {
-          this.elements.createElement("diamond", mx, my);
-        }
+        this.ensureCreateElement("diamond", mx, my);
+        this.elements.updateActiveElementSize(offsetX, offsetY);
+        this.elements.render();
+      } else if (this.currentType === "triangle") {
+        // 当前是绘制三角形模式
+        this.ensureCreateElement("triangle", mx, my);
         this.elements.updateActiveElementSize(offsetX, offsetY);
         this.elements.render();
       }
@@ -371,10 +371,7 @@ export default class App extends EventEmitter {
   onMouseup(e) {
     if (this.currentType === "line") {
       // 当前是绘制线段模式
-      // 当前没有激活元素，那么创建一个新元素
-      if (!this.elements.activeElement) {
-        this.elements.createElement("line");
-      }
+      this.ensureCreateElement("line");
       this.elements.addActiveElementPoint(e.clientX, e.clientY);
       this.elements.updateActiveElementFictitiousPoint(e.clientX, e.clientY);
       this.elements.render();
