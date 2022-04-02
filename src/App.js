@@ -332,7 +332,7 @@ export default class App extends EventEmitter {
 
       // 选中模式
       if (this.currentType === "selection") {
-        this.handleSelectionTypeMove(e, mx, my, offsetX, offsetY);
+        this.handleSelectionTypeMove(e, mx, my, mouseEvent.mouseOffset.x, mouseEvent.mouseOffset.y);
       } else if (this.currentType === "rectangle") {
         // 绘制矩形模式
         this.ensureCreateElement("rectangle", mx, my);
