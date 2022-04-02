@@ -11,6 +11,7 @@ import {
 } from "./utils";
 import EventEmitter from "eventemitter3";
 import { CORNERS, DRAG_ELEMENT_PARTS } from "./constants";
+import TextEdit from "./TextEdit";
 
 export default class App extends EventEmitter {
   constructor() {
@@ -54,6 +55,8 @@ export default class App extends EventEmitter {
       this.onMouseup,
       this.onDblclick
     );
+    // 文字编辑类
+    this.textEdit = new TextEdit(this.ctx, this);
     // 绘制图形类
     this.drawShape = new DrawShape(this.ctx, this);
     // 元素类
@@ -409,7 +412,14 @@ export default class App extends EventEmitter {
 
   // 鼠标松开事件
   onMouseup(e) {
-    if (this.currentType === "line") {
+    if (this.currentType === "text") {
+      // 文字编辑模式
+      if (!this.textEdit.isEdit) {
+        this.ensureCreateElement("text", e.clientX, e.clientY);
+        this.textEdit.showTextEdit();
+        this.resetCurrentType();
+      }
+    } else if (this.currentType === "line") {
       if (this.elements.activeElement?.isSingleLine) {
         // 单根线段模式
         this.elements.addActiveElementPoint(e.clientX, e.clientY);
@@ -430,6 +440,14 @@ export default class App extends EventEmitter {
         if (this.currentType === "freedraw") {
           // 自由绘画模式可以连续绘制
           this.elements.activeElement = null;
+        } else if (this.elements.activeElement?.type === "text") {
+          if (this.elements.activeElement.text.trim()) {
+            this.completeCreateNewElement();
+          } else {
+            // 没有输入则删除该文字元素
+            this.elements.deleteElement(this.elements.activeElement);
+            this.elements.activeElement = null;
+          }
         } else {
           this.completeCreateNewElement();
         }
@@ -438,6 +456,9 @@ export default class App extends EventEmitter {
         this.dragElement.inDragElementPart = "";
       } else {
         // 其他情况下单击
+        if (this.elements.activeElement?.noRender) {
+          this.elements.activeElement.noRender = false;
+        }
         this.elements.activeElement = null;
         this.checkIsActiveElement(e);
       }
@@ -445,9 +466,27 @@ export default class App extends EventEmitter {
   }
 
   // 鼠标双击事件
-  onDblclick() {
+  onDblclick(e) {
     if (this.currentType === "line") {
       this.completeCreateNewElement();
+    }
+    let el = this.elements.checkElementsAtPos(e.clientX, e.clientY);
+    // 点击到了元素
+    if (el) {
+      // 编辑文字
+      if (el.type === "text") {
+        this.elements.activeElement = el;
+        this.elements.activeElement.noRender = true;
+        this.dragElement.delete();
+        this.elements.render();
+        this.textEdit.showTextEdit();
+      }
+    } else {
+      // 双击空白处新增文字
+      if (!this.textEdit.isEdit) {
+        this.ensureCreateElement("text", e.clientX, e.clientY);
+        this.textEdit.showTextEdit();
+      }
     }
   }
 }

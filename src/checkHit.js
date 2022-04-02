@@ -1,4 +1,8 @@
-import { checkIsAtSegment, getTowPointDistance } from "./utils";
+import {
+  checkIsAtSegment,
+  getTowPointDistance,
+  checkPointIsInRectangle,
+} from "./utils";
 import { HIT_DISTANCE } from "./constants";
 
 // 检测是否点击到折线上
@@ -23,6 +27,11 @@ export const checkIsAtRectangleEdge = (element, rp) => {
     [x, y + height, x, y],
   ];
   return checkIsAtMultiSegment(segments, rp) ? element : null;
+};
+
+// 检测是否点击到矩形内部
+export const checkIsAtRectangleInner = (element, rp) => {
+  return checkPointIsInRectangle(rp.x, rp.y, element) ? element : null;
 };
 
 // 根据宽高计算圆的半径
@@ -93,8 +102,6 @@ export const checkIsAtArrowEdge = (element, rp) => {
   let y = pointArr[0][1];
   let tx = pointArr[pointArr.length - 1][0];
   let ty = pointArr[pointArr.length - 1][1];
-  let segments = [
-    [x, y, tx, ty],
-  ];
+  let segments = [[x, y, tx, ty]];
   return checkIsAtMultiSegment(segments, rp) ? element : null;
 };

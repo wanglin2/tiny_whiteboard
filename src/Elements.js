@@ -3,6 +3,8 @@ import {
   transformPointOnElement,
   getBoundingRect,
   deepCopy,
+  splitTextLines,
+  getMaxFontSizeInWidth,
 } from "./utils";
 import {
   checkIsAtRectangleEdge,
@@ -13,6 +15,7 @@ import {
   checkIsAtDiamondEdge,
   checkIsAtTriangleEdge,
   checkIsAtArrowEdge,
+  checkIsAtRectangleInner,
 } from "./checkHit";
 
 export default class Elements {
@@ -33,10 +36,21 @@ export default class Elements {
     this.elementList.push(element);
   }
 
+  // 删除元素
+  deleteElement(element) {
+    let index = this.elementList.findIndex((item) => {
+      return item === element;
+    });
+    this.elementList.splice(index, 1);
+  }
+
   // 绘制所有元素
   render() {
     this.app.clearCanvas();
     this.elementList.forEach((element) => {
+      if (element.noRender) {
+        return;
+      }
       let { x, y, width, height, rotate, type } = element;
       let halfWidth = width / 2;
       let halfHeight = height / 2;
@@ -111,6 +125,15 @@ export default class Elements {
               )
           );
           break;
+        case "text":
+          this.drawShape.drawText(
+            element,
+            -halfWidth,
+            -halfHeight,
+            width,
+            height
+          );
+          break;
         default:
           break;
       }
@@ -136,6 +159,8 @@ export default class Elements {
       startRotate: 0,
       // 角度
       rotate,
+      // 是否不要渲染
+      noRender: false,
     };
     if (type === "line") {
       // 记录初始点位，在拖动时
@@ -172,6 +197,14 @@ export default class Elements {
       // 记录初始大小，用于缩放时
       element.startWidth = 0;
       element.startHeight = 0;
+    } else if (type === "text") {
+      element.text = "";
+      element.color = "#000";
+      element.fontSize = 18;
+      element.lineHeightRatio = 1.5;
+      element.fontFamily = "微软雅黑, Microsoft YaHei";
+      element.y -=
+        (element.fontSize * element.lineHeightRatio - element.fontSize) / 2 + 8;
     }
     this.addElement(element);
     this.activeElement = element;
@@ -199,6 +232,8 @@ export default class Elements {
         res = checkIsAtTriangleEdge(element, rp);
       } else if (element.type === "arrow") {
         res = checkIsAtArrowEdge(element, rp);
+      } else if (element.type === "text") {
+        res = checkIsAtRectangleInner(element, rp);
       }
     });
     return res;
@@ -263,6 +298,16 @@ export default class Elements {
       this.activeElement.pointArr = this.activeElement.pointArr.map((point) => {
         return [point[0] - offsetX, point[1] - offsetY, ...point.slice(2)];
       });
+      this.updateActiveElementPos(x, y);
+      this.updateActiveElementSize(width, height);
+    } else if (type === "text") {
+      let { text, lineHeightRatio } = this.activeElement;
+      // 计算该限定宽高内最大的字号
+      let fontSizeX = getMaxFontSizeInWidth(text, width, this.activeElement);
+      let fontSizeY = Math.floor(
+        height / splitTextLines(text).length / lineHeightRatio
+      );
+      this.activeElement.fontSize = Math.min(fontSizeX, fontSizeY);
       this.updateActiveElementPos(x, y);
       this.updateActiveElementSize(width, height);
     } else {
