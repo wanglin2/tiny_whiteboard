@@ -134,6 +134,15 @@ export default class Elements {
             height
           );
           break;
+        case "image":
+          this.drawShape.drawImage(
+            element,
+            -halfWidth,
+            -halfHeight,
+            width,
+            height
+          );
+          break;
         default:
           break;
       }
@@ -205,6 +214,10 @@ export default class Elements {
       element.fontFamily = "微软雅黑, Microsoft YaHei";
       element.y -=
         (element.fontSize * element.lineHeightRatio - element.fontSize) / 2 + 8;
+    } else if (type === "image") {
+      element.url = "";
+      element.imageObj = null;
+      element.ratio = 1;
     }
     this.addElement(element);
     this.activeElement = element;
@@ -233,6 +246,8 @@ export default class Elements {
       } else if (element.type === "arrow") {
         res = checkIsAtArrowEdge(element, rp);
       } else if (element.type === "text") {
+        res = checkIsAtRectangleInner(element, rp);
+      } else if (element.type === "image") {
         res = checkIsAtRectangleInner(element, rp);
       }
     });
