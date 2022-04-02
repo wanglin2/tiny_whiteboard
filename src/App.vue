@@ -67,8 +67,11 @@ onMounted(() => {
     position: absolute;
     left: 50%;
     top: 10px;
+    width: 100%;
     transform: translateX(-50%);
     z-index: 2;
+    display: flex;
+    justify-content: center;
   }
 
   .canvasBox {

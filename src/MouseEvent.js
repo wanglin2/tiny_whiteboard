@@ -6,13 +6,15 @@ export default class MouseEvent {
     mousedownCallback,
     mousemoveCallback,
     mouseupCallback,
-    dblclickCallback
+    dblclickCallback,
+    mousewheelCallback
   ) {
     this.app = app;
     this.mousedownCallback = mousedownCallback;
     this.mousemoveCallback = mousemoveCallback;
     this.mouseupCallback = mouseupCallback;
     this.dblclickCallback = dblclickCallback;
+    this.mousewheelCallback = mousewheelCallback;
 
     // 鼠标相关
     this.isMousedown = false;
@@ -44,6 +46,7 @@ export default class MouseEvent {
     this.onMousemove = this.onMousemove.bind(this);
     this.onMouseup = this.onMouseup.bind(this);
     this.onDblclick = this.onDblclick.bind(this);
+    this.onMousewheel = this.onMousewheel.bind(this);
     this.bindEvent();
   }
 
@@ -53,6 +56,7 @@ export default class MouseEvent {
     this.app.canvasEl.addEventListener("mousemove", this.onMousemove);
     this.app.canvasEl.addEventListener("mouseup", this.onMouseup);
     this.app.canvasEl.addEventListener("dblclick", this.onDblclick);
+    this.app.canvasEl.addEventListener("mousewheel", this.onMousewheel);
   }
 
   // 解绑事件
@@ -61,20 +65,21 @@ export default class MouseEvent {
     this.app.canvasEl.removeEventListener("mousemove", this.onMousemove);
     this.app.canvasEl.removeEventListener("mouseup", this.onMouseup);
     this.app.canvasEl.removeEventListener("dblclick", this.onDblclick);
+    this.app.canvasEl.removeEventListener("mousewheel", this.onMousewheel);
   }
 
   // 鼠标按下事件
   onMousedown(e) {
     this.isMousedown = true;
     this.mousedownPos.x = e.clientX;
-    this.mousedownPos.y = e.clientY;
+    this.mousedownPos.y = e.clientY + this.app.state.scrollY;
     this.mousedownCallback.call(this.app, e, this);
   }
 
   // 鼠标移动事件
   onMousemove(e) {
     let x = e.clientX;
-    let y = e.clientY;
+    let y = e.clientY + this.app.state.scrollY;
     // 鼠标按下状态
     if (this.isMousedown) {
       this.mouseOffset.x = x - this.mousedownPos.x;
@@ -102,5 +107,10 @@ export default class MouseEvent {
   // 双击事件
   onDblclick(e) {
     this.dblclickCallback.call(this.app, e, this);
+  }
+
+  // 鼠标滚动事件
+  onMousewheel(e) {
+    this.mousewheelCallback.call(this.app, e.wheelDelta < 0 ? "down" : "up");
   }
 }

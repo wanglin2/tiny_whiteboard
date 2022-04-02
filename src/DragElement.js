@@ -84,6 +84,8 @@ export default class DragElement {
       return;
     }
     let { x, y, width, height, rotate } = this.element;
+    // 加上滚动偏移
+    y -= this.app.state.scrollY;
     // 原点移动到元素的中心
     this.ctx.save();
     let cx = x + width / 2;
