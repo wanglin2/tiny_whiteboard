@@ -309,22 +309,22 @@ export default class App extends EventEmitter {
       let offsetX = mouseEvent.mouseOffset.x;
       let offsetY = mouseEvent.mouseOffset.y;
 
-      // 当前是选中模式
+      // 选中模式
       if (this.currentType === "selection") {
         this.handleSelectionTypeMove(e, mx, my, offsetX, offsetY);
       } else if (this.currentType === "rectangle") {
-        // 当前是绘制矩形模式
+        // 绘制矩形模式
         this.ensureCreateElement("rectangle", mx, my);
         this.elements.updateActiveElementSize(offsetX, offsetY);
         this.elements.render();
       } else if (this.currentType === "circle") {
-        // 当前是绘制正圆模式
+        // 绘制正圆模式
         this.ensureCreateElement("circle", mx, my);
         let radius = getTowPointDistance(e.clientX, e.clientY, mx, my);
         this.elements.updateActiveElementSize(radius * 2, radius * 2);
         this.elements.render();
       } else if (this.currentType === "freedraw") {
-        // 当前是自由画笔模式
+        // 自由画笔模式
         this.ensureCreateElement("freedraw", mx, my);
         // 计算画笔粗细
         let lineWidth = this.drawShape.computedLineWidthBySpeed(
@@ -342,18 +342,26 @@ export default class App extends EventEmitter {
           lineWidth
         );
       } else if (this.currentType === "diamond") {
-        // 当前是绘制菱形模式
+        // 绘制菱形模式
         this.ensureCreateElement("diamond", mx, my);
         this.elements.updateActiveElementSize(offsetX, offsetY);
         this.elements.render();
       } else if (this.currentType === "triangle") {
-        // 当前是绘制三角形模式
+        // 绘制三角形模式
         this.ensureCreateElement("triangle", mx, my);
         this.elements.updateActiveElementSize(offsetX, offsetY);
         this.elements.render();
       } else if (this.currentType === "arrow") {
-        // 当前是绘制箭头模式
+        // 绘制箭头模式
         this.ensureCreateElement("arrow", mx, my, () => {
+          this.elements.addActiveElementPoint(mx, my);
+        });
+        this.elements.updateActiveElementFictitiousPoint(e.clientX, e.clientY);
+        this.elements.render();
+      } else if (this.currentType === "line") {
+        // 绘制线段模式
+        this.ensureCreateElement("line", mx, my, (element) => {
+          element.isSingleLine = true;
           this.elements.addActiveElementPoint(mx, my);
         });
         this.elements.updateActiveElementFictitiousPoint(e.clientX, e.clientY);
@@ -392,6 +400,7 @@ export default class App extends EventEmitter {
 
   // 创建新元素完成
   completeCreateNewElement() {
+    this.resetCurrentType();
     this.elements.isCreatingElement = false;
     this.dragElement.reset();
     this.dragElement.create(this.elements.activeElement);
@@ -401,14 +410,19 @@ export default class App extends EventEmitter {
   // 鼠标松开事件
   onMouseup(e) {
     if (this.currentType === "line") {
-      // 当前是绘制线段模式
-      this.ensureCreateElement("line");
-      this.elements.addActiveElementPoint(e.clientX, e.clientY);
-      this.elements.updateActiveElementFictitiousPoint(e.clientX, e.clientY);
-      this.elements.render();
+      if (this.elements.activeElement?.isSingleLine) {
+        // 单根线段模式
+        this.elements.addActiveElementPoint(e.clientX, e.clientY);
+        this.completeCreateNewElement();
+      } else {
+        // 绘制折线模式
+        this.ensureCreateElement("line");
+        this.elements.addActiveElementPoint(e.clientX, e.clientY);
+        this.elements.updateActiveElementFictitiousPoint(e.clientX, e.clientY);
+        this.elements.render();
+      }
     } else if (this.currentType === "arrow") {
       this.elements.addActiveElementPoint(e.clientX, e.clientY);
-      this.resetCurrentType();
       this.completeCreateNewElement();
     } else {
       // 创建新元素完成
@@ -417,7 +431,6 @@ export default class App extends EventEmitter {
           // 自由绘画模式可以连续绘制
           this.elements.activeElement = null;
         } else {
-          this.resetCurrentType();
           this.completeCreateNewElement();
         }
       } else if (this.dragElement.inDragElementPart) {
@@ -434,7 +447,6 @@ export default class App extends EventEmitter {
   // 鼠标双击事件
   onDblclick() {
     if (this.currentType === "line") {
-      this.resetCurrentType();
       this.completeCreateNewElement();
     }
   }
