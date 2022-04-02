@@ -34,6 +34,10 @@ export default class App extends EventEmitter {
     this.wrapEl = wrapEl;
     this.canvasEl = canvasEl;
     this.currentType = currentType;
+    // 画布状态
+    this.state = {
+      scrollY: 0,// 垂直方向的滚动偏移量
+    };
     // 获取绘图上下文
     this.ctx = this.canvasEl.getContext("2d");
     let { width, height } = this.wrapEl.getBoundingClientRect();
@@ -54,7 +58,8 @@ export default class App extends EventEmitter {
       this.onMousedown,
       this.onMousemove,
       this.onMouseup,
-      this.onDblclick
+      this.onDblclick,
+      this.onMousewheel
     );
     // 文字编辑类
     this.textEdit = new TextEdit(this.ctx, this);
@@ -98,7 +103,8 @@ export default class App extends EventEmitter {
     this.dragElement.diagonalPoint.y = 2 * centerPos.y - pos.y;
     // 鼠标按下位置和元素的左上角坐标差值
     this.dragElement.mousedownPosAndElementPosOffset.x = e.clientX - pos.x;
-    this.dragElement.mousedownPosAndElementPosOffset.y = e.clientY - pos.y;
+    this.dragElement.mousedownPosAndElementPosOffset.y =
+      e.clientY + this.state.scrollY - pos.y;
     this.elements.saveActiveElementState();
   }
 
@@ -153,7 +159,7 @@ export default class App extends EventEmitter {
       centerPos.x,
       centerPos.y,
       e.clientX,
-      e.clientY,
+      e.clientY + this.state.scrollY,
       mx,
       my
     );
@@ -167,7 +173,9 @@ export default class App extends EventEmitter {
     let actClientX =
       e.clientX - this.dragElement.mousedownPosAndElementPosOffset.x;
     let actClientY =
-      e.clientY - this.dragElement.mousedownPosAndElementPosOffset.y;
+      e.clientY +
+      this.state.scrollY -
+      this.dragElement.mousedownPosAndElementPosOffset.y;
     // 新的中心点
     let newCenter = {
       x: (actClientX + this.dragElement.diagonalPoint.x) / 2,
@@ -330,7 +338,12 @@ export default class App extends EventEmitter {
       } else if (this.currentType === "circle") {
         // 绘制正圆模式
         this.ensureCreateElement("circle", mx, my);
-        let radius = getTowPointDistance(e.clientX, e.clientY, mx, my);
+        let radius = getTowPointDistance(
+          e.clientX,
+          e.clientY + this.state.scrollY,
+          mx,
+          my
+        );
         this.elements.updateActiveElementSize(radius * 2, radius * 2);
         this.elements.render();
       } else if (this.currentType === "freedraw") {
@@ -342,11 +355,15 @@ export default class App extends EventEmitter {
           this.elements.activeElement.lastLineWidth
         );
         this.elements.activeElement.lastLineWidth = lineWidth;
-        this.elements.addActiveElementPoint(e.clientX, e.clientY, lineWidth);
+        this.elements.addActiveElementPoint(
+          e.clientX,
+          e.clientY + this.state.scrollY,
+          lineWidth
+        );
         // 绘制自由线不重绘，采用增量绘制，否则会卡顿
         this.drawShape.drawLineSegment(
           mouseEvent.lastPos.x,
-          mouseEvent.lastPos.y,
+          mouseEvent.lastPos.y - this.state.scrollY,
           e.clientX,
           e.clientY,
           lineWidth
@@ -366,7 +383,10 @@ export default class App extends EventEmitter {
         this.ensureCreateElement("arrow", mx, my, () => {
           this.elements.addActiveElementPoint(mx, my);
         });
-        this.elements.updateActiveElementFictitiousPoint(e.clientX, e.clientY);
+        this.elements.updateActiveElementFictitiousPoint(
+          e.clientX,
+          e.clientY + this.state.scrollY
+        );
         this.elements.render();
       } else if (this.currentType === "line") {
         // 绘制线段模式
@@ -374,7 +394,10 @@ export default class App extends EventEmitter {
           element.isSingleLine = true;
           this.elements.addActiveElementPoint(mx, my);
         });
-        this.elements.updateActiveElementFictitiousPoint(e.clientX, e.clientY);
+        this.elements.updateActiveElementFictitiousPoint(
+          e.clientX,
+          e.clientY + this.state.scrollY
+        );
         this.elements.render();
       }
     } else {
@@ -383,13 +406,16 @@ export default class App extends EventEmitter {
         if (this.elements.activeElement) {
           this.elements.updateActiveElementFictitiousPoint(
             e.clientX,
-            e.clientY
+            e.clientY + this.state.scrollY
           );
           this.elements.render();
         }
       } else if (this.imageEdit.isReady) {
         // 图片放置中
-        this.imageEdit.updatePreviewElPos(e.clientX, e.clientY);
+        this.imageEdit.updatePreviewElPos(
+          e.clientX,
+          e.clientY
+        );
       }
     }
   }
@@ -397,7 +423,10 @@ export default class App extends EventEmitter {
   // 检测是否选中元素
   checkIsActiveElement(e) {
     // 判断是否选中元素
-    let el = this.elements.checkElementsAtPos(e.clientX, e.clientY);
+    let el = this.elements.checkElementsAtPos(
+      e.clientX,
+      e.clientY + this.state.scrollY
+    );
     this.elements.activeElement = el;
     this.dragElement.create(el);
     this.elements.render();
@@ -439,7 +468,11 @@ export default class App extends EventEmitter {
   onMouseup(e) {
     if (this.imageEdit.isReady) {
       // 图片放置模式
-      this.ensureCreateElement("image", e.clientX, e.clientY);
+      this.ensureCreateElement(
+        "image",
+        e.clientX,
+        e.clientY + this.state.scrollY
+      );
       this.elements.activeElement.url = this.imageEdit.imageData.url;
       this.elements.activeElement.imageObj = this.imageEdit.imageData.imageObj;
       this.elements.activeElement.width = this.imageEdit.imageData.width;
@@ -455,24 +488,40 @@ export default class App extends EventEmitter {
     } else if (this.currentType === "text") {
       // 文字编辑模式
       if (!this.textEdit.isEdit) {
-        this.ensureCreateElement("text", e.clientX, e.clientY);
+        this.ensureCreateElement(
+          "text",
+          e.clientX,
+          e.clientY + this.state.scrollY
+        );
         this.textEdit.showTextEdit();
         this.resetCurrentType();
       }
     } else if (this.currentType === "line") {
       if (this.elements.activeElement?.isSingleLine) {
         // 单根线段模式
-        this.elements.addActiveElementPoint(e.clientX, e.clientY);
+        this.elements.addActiveElementPoint(
+          e.clientX,
+          e.clientY + this.state.scrollY
+        );
         this.completeCreateNewElement();
       } else {
         // 绘制折线模式
         this.ensureCreateElement("line");
-        this.elements.addActiveElementPoint(e.clientX, e.clientY);
-        this.elements.updateActiveElementFictitiousPoint(e.clientX, e.clientY);
+        this.elements.addActiveElementPoint(
+          e.clientX,
+          e.clientY + this.state.scrollY
+        );
+        this.elements.updateActiveElementFictitiousPoint(
+          e.clientX,
+          e.clientY + this.state.scrollY
+        );
         this.elements.render();
       }
     } else if (this.currentType === "arrow") {
-      this.elements.addActiveElementPoint(e.clientX, e.clientY);
+      this.elements.addActiveElementPoint(
+        e.clientX,
+        e.clientY + this.state.scrollY
+      );
       this.completeCreateNewElement();
     } else {
       // 创建新元素完成
@@ -510,7 +559,10 @@ export default class App extends EventEmitter {
     if (this.currentType === "line") {
       this.completeCreateNewElement();
     }
-    let el = this.elements.checkElementsAtPos(e.clientX, e.clientY);
+    let el = this.elements.checkElementsAtPos(
+      e.clientX,
+      e.clientY + this.state.scrollY
+    );
     // 点击到了元素
     if (el) {
       // 编辑文字
@@ -524,9 +576,20 @@ export default class App extends EventEmitter {
     } else {
       // 双击空白处新增文字
       if (!this.textEdit.isEdit) {
-        this.ensureCreateElement("text", e.clientX, e.clientY);
+        this.ensureCreateElement(
+          "text",
+          e.clientX,
+          e.clientY + this.state.scrollY
+        );
         this.textEdit.showTextEdit();
       }
     }
+  }
+
+  // 鼠标滚动事件
+  onMousewheel(dir) {
+    let step = dir === "down" ? 50 : -50;
+    this.state.scrollY += step;
+    this.elements.render();
   }
 }

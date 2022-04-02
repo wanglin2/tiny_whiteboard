@@ -65,7 +65,7 @@ export default class TextEdit {
       font: getFontString(fontSize, fontFamily),
       lineHeight: `${fontSize * lineHeightRatio}px`,
       left: `${x}px`,
-      top: `${y}px`,
+      top: `${y - this.app.state.scrollY}px`,
       color,
       width: Math.max(width, 100) + "px",
       height: height + "px",

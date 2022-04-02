@@ -52,6 +52,8 @@ export default class Elements {
         return;
       }
       let { x, y, width, height, rotate, type } = element;
+      // 加上滚动偏移
+      y -= this.app.state.scrollY;
       let halfWidth = width / 2;
       let halfHeight = height / 2;
       // 移动画布中点到元素中心，否则旋转时中心点不对
@@ -74,7 +76,7 @@ export default class Elements {
           this.drawShape.drawLine(
             element.pointArr
               .map((point) => {
-                return [point[0] - cx, point[1] - cy];
+                return [point[0] - cx, point[1] - cy - this.app.state.scrollY];
               })
               .concat(
                 // 加上鼠标当前实时位置
@@ -84,7 +86,7 @@ export default class Elements {
                   ? [
                       [
                         element.fictitiousPoint.x - cx,
-                        element.fictitiousPoint.y - cy,
+                        element.fictitiousPoint.y - cy - this.app.state.scrollY,
                       ],
                     ]
                   : []
@@ -94,7 +96,11 @@ export default class Elements {
         case "freedraw":
           this.drawShape.drawFreeLine(
             element.pointArr.map((point) => {
-              return [point[0] - cx, point[1] - cy, ...point.slice(2)];
+              return [
+                point[0] - cx,
+                point[1] - cy - this.app.state.scrollY,
+                ...point.slice(2),
+              ];
             })
           );
           break;
@@ -108,7 +114,7 @@ export default class Elements {
           this.drawShape.drawArrow(
             element.pointArr
               .map((point) => {
-                return [point[0] - cx, point[1] - cy];
+                return [point[0] - cx, point[1] - cy - this.app.state.scrollY];
               })
               .concat(
                 // 加上鼠标当前实时位置
@@ -118,7 +124,7 @@ export default class Elements {
                   ? [
                       [
                         element.fictitiousPoint.x - cx,
-                        element.fictitiousPoint.y - cy,
+                        element.fictitiousPoint.y - cy - this.app.state.scrollY,
                       ],
                     ]
                   : []
