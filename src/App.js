@@ -36,7 +36,7 @@ export default class App extends EventEmitter {
     this.currentType = currentType;
     // 画布状态
     this.state = {
-      scrollY: 0,// 垂直方向的滚动偏移量
+      scrollY: 0, // 垂直方向的滚动偏移量
     };
     // 获取绘图上下文
     this.ctx = this.canvasEl.getContext("2d");
@@ -79,6 +79,11 @@ export default class App extends EventEmitter {
     if (currentType === "image") {
       this.imageEdit.selectImage();
       this.resetCurrentType();
+    }
+    if (currentType !== "selection") {
+      this.setCursor("crosshair");
+    } else {
+      this.setCursor();
     }
   }
 
@@ -212,10 +217,8 @@ export default class App extends EventEmitter {
       newSize.height
     );
     // 如果翻转了，那么位置保持为上一次的位置
-    if (isWidthReverse) {
+    if (isWidthReverse || isHeightReverse) {
       activeElementNewInfo.x = this.elements.activeElement.x;
-    }
-    if (isHeightReverse) {
       activeElementNewInfo.y = this.elements.activeElement.y;
     }
     // 更新尺寸位置信息
@@ -324,8 +327,8 @@ export default class App extends EventEmitter {
     if (mouseEvent.isMousedown) {
       let mx = mouseEvent.mousedownPos.x;
       let my = mouseEvent.mousedownPos.y;
-      let offsetX = mouseEvent.mouseOffset.x;
-      let offsetY = mouseEvent.mouseOffset.y;
+      let offsetX = Math.max(mouseEvent.mouseOffset.x, 0);
+      let offsetY = Math.max(mouseEvent.mouseOffset.y, 0);
 
       // 选中模式
       if (this.currentType === "selection") {
@@ -412,10 +415,7 @@ export default class App extends EventEmitter {
         }
       } else if (this.imageEdit.isReady) {
         // 图片放置中
-        this.imageEdit.updatePreviewElPos(
-          e.clientX,
-          e.clientY
-        );
+        this.imageEdit.updatePreviewElPos(e.clientX, e.clientY);
       }
     }
   }
@@ -447,6 +447,11 @@ export default class App extends EventEmitter {
     this.dragElement.reset();
     this.dragElement.create(this.elements.activeElement);
     this.elements.render();
+  }
+
+  // 设置鼠标指针样式
+  setCursor(type = "default") {
+    this.canvasEl.style.cursor = type;
   }
 
   // 隐藏鼠标指针

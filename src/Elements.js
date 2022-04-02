@@ -48,9 +48,11 @@ export default class Elements {
   render() {
     this.app.clearCanvas();
     this.elementList.forEach((element) => {
+      // 该元素不需要渲染
       if (element.noRender) {
         return;
       }
+      // 超出可视范围的不需要渲染TODO:
       let { x, y, width, height, rotate, type } = element;
       // 加上滚动偏移
       y -= this.app.state.scrollY;

@@ -123,7 +123,7 @@ export default class DragElement {
     );
     // 旋转按钮
     this.drawShape.drawCircle(
-      x + this.el.width / 2,
+      x + this.el.width / 2 + this.size / 2,
       y - this.size * 2,
       this.size
     );
