@@ -11,6 +11,7 @@
         <el-radio-button label="arrow">箭头</el-radio-button>
         <el-radio-button label="freedraw">自由画笔</el-radio-button>
         <el-radio-button label="text">文字</el-radio-button>
+        <el-radio-button label="image">图片</el-radio-button>
       </el-radio-group>
     </div>
     <div class="canvasBox" ref="box">
@@ -33,15 +34,18 @@ const canvas = ref(null);
 // 应用实例
 const app = new App();
 
+// 通知app更当前类型
 watch(currentType, () => {
   app.updateCurrentType(currentType.value);
 });
 
+// 监听app内部修改类型事件
 app.on("currentTypeChange", (type) => {
   currentType.value = type;
 });
 
 const onCurrentTypeChange = () => {
+  // 清除激活项
   app.clearActive();
 };
 

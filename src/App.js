@@ -12,6 +12,7 @@ import {
 import EventEmitter from "eventemitter3";
 import { CORNERS, DRAG_ELEMENT_PARTS } from "./constants";
 import TextEdit from "./TextEdit";
+import ImageEdit from "./ImageEdit";
 
 export default class App extends EventEmitter {
   constructor() {
@@ -57,6 +58,8 @@ export default class App extends EventEmitter {
     );
     // 文字编辑类
     this.textEdit = new TextEdit(this.ctx, this);
+    // 图片选择类
+    this.imageEdit = new ImageEdit(this.ctx, this, this.onSelectImage);
     // 绘制图形类
     this.drawShape = new DrawShape(this.ctx, this);
     // 元素类
@@ -68,6 +71,10 @@ export default class App extends EventEmitter {
   // 更新当前类型
   updateCurrentType(currentType) {
     this.currentType = currentType;
+    if (currentType === "image") {
+      this.imageEdit.selectImage();
+      this.resetCurrentType();
+    }
   }
 
   // 清除画布
@@ -380,6 +387,9 @@ export default class App extends EventEmitter {
           );
           this.elements.render();
         }
+      } else if (this.imageEdit.isReady) {
+        // 图片放置中
+        this.imageEdit.updatePreviewElPos(e.clientX, e.clientY);
       }
     }
   }
@@ -410,9 +420,39 @@ export default class App extends EventEmitter {
     this.elements.render();
   }
 
+  // 隐藏鼠标指针
+  hideCursor() {
+    this.canvasEl.style.cursor = "none";
+  }
+
+  // 显示鼠标指针
+  showCursor() {
+    this.canvasEl.style.cursor = "default";
+  }
+
+  // 图片选择事件
+  onSelectImage() {
+    this.hideCursor();
+  }
+
   // 鼠标松开事件
   onMouseup(e) {
-    if (this.currentType === "text") {
+    if (this.imageEdit.isReady) {
+      // 图片放置模式
+      this.ensureCreateElement("image", e.clientX, e.clientY);
+      this.elements.activeElement.url = this.imageEdit.imageData.url;
+      this.elements.activeElement.imageObj = this.imageEdit.imageData.imageObj;
+      this.elements.activeElement.width = this.imageEdit.imageData.width;
+      this.elements.activeElement.height = this.imageEdit.imageData.height;
+      this.elements.activeElement.ratio = this.imageEdit.imageData.ratio;
+      this.elements.activeElement.x =
+        this.elements.activeElement.x - this.elements.activeElement.width / 2;
+      this.elements.activeElement.y =
+        this.elements.activeElement.y - this.elements.activeElement.height / 2;
+      this.completeCreateNewElement();
+      this.showCursor();
+      this.imageEdit.reset();
+    } else if (this.currentType === "text") {
       // 文字编辑模式
       if (!this.textEdit.isEdit) {
         this.ensureCreateElement("text", e.clientX, e.clientY);

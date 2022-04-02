@@ -180,4 +180,21 @@ export default class DrawShap {
       });
     });
   }
+
+  // 绘制图片
+  drawImage(element, x, y, width, height) {
+    this.drawWrap(() => {
+      let ratio = width / height;
+      let showWidth = 0;
+      let showHeight = 0;
+      if (ratio > element.ratio) {
+        showHeight = height;
+        showWidth = element.ratio * height;
+      } else {
+        showWidth = width;
+        showHeight = width / element.ratio;
+      }
+      this.ctx.drawImage(element.imageObj, x, y, showWidth, showHeight);
+    });
+  }
 }
