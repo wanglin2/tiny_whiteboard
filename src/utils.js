@@ -174,3 +174,83 @@ export const getBoundingRect = (pointArr = []) => {
 export const deepCopy = (obj) => {
   return JSON.parse(JSON.stringify(obj));
 };
+
+// 拼接文字字体字号字符串
+export const getFontString = (fontSize, fontFamily) => {
+  return `${fontSize}px ${fontFamily}`;
+};
+
+// 文本切割成行
+export const splitTextLines = (text) => {
+  return text.replace(/\r\n?/g, "\n").split("\n");
+};
+
+// 计算文本的实际渲染宽度
+let textCheckEl = null;
+export const getTextActWidth = (text, style) => {
+  if (!textCheckEl) {
+    textCheckEl = document.createElement("div");
+    textCheckEl.style.position = "fixed";
+    textCheckEl.style.left = "-99999px";
+    document.body.appendChild(textCheckEl);
+  }
+  let { fontSize, fontFamily } = style;
+  textCheckEl.innerText = text;
+  textCheckEl.style.fontSize = fontSize + "px";
+  textCheckEl.style.fontFamily = fontFamily;
+  let { width } = textCheckEl.getBoundingClientRect();
+  return width;
+};
+
+// 计算固定宽度内能放下所有文字的最大字号
+export const getMaxFontSizeInWidth = (text, width, style) => {
+  let fontSize = 12;
+  while (
+    getTextActWidth(text, {
+      ...style,
+      fontSize: fontSize + 1,
+    }) < width
+  ) {
+    fontSize++;
+  }
+  return fontSize;
+};
+
+// 计算换行文本的实际宽度
+export const getWrapTextActWidth = (element) => {
+  let { text } = element;
+  let textArr = splitTextLines(text);
+  let maxWidth = -Infinity;
+  textArr.forEach((textRow) => {
+    let width = getTextActWidth(textRow, element);
+    if (width > maxWidth) {
+      maxWidth = width;
+    }
+  });
+  return maxWidth;
+};
+
+// 计算换行文本的最长一行的文字数量
+export const getWrapTextMaxRowTextNumber = (text) => {
+  let textArr = splitTextLines(text);
+  let maxNumber = -Infinity;
+  textArr.forEach((textRow) => {
+    if (textRow.length > maxNumber) {
+      maxNumber = textRow.length;
+    }
+  });
+  return maxNumber;
+};
+
+// 计算一个文本元素的宽高
+export const getTextElementSize = (element) => {
+  let { text, fontSize, lineHeightRatio } = element;
+  let width = getWrapTextActWidth(element);
+  const lines = Math.max(splitTextLines(text).length, 1);
+  let lineHeight = fontSize * lineHeightRatio;
+  let height = lines * lineHeight;
+  return {
+    width,
+    height,
+  };
+};

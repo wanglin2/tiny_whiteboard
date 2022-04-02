@@ -10,6 +10,7 @@
         <el-radio-button label="line">线段</el-radio-button>
         <el-radio-button label="arrow">箭头</el-radio-button>
         <el-radio-button label="freedraw">自由画笔</el-radio-button>
+        <el-radio-button label="text">文字</el-radio-button>
       </el-radio-group>
     </div>
     <div class="canvasBox" ref="box">

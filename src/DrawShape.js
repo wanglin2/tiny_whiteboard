@@ -1,4 +1,4 @@
-import { degToRad, radToDeg } from "./utils";
+import { degToRad, radToDeg, getFontString, splitTextLines } from "./utils";
 
 export default class DrawShap {
   constructor(ctx, app) {
@@ -160,5 +160,24 @@ export default class DrawShap {
     }
     // 最终的粗细为计算出来的一半加上上一次粗细的一半，防止两次粗细相差过大，出现明显突变
     return lineWidth * (1 / 2) + lastLineWidth * (1 / 2);
+  }
+
+  // 绘制文字
+  drawText(textObj, x, y, width, height) {
+    let { text, fontSize, fontFamily, color, lineHeightRatio } = textObj;
+    let lineHeight = fontSize * lineHeightRatio;
+    this.drawWrap(() => {
+      this.ctx.font = getFontString(fontSize, fontFamily);
+      this.ctx.textBaseline = "middle";
+      this.ctx.fillStyle = color;
+      let textArr = splitTextLines(text);
+      textArr.forEach((textRow, index) => {
+        this.ctx.fillText(
+          textRow,
+          x,
+          y + (index * lineHeight + lineHeight / 2)
+        );
+      });
+    });
   }
 }
