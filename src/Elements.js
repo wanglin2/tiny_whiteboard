@@ -176,6 +176,7 @@ export default class Elements {
     this.addElement(element);
     this.activeElement = element;
     this.isCreatingElement = true;
+    return element;
   }
 
   // 检测指定位置的元素
