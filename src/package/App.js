@@ -30,13 +30,16 @@ export default class App extends EventEmitter {
   }
 
   // 初始化
-  init(wrapEl, canvasEl, currentType) {
-    this.wrapEl = wrapEl;
-    this.canvasEl = canvasEl;
+  init(el, currentType, opts = {}) {
+    this.wrapEl = el;
+    this.canvasEl = this.createCanvasEl();
+    this.wrapEl.appendChild(this.canvasEl);
     this.currentType = currentType;
     // 画布状态
     this.state = {
       scrollY: 0, // 垂直方向的滚动偏移量
+      backgroundColor: '',// 背景颜色
+      ...opts
     };
     // 获取绘图上下文
     this.ctx = this.canvasEl.getContext("2d");
@@ -71,6 +74,19 @@ export default class App extends EventEmitter {
     this.elements = new Elements(this.ctx, this);
     // 拖拽元素类
     this.dragElement = new DragElement(this.ctx, this);
+  }
+
+  // 创建canvas元素
+  createCanvasEl() {
+    let canvas = document.createElement('canvas')
+    canvas.style.cssText = `
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+    `
+    return canvas;
   }
 
   // 更新当前类型

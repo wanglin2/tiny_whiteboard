@@ -14,22 +14,19 @@
         <el-radio-button label="image">图片</el-radio-button>
       </el-radio-group>
     </div>
-    <div class="canvasBox" ref="box">
-      <canvas class="canvas" ref="canvas"></canvas>
-    </div>
+    <div class="canvasBox" ref="box"></div>
   </div>
 </template>
 
 <script setup>
 import { onMounted, ref, watch } from "vue";
-import App from "./App.js";
+import App from "./package/App.js";
 
 // 当前操作类型
 const currentType = ref("selection");
 
 // dom节点
 const box = ref(null);
-const canvas = ref(null);
 
 // 应用实例
 const app = new App();
@@ -51,7 +48,7 @@ const onCurrentTypeChange = () => {
 
 // dom元素挂载完成
 onMounted(() => {
-  app.init(box.value, canvas.value, currentType.value);
+  app.init(box.value, currentType.value);
 });
 </script>
 
