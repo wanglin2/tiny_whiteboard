@@ -8,6 +8,7 @@ import {
   transformPointReverseRotate,
   getElementRotatedCornerPoint,
   getTowPointDistance,
+  deepCopy
 } from "./utils";
 import EventEmitter from "eventemitter3";
 import { CORNERS, DRAG_ELEMENT_PARTS } from "./constants";
@@ -110,8 +111,46 @@ export default class App extends EventEmitter {
 
   // 清除当前激活元素
   clearActive() {
-    this.elements.activeElement = null;
+    this.elements.setActiveElement(null);
     this.dragElement.delete();
+    this.elements.render();
+  }
+
+  // 为元素设置样式
+  setElementStyle(style = {}) {
+    if (!this.elements.activeElement) {
+      return;
+    }
+    Object.keys(style).forEach((key) => {
+      this.elements.activeElement.style[key] = style[key];
+    })
+    this.elements.render();
+  }
+
+  // 删除元素
+  deleteElement(element) {
+    if (!element) {
+      return;
+    }
+    this.elements.deleteElement(element);
+    if (element === this.elements.activeElement) {
+      this.elements.setActiveElement(null);
+      this.dragElement.delete();
+    }
+    this.elements.render();
+  }
+
+  // 复制元素
+  copyElement(element) {
+    if (!element) {
+      return;
+    }
+    let newElement = deepCopy(element);
+    this.elements.addElement(newElement);
+    this.elements.setActiveElement(newElement);
+    this.elements.saveActiveElementState();
+    this.handleMoveElement(20, 20);
+    this.dragElement.create(newElement);
     this.elements.render();
   }
 
@@ -443,7 +482,7 @@ export default class App extends EventEmitter {
       e.clientX,
       e.clientY + this.state.scrollY
     );
-    this.elements.activeElement = el;
+    this.elements.setActiveElement(el);
     this.dragElement.create(el);
     this.elements.render();
   }
@@ -549,14 +588,14 @@ export default class App extends EventEmitter {
       if (this.elements.isCreatingElement) {
         if (this.currentType === "freedraw") {
           // 自由绘画模式可以连续绘制
-          this.elements.activeElement = null;
+          this.elements.setActiveElement(null);
         } else if (this.elements.activeElement?.type === "text") {
           if (this.elements.activeElement.text.trim()) {
             this.completeCreateNewElement();
           } else {
             // 没有输入则删除该文字元素
             this.elements.deleteElement(this.elements.activeElement);
-            this.elements.activeElement = null;
+            this.elements.setActiveElement(null);
           }
         } else {
           this.completeCreateNewElement();
@@ -569,7 +608,7 @@ export default class App extends EventEmitter {
         if (this.elements.activeElement?.noRender) {
           this.elements.activeElement.noRender = false;
         }
-        this.elements.activeElement = null;
+        this.elements.setActiveElement(null);
         this.checkIsActiveElement(e);
       }
     }
@@ -588,7 +627,7 @@ export default class App extends EventEmitter {
     if (el) {
       // 编辑文字
       if (el.type === "text") {
-        this.elements.activeElement = el;
+        this.elements.setActiveElement(el);
         this.elements.activeElement.noRender = true;
         this.dragElement.delete();
         this.elements.render();

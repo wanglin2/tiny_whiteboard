@@ -95,9 +95,10 @@ export default class DragElement {
     x = -width / 2;
     y = -height / 2;
     // 主体
-    this.drawShape.drawRect(x, y, width, height, {
+    this.drawShape.setCurrentStyle({
       lineDash: [this.offset],
-    });
+    })
+    this.drawShape.drawRect(x, y, width, height);
     // 左上角
     this.drawShape.drawRect(x - this.size, y - this.size, this.size, this.size);
     // 右上角
