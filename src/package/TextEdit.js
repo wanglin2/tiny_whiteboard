@@ -53,7 +53,7 @@ export default class TextEdit {
       y,
       width,
       height,
-      color,
+      style,
       fontSize,
       fontFamily,
       text,
@@ -66,12 +66,11 @@ export default class TextEdit {
       lineHeight: `${fontSize * lineHeightRatio}px`,
       left: `${x}px`,
       top: `${y - this.app.state.scrollY}px`,
-      color,
+      color: style.fillStyle,
       width: Math.max(width, 100) + "px",
       height: height + "px",
       transform: `rotate(${rotate}deg)`,
-      //   textAlign,
-      //   opacity,
+      opacity: style.globalAlpha,
     };
     Object.assign(this.editable.style, styles);
   }

@@ -7,31 +7,67 @@ export default class DrawShap {
     this.style = {
       lineWidth: 2,
     };
+    this.tmpStyle = {};
+  }
+
+  // 设置本次绘制的样式
+  setCurrentStyle(style) {
+    this.tmpStyle = style
+  }
+
+  // 处理样式数据
+  handleStyle(style) {
+    Object.keys(style).forEach((key) => {
+      // 处理线条宽度
+      if (key === 'lineWidth') {
+        if (style[key] === 'small') {
+          style[key] = 2;
+        } else if (style[key] === 'middle') {
+          style[key] = 4;
+        } else if (style[key] === 'large') {
+          style[key] = 6;
+        }
+      }
+    })
+    return style;
   }
 
   // 设置绘图样式
   setStyle() {
-    Object.keys(this.style).forEach((key) => {
-      this.ctx[key] = this.style[key];
+    let _style = this.handleStyle({
+      ...this.style,
+      ...this.tmpStyle
+    });
+    Object.keys(_style).forEach((key) => {
+      if (key === 'lineDash') {
+        if (_style.lineDash > 0) {
+          this.ctx.setLineDash([_style.lineDash]);
+        }
+      } else {  
+        this.ctx[key] = _style[key];
+      }
     });
   }
 
   // 绘制公共操作
-  drawWrap(fn) {
+  drawWrap(fn, noResetStyle) {
     this.ctx.save();
     this.ctx.beginPath();
     this.setStyle();
     fn();
     this.ctx.stroke();
     this.ctx.restore();
+    if (!noResetStyle) {
+      this.setCurrentStyle({});
+    }
   }
 
   // 绘制矩形
-  drawRect(x, y, width, height, styles = {}) {
+  drawRect(x, y, width, height) {
     this.drawWrap(() => {
       this.ctx.rect(x, y, width, height);
-      if (styles.lineDash) {
-        this.ctx.setLineDash(styles.lineDash);
+      if (this.tmpStyle.fillStyle) {
+        this.ctx.fillRect(x, y, width, height);
       }
     });
   }
@@ -44,6 +80,9 @@ export default class DrawShap {
       this.ctx.lineTo(x + width / 2, y + height);
       this.ctx.lineTo(x, y + height / 2);
       this.ctx.closePath();
+      if (this.tmpStyle.fillStyle) {
+        this.ctx.fill();
+      }
     });
   }
 
@@ -54,6 +93,9 @@ export default class DrawShap {
       this.ctx.lineTo(x + width, y + height);
       this.ctx.lineTo(x, y + height);
       this.ctx.closePath();
+      if (this.tmpStyle.fillStyle) {
+        this.ctx.fill();
+      }
     });
   }
 
@@ -61,6 +103,9 @@ export default class DrawShap {
   drawCircle(x, y, r) {
     this.drawWrap(() => {
       this.ctx.arc(x, y, r, 0, 2 * Math.PI);
+      if (this.tmpStyle.fillStyle) {
+        this.ctx.fill();
+      }
     });
   }
 
@@ -88,7 +133,7 @@ export default class DrawShap {
     this.drawWrap(() => {
       this.ctx.moveTo(x, y);
       this.ctx.lineTo(tx, ty);
-    });
+    }, true);
     let l = 30;
     let deg = 30;
     let lineDeg = radToDeg(Math.atan2(ty - y, tx - x));
@@ -98,7 +143,7 @@ export default class DrawShap {
       let _y = ty + l * Math.sin(degToRad(plusDeg));
       this.ctx.moveTo(_x, _y);
       this.ctx.lineTo(tx, ty);
-    });
+    }, true);
     this.drawWrap(() => {
       let plusDeg = 90 - lineDeg - deg;
       let _x = tx - l * Math.sin(degToRad(plusDeg));
@@ -119,21 +164,25 @@ export default class DrawShap {
           point[1],
           nextPoint[0],
           nextPoint[1],
-          nextPoint[2]
+          nextPoint[2],
+          true
         );
-      });
+      }, true);
     }
+    this.setCurrentStyle({});
   }
 
   // 绘制线段
-  drawLineSegment(mx, my, tx, ty, lineWidth) {
+  drawLineSegment(mx, my, tx, ty, lineWidth = 0, noResetStyle) {
     this.drawWrap(() => {
-      this.ctx.lineWidth = lineWidth;
+      if (lineWidth > 0) {
+        this.ctx.lineWidth = lineWidth;
+      }
       this.ctx.moveTo(mx, my);
       this.ctx.lineTo(tx, ty);
       this.ctx.lineCap = "round";
       this.ctx.lineJoin = "round";
-    });
+    }, noResetStyle);
   }
 
   // 根据速度计算画笔粗细
@@ -164,12 +213,11 @@ export default class DrawShap {
 
   // 绘制文字
   drawText(textObj, x, y, width, height) {
-    let { text, fontSize, fontFamily, color, lineHeightRatio } = textObj;
+    let { text, fontSize, fontFamily, lineHeightRatio } = textObj;
     let lineHeight = fontSize * lineHeightRatio;
     this.drawWrap(() => {
       this.ctx.font = getFontString(fontSize, fontFamily);
       this.ctx.textBaseline = "middle";
-      this.ctx.fillStyle = color;
       let textArr = splitTextLines(text);
       textArr.forEach((textRow, index) => {
         this.ctx.fillText(

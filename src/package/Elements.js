@@ -41,7 +41,9 @@ export default class Elements {
     let index = this.elementList.findIndex((item) => {
       return item === element;
     });
-    this.elementList.splice(index, 1);
+    if (index !== -1) {
+      this.elementList.splice(index, 1);
+    }
   }
 
   // 绘制所有元素
@@ -53,7 +55,7 @@ export default class Elements {
         return;
       }
       // 超出可视范围的不需要渲染TODO:
-      let { x, y, width, height, rotate, type } = element;
+      let { x, y, width, height, rotate, type, style } = element;
       // 加上滚动偏移
       y -= this.app.state.scrollY;
       let halfWidth = width / 2;
@@ -66,6 +68,7 @@ export default class Elements {
       this.ctx.save();
       this.ctx.translate(cx, cy);
       this.ctx.rotate(degToRad(rotate));
+      this.drawShape.setCurrentStyle(style);
       // 画布中心点修改了，所以元素的坐标也要相应修改
       switch (type) {
         case "rectangle":
@@ -178,6 +181,14 @@ export default class Elements {
       rotate,
       // 是否不要渲染
       noRender: false,
+      // 样式
+      style: {
+        strokeStyle: '#000000',
+        fillStyle: 'transparent',
+        lineWidth: 'small',
+        lineDash: 0,
+        globalAlpha: 1
+      }
     };
     if (type === "line") {
       // 记录初始点位，在拖动时
@@ -216,7 +227,7 @@ export default class Elements {
       element.startHeight = 0;
     } else if (type === "text") {
       element.text = "";
-      element.color = "#000";
+      element.style.fillStyle = "#000";
       element.fontSize = 18;
       element.lineHeightRatio = 1.5;
       element.fontFamily = "微软雅黑, Microsoft YaHei";
@@ -228,7 +239,7 @@ export default class Elements {
       element.ratio = 1;
     }
     this.addElement(element);
-    this.activeElement = element;
+    this.setActiveElement(element);
     this.isCreatingElement = true;
     return element;
   }
@@ -260,6 +271,12 @@ export default class Elements {
       }
     });
     return res;
+  }
+
+  // 设置当前激活元素
+  setActiveElement(element) {
+    this.activeElement = element;
+    this.app.emit('activeElementChange', element);
   }
 
   // 保存激活元素初始状态
