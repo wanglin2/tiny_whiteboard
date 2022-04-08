@@ -1,0 +1,110 @@
+import { degToRad } from "../utils";
+
+// 基础元素类
+export default class BaseElement {
+  constructor(opts = {}, app) {
+    this.app = app;
+    this.ctx = app.ctx;
+    this.draw = app.draw;
+    // 类型
+    this.type = opts.type || "";
+    // 是否正在创建中
+    this.isCreating = true;
+    // 是否被激活
+    this.isActive = true;
+    // 记录初始位置，用于拖动时
+    this.startX = 0;
+    this.startY = 0;
+    // 实时位置，该位置为元素的左上角坐标
+    this.x = opts.x || 0;
+    this.y = opts.y || 0;
+    // 宽高
+    this.width = opts.width || 0;
+    this.height = opts.height || 0;
+    // 记录初始角度，用于旋转时
+    this.startRotate = 0;
+    // 角度
+    this.rotate = opts.rotate || 0;
+    // 是否不需要渲染
+    this.noRender = false;
+    // 样式
+    this.style = {
+      strokeStyle: "#000000", // 线条颜色
+      fillStyle: "transparent", // 填充颜色
+      lineWidth: "small", // 线条宽度
+      lineDash: 0, // 线条虚线大小
+      globalAlpha: 1, // 透明度
+    };
+  }
+
+  // 渲染方法
+  render() {
+    throw new Error("子类需要重写该方法！");
+  }
+
+  // 处理样式数据
+  handleStyle(style) {
+    Object.keys(style).forEach((key) => {
+      // 处理线条宽度
+      if (key === "lineWidth") {
+        if (style[key] === "small") {
+          style[key] = 2;
+        } else if (style[key] === "middle") {
+          style[key] = 4;
+        } else if (style[key] === "large") {
+          style[key] = 6;
+        }
+      }
+    });
+    return style;
+  }
+
+  // 设置绘图样式
+  setStyle(style = {}) {
+    let _style = this.handleStyle(style);
+    Object.keys(_style).forEach((key) => {
+      // 处理虚线
+      if (key === "lineDash") {
+        if (_style.lineDash > 0) {
+          this.ctx.setLineDash([_style.lineDash]);
+        }
+      } else {
+        this.ctx[key] = _style[key];
+      }
+    });
+  }
+
+  // 公共渲染操作
+  warpRender(renderFn) {
+    let { x, y, width, height, rotate, style } = this;
+    // 坐标转换
+    let { x: tx, y: ty } = this.app.coordinate.transform(x, y);
+    // 移动画布中点到元素中心，否则旋转时中心点不对
+    let halfWidth = width / 2;
+    let halfHeight = height / 2;
+    let cx = tx + halfWidth;
+    let cy = ty + halfHeight;
+    this.ctx.save();
+    this.ctx.translate(cx, cy);
+    this.ctx.rotate(degToRad(rotate));
+    this.setStyle(style);
+    renderFn({
+      halfWidth,
+      halfHeight,
+      tx,
+      ty,
+      cx,
+      cy,
+    });
+    // 激活时显示拖拽框
+    if (this.isActive && !this.isCreating) {
+      this.renderDragElement();
+    }
+    this.ctx.restore();
+  }
+
+  // 渲染该元素的拖拽框
+  renderDragElement() {
+
+  }
+}

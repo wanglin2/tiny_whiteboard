@@ -8,12 +8,13 @@ import {
   transformPointReverseRotate,
   getElementRotatedCornerPoint,
   getTowPointDistance,
-  deepCopy
+  deepCopy,
 } from "./utils";
 import EventEmitter from "eventemitter3";
 import { CORNERS, DRAG_ELEMENT_PARTS } from "./constants";
 import TextEdit from "./TextEdit";
 import ImageEdit from "./ImageEdit";
+import Render from './Render';
 
 export default class App extends EventEmitter {
   constructor() {
@@ -32,15 +33,22 @@ export default class App extends EventEmitter {
 
   // 初始化
   init(el, currentType, opts = {}) {
+    this.initCanvas(el, currentType, opts);
+    this.initClass();
+  }
+
+  // 初始化画布
+  initCanvas(el, currentType, opts) {
     this.wrapEl = el;
     this.canvasEl = this.createCanvasEl();
     this.wrapEl.appendChild(this.canvasEl);
     this.currentType = currentType;
     // 画布状态
     this.state = {
+      scale: 1, // 缩放
       scrollY: 0, // 垂直方向的滚动偏移量
-      backgroundColor: '',// 背景颜色
-      ...opts
+      backgroundColor: "", // 背景颜色
+      ...opts,
     };
     // 获取绘图上下文
     this.ctx = this.canvasEl.getContext("2d");
@@ -55,7 +63,12 @@ export default class App extends EventEmitter {
     this.canvasEl.height = Math.floor(height * scale);
     // 规范化坐标系以使用css像素
     this.ctx.scale(scale, scale);
+    // 画布原点移动到画布中心
+    this.ctx.translate(this.canvasEl.width / 2, this.canvasEl.height / 2);
+  }
 
+  // 初始化工具类
+  initClass() {
     // 鼠标事件类
     this.mouseEvent = new MouseEvent(
       this,
@@ -75,18 +88,20 @@ export default class App extends EventEmitter {
     this.elements = new Elements(this.ctx, this);
     // 拖拽元素类
     this.dragElement = new DragElement(this.ctx, this);
+    // 渲染类
+    this.renderer = new Render(this.ctx, this);
   }
 
   // 创建canvas元素
   createCanvasEl() {
-    let canvas = document.createElement('canvas')
+    let canvas = document.createElement("canvas");
     canvas.style.cssText = `
       position: absolute;
       left: 0;
       top: 0;
       width: 100%;
       height: 100%;
-    `
+    `;
     return canvas;
   }
 
@@ -104,11 +119,6 @@ export default class App extends EventEmitter {
     }
   }
 
-  // 清除画布
-  clearCanvas() {
-    this.ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
-  }
-
   // 清除当前激活元素
   clearActive() {
     this.elements.setActiveElement(null);
@@ -123,7 +133,7 @@ export default class App extends EventEmitter {
     }
     Object.keys(style).forEach((key) => {
       this.elements.activeElement.style[key] = style[key];
-    })
+    });
     this.elements.render();
   }
 
@@ -151,6 +161,18 @@ export default class App extends EventEmitter {
     this.elements.saveActiveElementState();
     this.handleMoveElement(20, 20);
     this.dragElement.create(newElement);
+    this.elements.render();
+  }
+
+  // 放大
+  zoomIn() {
+    this.state.scale += 0.1;
+    this.elements.render();
+  }
+
+  // 缩小
+  zoomOut() {
+    this.state.scale -= 0.1;
     this.elements.render();
   }
 
@@ -387,7 +409,13 @@ export default class App extends EventEmitter {
 
       // 选中模式
       if (this.currentType === "selection") {
-        this.handleSelectionTypeMove(e, mx, my, mouseEvent.mouseOffset.x, mouseEvent.mouseOffset.y);
+        this.handleSelectionTypeMove(
+          e,
+          mx,
+          my,
+          mouseEvent.mouseOffset.x,
+          mouseEvent.mouseOffset.y
+        );
       } else if (this.currentType === "rectangle") {
         // 绘制矩形模式
         this.ensureCreateElement("rectangle", mx, my);
