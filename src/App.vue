@@ -19,7 +19,10 @@
       <div class="sidebar" v-show="activeElement">
         <div class="elementStyle">
           <!-- 描边 -->
-          <div class="styleBlock" v-if="!['text', 'image'].includes(activeElement?.type)">
+          <div
+            class="styleBlock"
+            v-if="!['text', 'image'].includes(activeElement?.type)"
+          >
             <div class="styleBlockTitle">描边</div>
             <div class="styleBlockContent">
               <ColorPicker
@@ -32,7 +35,11 @@
           <!-- 填充 -->
           <div
             class="styleBlock"
-            v-if="!['image', 'line', 'arrow', 'freedraw'].includes(activeElement?.type)"
+            v-if="
+              !['image', 'line', 'arrow', 'freedraw'].includes(
+                activeElement?.type
+              )
+            "
           >
             <div class="styleBlockTitle">填充</div>
             <div class="styleBlockContent">
@@ -44,10 +51,16 @@
             </div>
           </div>
           <!-- 描边宽度 -->
-          <div class="styleBlock" v-if="!['image'].includes(activeElement?.type)">
+          <div
+            class="styleBlock"
+            v-if="!['image'].includes(activeElement?.type)"
+          >
             <div class="styleBlockTitle">描边宽度</div>
             <div class="styleBlockContent">
-              <el-radio-group v-model="lineWidth" @change="updateStyle('lineWidth', $event)">
+              <el-radio-group
+                v-model="lineWidth"
+                @change="updateStyle('lineWidth', $event)"
+              >
                 <el-radio-button label="small">
                   <div class="lineWidthItem small">
                     <div class="bar"></div>
@@ -67,10 +80,16 @@
             </div>
           </div>
           <!-- 边框样式 -->
-          <div class="styleBlock" v-if="!['freedraw', 'image'].includes(activeElement?.type)">
+          <div
+            class="styleBlock"
+            v-if="!['freedraw', 'image'].includes(activeElement?.type)"
+          >
             <div class="styleBlockTitle">边框样式</div>
             <div class="styleBlockContent">
-              <el-radio-group v-model="lineDash" @change="updateStyle('lineDash', $event)">
+              <el-radio-group
+                v-model="lineDash"
+                @change="updateStyle('lineDash', $event)"
+              >
                 <el-radio-button :label="0">
                   <div>实线</div>
                 </el-radio-button>
@@ -100,24 +119,37 @@
           <div class="styleBlock">
             <div class="styleBlockTitle">操作</div>
             <div class="styleBlockContent">
-              <el-button type="danger" :icon="Delete" circle @click="deleteElement" />
-              <el-button type="primary" :icon="CopyDocument" circle @click="copyElement" />
+              <el-button
+                type="danger"
+                :icon="Delete"
+                circle
+                @click="deleteElement"
+              />
+              <el-button
+                type="primary"
+                :icon="CopyDocument"
+                circle
+                @click="copyElement"
+              />
             </div>
           </div>
         </div>
       </div>
     </Transition>
+    <div class="footerLeft">
+      <div class="scaleBox">
+        <el-button :icon="ZoomOut" circle @click="zoomOut" />
+        <el-button :icon="ZoomIn" circle @click="zoomIn" />
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { onMounted, ref, watch, toRaw } from "vue";
-import App from "./package/App.js";
-import ColorPicker from './components/ColorPicker.vue';
-import {
-  Delete,
-  CopyDocument
-} from '@element-plus/icons-vue';
+import TinyWhiteboard from "./package";
+import ColorPicker from "./components/ColorPicker.vue";
+import { Delete, CopyDocument, ZoomIn, ZoomOut } from "@element-plus/icons-vue";
 
 // 当前操作类型
 const currentType = ref("selection");
@@ -126,12 +158,12 @@ const currentType = ref("selection");
 const box = ref(null);
 
 // 应用实例
-const app = new App();
+let app = null;
 // 当前激活的元素
 const activeElement = ref(null);
 let originActiveElement = null;
 // 描边宽度
-const lineWidth = ref('small');
+const lineWidth = ref("small");
 // 边框样式
 const lineDash = ref(0);
 // 透明度
@@ -142,48 +174,62 @@ watch(currentType, () => {
   app.updateCurrentType(currentType.value);
 });
 
-// 监听app内部修改类型事件
-app.on("currentTypeChange", (type) => {
-  currentType.value = type;
-});
-// 监听元素激活事件
-app.on('activeElementChange', (element) => {
-  activeElement.value = element;
-  originActiveElement = element;
-  if (element) {
-    let { style } = element;
-    lineWidth.value = style.lineWidth;
-    lineDash.value = style.lineDash;
-    globalAlpha.value = style.globalAlpha;
-  }
-})
-
 // 更新样式
 const updateStyle = (key, value) => {
   app.setElementStyle({
-    [key]: value
-  })
-}
+    [key]: value,
+  });
+};
 
 // 类型变化
 const onCurrentTypeChange = () => {
   // 清除激活项
-  app.clearActive();
+  app.clearActiveElements();
 };
 
 // 删除元素
 const deleteElement = () => {
   app.deleteElement(originActiveElement);
-}
+};
 
 // 复制元素
 const copyElement = () => {
   app.copyElement(originActiveElement);
-}
+};
+
+// 放大
+const zoomIn = () => {
+  app.zoomIn();
+};
+
+// 缩小
+const zoomOut = () => {
+  app.zoomOut();
+};
 
 // dom元素挂载完成
 onMounted(() => {
-  app.init(box.value, currentType.value);
+  // 创建实例
+  app = new TinyWhiteboard({
+    container: box.value,
+    drawType: currentType.value,
+  });
+  // 监听app内部修改类型事件
+  app.on("currentTypeChange", (type) => {
+    currentType.value = type;
+  });
+  // 监听元素激活事件
+  app.on("activeElementChange", (element) => {
+    element = element.length > 0 ? element[0] : null;
+    activeElement.value = element;
+    originActiveElement = element;
+    if (element) {
+      let { style } = element;
+      lineWidth.value = style.lineWidth;
+      lineDash.value = style.lineDash;
+      globalAlpha.value = style.globalAlpha;
+    }
+  });
 });
 </script>
 
@@ -291,6 +337,21 @@ onMounted(() => {
           }
         }
       }
+    }
+  }
+
+  .footerLeft {
+    position: absolute;
+    left: 10px;
+    bottom: 10px;
+    height: 40px;
+    background-color: #fff;
+
+    .scaleBox {
+      height: 100%;
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
     }
   }
 }

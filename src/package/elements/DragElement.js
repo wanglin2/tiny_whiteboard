@@ -3,9 +3,10 @@ import {
   degToRad,
   transformPointOnElement,
   checkPointIsInRectangle,
-} from "./utils";
-import { CORNERS, DRAG_ELEMENT_PARTS } from "./constants";
+} from "../utils";
+import { CORNERS, DRAG_ELEMENT_PARTS } from "../constants";
 
+// 拖拽元素
 export default class DragElement {
   constructor(ctx, app) {
     this.ctx = ctx;
@@ -72,18 +73,14 @@ export default class DragElement {
     };
   }
 
-  // 删除拖拽节点
-  delete() {
-    this.el = null;
-    this.element = null;
-  }
-
-  // 渲染
-  render() {
+  // 渲染拖拽元素
+  renderDragElement() {
     if (!this.element) {
       return;
     }
     let { x, y, width, height, rotate } = this.element;
+    x -= this.app.canvasWidth / 2;
+    y -= this.app.canvasHeight / 2;
     // 加上滚动偏移
     y -= this.app.state.scrollY;
     // 原点移动到元素的中心
@@ -97,7 +94,7 @@ export default class DragElement {
     // 主体
     this.drawShape.setCurrentStyle({
       lineDash: [this.offset],
-    })
+    });
     this.drawShape.drawRect(x, y, width, height);
     // 左上角
     this.drawShape.drawRect(x - this.size, y - this.size, this.size, this.size);
@@ -129,6 +126,12 @@ export default class DragElement {
       this.size
     );
     this.ctx.restore();
+  }
+
+  // 删除拖拽节点
+  delete() {
+    this.el = null;
+    this.element = null;
   }
 
   // 将拖拽元素的位置宽高转换为内部元素的位置宽高

@@ -1,5 +1,4 @@
 import {
-  degToRad,
   transformPointOnElement,
   getBoundingRect,
   deepCopy,
@@ -8,7 +7,6 @@ import {
 } from "./utils";
 import {
   checkIsAtRectangleEdge,
-  getCircleRadius,
   checkIsAtCircleEdge,
   checkIsAtLineEdge,
   checkIsAtFreedrawLineEdge,
@@ -44,122 +42,6 @@ export default class Elements {
     if (index !== -1) {
       this.elementList.splice(index, 1);
     }
-  }
-
-  // 绘制所有元素
-  render() {
-    this.app.clearCanvas();
-    this.elementList.forEach((element) => {
-      // 该元素不需要渲染
-      if (element.noRender) {
-        return;
-      }
-      // 超出可视范围的不需要渲染TODO:
-      let { x, y, width, height, rotate, type, style } = element;
-      // 加上滚动偏移
-      y -= this.app.state.scrollY;
-      let halfWidth = width / 2;
-      let halfHeight = height / 2;
-      // 移动画布中点到元素中心，否则旋转时中心点不对
-      let cx = 0;
-      let cy = 0;
-      cx = x + halfWidth;
-      cy = y + halfHeight;
-      this.ctx.save();
-      this.ctx.translate(cx, cy);
-      this.ctx.rotate(degToRad(rotate));
-      this.drawShape.setCurrentStyle(style);
-      // 画布中心点修改了，所以元素的坐标也要相应修改
-      switch (type) {
-        case "rectangle":
-          this.drawShape.drawRect(-halfWidth, -halfHeight, width, height);
-          break;
-        case "circle":
-          this.drawShape.drawCircle(0, 0, getCircleRadius(width, height));
-          break;
-        case "line":
-          this.drawShape.drawLine(
-            element.pointArr
-              .map((point) => {
-                return [point[0] - cx, point[1] - cy - this.app.state.scrollY];
-              })
-              .concat(
-                // 加上鼠标当前实时位置
-                element.pointArr.length > 0 &&
-                  this.isCreatingElement &&
-                  this.app.currentType === "line"
-                  ? [
-                      [
-                        element.fictitiousPoint.x - cx,
-                        element.fictitiousPoint.y - cy - this.app.state.scrollY,
-                      ],
-                    ]
-                  : []
-              )
-          );
-          break;
-        case "freedraw":
-          this.drawShape.drawFreeLine(
-            element.pointArr.map((point) => {
-              return [
-                point[0] - cx,
-                point[1] - cy - this.app.state.scrollY,
-                ...point.slice(2),
-              ];
-            })
-          );
-          break;
-        case "diamond":
-          this.drawShape.drawDiamond(-halfWidth, -halfHeight, width, height);
-          break;
-        case "triangle":
-          this.drawShape.drawTriangle(-halfWidth, -halfHeight, width, height);
-          break;
-        case "arrow":
-          this.drawShape.drawArrow(
-            element.pointArr
-              .map((point) => {
-                return [point[0] - cx, point[1] - cy - this.app.state.scrollY];
-              })
-              .concat(
-                // 加上鼠标当前实时位置
-                element.pointArr.length > 0 &&
-                  this.isCreatingElement &&
-                  this.app.currentType === "arrow"
-                  ? [
-                      [
-                        element.fictitiousPoint.x - cx,
-                        element.fictitiousPoint.y - cy - this.app.state.scrollY,
-                      ],
-                    ]
-                  : []
-              )
-          );
-          break;
-        case "text":
-          this.drawShape.drawText(
-            element,
-            -halfWidth,
-            -halfHeight,
-            width,
-            height
-          );
-          break;
-        case "image":
-          this.drawShape.drawImage(
-            element,
-            -halfWidth,
-            -halfHeight,
-            width,
-            height
-          );
-          break;
-        default:
-          break;
-      }
-      this.ctx.restore();
-    });
-    this.app.dragElement.render();
   }
 
   // 创建元素
