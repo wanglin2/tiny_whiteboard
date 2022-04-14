@@ -1,14 +1,8 @@
 import Rectangle from "./elements/Rectangle";
 import Circle from "./elements/Circle";
-import { CORNERS, DRAG_ELEMENT_PARTS } from "./constants";
-import {
-  getTowPointRotate,
-  getElementCenterPoint,
-  transformPointReverseRotate,
-  getElementRotatedCornerPoint,
-  getTowPointDistance,
-  deepCopy,
-} from "./utils";
+import Diamond from "./elements/Diamond";
+import Triangle from "./elements/Triangle";
+import { getTowPointDistance } from "./utils";
 
 // 渲染类
 export default class Render {
@@ -110,6 +104,12 @@ export default class Render {
       case "rectangle":
         element = new Rectangle(opts, this.app);
         break;
+      case "diamond":
+        element = new Diamond(opts, this.app);
+        break;
+      case "triangle":
+        element = new Triangle(opts, this.app);
+        break;
       case "circle":
         element = new Circle(opts, this.app);
         break;
@@ -123,10 +123,10 @@ export default class Render {
     return this;
   }
 
-  // 正在创建矩形元素
-  creatingRectangle(x, y, offsetX, offsetY) {
+  // 创建类矩形元素
+  creatingRectangleLikeElement(type, x, y, offsetX, offsetY) {
     this.createElement({
-      type: "rectangle",
+      type,
       x: x,
       y: y,
       width: offsetX,

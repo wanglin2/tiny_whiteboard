@@ -124,9 +124,15 @@ export default class TinyWhiteboard extends EventEmitter {
           event.mouseOffset.x,
           event.mouseOffset.y
         );
-      } else if (this.drawType === "rectangle") {
-        // 绘制矩形模式
-        this.render.creatingRectangle(mx, my, offsetX, offsetY);
+      } else if (["rectangle", "diamond", "triangle"].includes(this.drawType)) {
+        // 类矩形元素绘制模式
+        this.render.creatingRectangleLikeElement(
+          this.drawType,
+          mx,
+          my,
+          offsetX,
+          offsetY
+        );
       } else if (this.drawType === "circle") {
         // 绘制圆形模式
         this.render.creatingCircle(mx, my, e);
