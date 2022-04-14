@@ -284,3 +284,17 @@ export const getTextElementSize = (element) => {
     height,
   };
 };
+
+// 节流函数
+export const throttle = (fn, ctx, time = 100) => {
+  let timer = null;
+  return (...args) => {
+    if (timer) {
+      return;
+    }
+    timer = setTimeout(() => {
+      fn.call(ctx, ...args);
+      timer = null;
+    }, time);
+  };
+};

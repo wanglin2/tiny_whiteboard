@@ -1,5 +1,5 @@
 import EventEmitter from "eventemitter3";
-import { createCanvas } from "./utils";
+import { createCanvas, throttle } from "./utils";
 import Coordinate from "./Coordinate";
 import Event from "./Event";
 import Render from "./Render";
@@ -55,12 +55,13 @@ export default class TinyWhiteboard extends EventEmitter {
 
     // 代理
     this.proxy();
+    this.checkIsOnElement = throttle(this.checkIsOnElement, this);
   }
 
   // 代理各个类的方法到实例上
   proxy() {
     // render类
-    ["clearActiveElements", "setElementStyle"].forEach((method) => {
+    ["setElementStyle"].forEach((method) => {
       this[method] = this.render[method].bind(this.render);
     });
   }
@@ -79,10 +80,30 @@ export default class TinyWhiteboard extends EventEmitter {
     this.drawType = drawType;
   }
 
+  // 清除当前激活元素
+  clearActiveElements() {
+    this.render.clearActiveElements().render();
+  }
+
   // 鼠标按下事件
   onMousedown(e, event) {
     let mx = event.mousedownPos.x;
     let my = event.mousedownPos.y;
+    // 是否击中了某个元素
+    let hitElement = this.render.checkIsHitElement(e);
+    // 当前存在激活元素
+    if (this.render.hasActiveElements()) {
+      let isResizing = this.render.checkIsResize(mx, my, e);
+      // 不在调整元素中
+      if (!isResizing) {
+        this.render.setActiveElements(hitElement).render();
+      }
+    } else {
+      // 当前没有激活元素
+      if (hitElement) {
+        this.render.setActiveElements(hitElement).render();
+      }
+    }
   }
 
   // 鼠标移动事件
@@ -96,6 +117,13 @@ export default class TinyWhiteboard extends EventEmitter {
 
       // 选中模式
       if (this.drawType === "selection") {
+        this.render.handleResizeElement(
+          e,
+          mx,
+          my,
+          event.mouseOffset.x,
+          event.mouseOffset.y
+        );
       } else if (this.drawType === "rectangle") {
         // 绘制矩形模式
         this.render
@@ -109,7 +137,22 @@ export default class TinyWhiteboard extends EventEmitter {
           .updateActiveElementSize(offsetX, offsetY)
           .render();
       }
+    } else {
+      // 鼠标没有按下状态
+      this.checkIsOnElement(e);
     }
+  }
+
+  // 检测是否滑过元素
+  checkIsOnElement(e) {
+    let hitElement = this.render.checkIsHitElement(e);
+    let type = "";
+    if (hitElement) {
+      type = "move";
+    } else {
+      type = "default";
+    }
+    this.render.setCursor(type);
   }
 
   // 复位当前类型到选择模式
@@ -131,6 +174,9 @@ export default class TinyWhiteboard extends EventEmitter {
     // 创建新元素完成
     if (this.render.isCreatingElement) {
       this.completeCreateNewElement();
+    } else if (this.render.isResizing) {
+      // 调整元素操作结束
+      this.render.endResize();
     }
   }
 }

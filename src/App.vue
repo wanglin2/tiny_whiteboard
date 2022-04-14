@@ -224,6 +224,7 @@ onMounted(() => {
     activeElement.value = element;
     originActiveElement = element;
     if (element) {
+      console.log(element);
       let { style } = element;
       lineWidth.value = style.lineWidth;
       lineDash.value = style.lineDash;
