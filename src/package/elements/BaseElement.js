@@ -35,6 +35,8 @@ export default class BaseElement {
       lineDash: 0, // 线条虚线大小
       globalAlpha: 1, // 透明度
     };
+    // 拖拽元素实例
+    this.dragElement = null;
   }
 
   // 渲染方法
@@ -140,5 +142,20 @@ export default class BaseElement {
   // 检测元素是否被击中
   isHit(x, y) {
     throw new Error("子类需要实现该方法!");
+  }
+
+  // 开始调整元素
+  startResize(resizeType, e) {
+    this.dragElement.startResize(resizeType, e);
+  }
+
+  // 结束调整元素操作
+  endResize() {
+    this.dragElement.endResize();
+  }
+
+  // 调整元素中
+  resize(...args) {
+    this.dragElement.handleResizeElement(...args);
   }
 }

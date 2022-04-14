@@ -1,5 +1,5 @@
 import EventEmitter from "eventemitter3";
-import { createCanvas, throttle } from "./utils";
+import { createCanvas, throttle, getTowPointDistance } from "./utils";
 import Coordinate from "./Coordinate";
 import Event from "./Event";
 import Render from "./Render";
@@ -117,7 +117,7 @@ export default class TinyWhiteboard extends EventEmitter {
 
       // 选中模式
       if (this.drawType === "selection") {
-        this.render.handleResizeElement(
+        this.render.handleResize(
           e,
           mx,
           my,
@@ -126,16 +126,10 @@ export default class TinyWhiteboard extends EventEmitter {
         );
       } else if (this.drawType === "rectangle") {
         // 绘制矩形模式
-        this.render
-          .createElement({
-            type: "rectangle",
-            x: mx,
-            y: my,
-            width: offsetX,
-            height: offsetY,
-          })
-          .updateActiveElementSize(offsetX, offsetY)
-          .render();
+        this.render.creatingRectangle(mx, my, offsetX, offsetY);
+      } else if (this.drawType === "circle") {
+        // 绘制圆形模式
+        this.render.creatingCircle(mx, my, e);
       }
     } else {
       // 鼠标没有按下状态
