@@ -39,7 +39,7 @@ export default class BaseElement {
 
   // 渲染方法
   render() {
-    throw new Error("子类需要重写该方法！");
+    throw new Error("子类需要实现该方法！");
   }
 
   // 处理样式数据
@@ -96,15 +96,49 @@ export default class BaseElement {
       cx,
       cy,
     });
-    // 激活时显示拖拽框
-    if (this.isActive && !this.isCreating) {
-      this.renderDragElement();
-    }
     this.ctx.restore();
   }
 
-  // 渲染该元素的拖拽框
-  renderDragElement() {
+  // 保存元素初始状态
+  saveState() {
+    let { rotate, x, y } = this;
+    this.startRotate = rotate;
+    this.startX = x;
+    this.startY = y;
+  }
 
+  // 移动元素
+  move(ox, oy) {
+    let { startX, startY } = this;
+    this.x = startX + ox;
+    this.y = startY + oy;
+  }
+
+  // 更新元素包围框
+  updateRect(x, y, width, height) {
+    this.updatePos(x, y);
+    this.updateSize(width, height);
+  }
+
+  // 更新激活元素尺寸
+  updateSize(width, height) {
+    this.width = width;
+    this.height = height;
+  }
+
+  // 更新激活元素坐标
+  updatePos(x, y) {
+    this.x = x;
+    this.y = y;
+  }
+
+  // 偏移元素角度
+  offsetRotate(or) {
+    this.rotate = this.startRotate + or;
+  }
+
+  // 检测元素是否被击中
+  isHit(x, y) {
+    throw new Error("子类需要实现该方法!");
   }
 }
