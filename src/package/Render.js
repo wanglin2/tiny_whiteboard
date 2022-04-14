@@ -1,4 +1,5 @@
 import Rectangle from "./elements/Rectangle";
+import Circle from "./elements/Circle";
 import { CORNERS, DRAG_ELEMENT_PARTS } from "./constants";
 import {
   getTowPointRotate,
@@ -23,19 +24,7 @@ export default class Render {
     // 当前正在调整元素
     this.isResizing = false;
     // 当前正在调整的元素
-    this.resizeElements = [];
-    // 当前正在进行何种调整操作
-    this.resizeType = "";
-    // 当前鼠标按住拖拽元素的点的对角点
-    this.diagonalPoint = {
-      x: 0,
-      y: 0,
-    };
-    // 当前鼠标按下时的坐标和拖拽元素的点的坐标差值
-    this.mousedownPosAndElementPosOffset = {
-      x: 0,
-      y: 0,
-    };
+    this.resizingElement = null;
   }
 
   // 添加元素
@@ -113,13 +102,16 @@ export default class Render {
 
   // 创建元素
   createElement(opts = {}, callback = () => {}, ctx = null) {
-    if (this.hasActiveElements()) {
+    if (this.hasActiveElements() || this.isCreatingElement) {
       return this;
     }
     let element = null;
     switch (opts.type) {
       case "rectangle":
         element = new Rectangle(opts, this.app);
+        break;
+      case "circle":
+        element = new Circle(opts, this.app);
         break;
       default:
         break;
@@ -129,6 +121,35 @@ export default class Render {
     this.isCreatingElement = true;
     callback.call(ctx, element);
     return this;
+  }
+
+  // 正在创建矩形元素
+  creatingRectangle(x, y, offsetX, offsetY) {
+    this.createElement({
+      type: "rectangle",
+      x: x,
+      y: y,
+      width: offsetX,
+      height: offsetY,
+    })
+      .updateActiveElementSize(offsetX, offsetY)
+      .render();
+  }
+
+  // 正在创建圆形元素
+  creatingCircle(x, y, e) {
+    this.createElement({
+      type: "circle",
+      x: x,
+      y: y,
+    });
+    let radius = getTowPointDistance(
+      e.clientX,
+      this.app.coordinate.addScrollY(e.clientY),
+      x,
+      y
+    );
+    this.updateActiveElementSize(radius, radius).render();
   }
 
   // 创建元素完成
@@ -188,7 +209,7 @@ export default class Render {
     return this;
   }
 
-  // 检查是否需要进行缩放移动操作
+  // 检查是否需要进行元素调整操作
   checkIsResize(x, y, e) {
     if (!this.hasActiveElements()) {
       return false;
@@ -205,223 +226,27 @@ export default class Render {
     }
     if (isInDragElement) {
       this.isResizing = true;
-      this.resizeElements = [element];
-      this.resizeType = isInDragElement;
-      if (isInDragElement === DRAG_ELEMENT_PARTS.BODY) {
-        // 按住了拖拽元素内部
-        element.saveState();
-      } else if (isInDragElement === DRAG_ELEMENT_PARTS.ROTATE) {
-        // 按住了拖拽元素的旋转按钮
-        element.saveState();
-      } else if (isInDragElement === DRAG_ELEMENT_PARTS.TOP_LEFT_BTN) {
-        // 按住了拖拽元素左上角拖拽手柄
-        this.handleElementDragMousedown(e, CORNERS.TOP_LEFT);
-      } else if (isInDragElement === DRAG_ELEMENT_PARTS.TOP_RIGHT_BTN) {
-        // 按住了拖拽元素右上角拖拽手柄
-        this.handleElementDragMousedown(e, CORNERS.TOP_RIGHT);
-      } else if (isInDragElement === DRAG_ELEMENT_PARTS.BOTTOM_RIGHT_BTN) {
-        // 按住了拖拽元素右下角拖拽手柄
-        this.handleElementDragMousedown(e, CORNERS.BOTTOM_RIGHT);
-      } else if (isInDragElement === DRAG_ELEMENT_PARTS.BOTTOM_LEFT_BTN) {
-        // 按住了拖拽元素左下角拖拽手柄
-        this.handleElementDragMousedown(e, CORNERS.BOTTOM_LEFT);
-      }
+      this.resizingElement = element;
+      element.startResize(isInDragElement, e);
       return true;
     }
     return false;
   }
 
-  // 结束调整元素操作
+  // 进行元素调整操作
+  handleResize(...args) {
+    if (!this.isResizing) {
+      return;
+    }
+    this.resizingElement.resize(...args);
+    this.render();
+  }
+
+  // 结束元素调整操作
   endResize() {
     this.isResizing = false;
-    this.resizeElements = [];
-    this.resizeType = "";
-  }
-
-  // 处理按下拖拽元素四个伸缩手柄事件
-  handleElementDragMousedown(e, corner) {
-    if (this.resizeElements.length === 1) {
-      let resizeElement = this.resizeElements[0];
-      let centerPos = getElementCenterPoint(resizeElement);
-      let pos = getElementRotatedCornerPoint(resizeElement, corner);
-      // 对角点的坐标
-      this.diagonalPoint.x = 2 * centerPos.x - pos.x;
-      this.diagonalPoint.y = 2 * centerPos.y - pos.y;
-      // 鼠标按下位置和元素的左上角坐标差值
-      this.mousedownPosAndElementPosOffset.x = e.clientX - pos.x;
-      this.mousedownPosAndElementPosOffset.y = this.app.coordinate.addScrollY(
-        e.clientY - pos.y
-      );
-      resizeElement.saveState();
-    }
-    return this;
-  }
-
-  // 调整元素
-  handleResizeElement(e, mx, my, offsetX, offsetY) {
-    let resizeType = this.resizeType;
-    // 按住了拖拽元素内部
-    if (resizeType === DRAG_ELEMENT_PARTS.BODY) {
-      this.handleMoveElement(offsetX, offsetY);
-    } else if (resizeType === DRAG_ELEMENT_PARTS.ROTATE) {
-      // 按住了拖拽元素的旋转按钮
-      this.handleRotateElement(e, mx, my);
-    } else if (resizeType === DRAG_ELEMENT_PARTS.TOP_LEFT_BTN) {
-      // 按住左上角伸缩元素
-      this.handleStretchElement(
-        e,
-        (newCenter, rp) => {
-          return {
-            width: (newCenter.x - rp.x) * 2,
-            height: (newCenter.y - rp.y) * 2,
-          };
-        },
-        (rp) => {
-          return {
-            x: rp.x,
-            y: rp.y,
-          };
-        }
-      );
-    } else if (resizeType === DRAG_ELEMENT_PARTS.TOP_RIGHT_BTN) {
-      // 按住右上角伸缩元素
-      this.handleStretchElement(
-        e,
-        (newCenter, rp) => {
-          return {
-            width: (rp.x - newCenter.x) * 2,
-            height: (newCenter.y - rp.y) * 2,
-          };
-        },
-        (rp, newSize) => {
-          return {
-            x: rp.x - newSize.width,
-            y: rp.y,
-          };
-        }
-      );
-    } else if (resizeType === DRAG_ELEMENT_PARTS.BOTTOM_RIGHT_BTN) {
-      // 按住右下角伸缩元素
-      this.handleStretchElement(
-        e,
-        (newCenter, rp) => {
-          return {
-            width: (rp.x - newCenter.x) * 2,
-            height: (rp.y - newCenter.y) * 2,
-          };
-        },
-        (rp, newSize) => {
-          return {
-            x: rp.x - newSize.width,
-            y: rp.y - newSize.height,
-          };
-        }
-      );
-    } else if (resizeType === DRAG_ELEMENT_PARTS.BOTTOM_LEFT_BTN) {
-      // 按住左下角伸缩元素
-      this.handleStretchElement(
-        e,
-        (newCenter, rp) => {
-          return {
-            width: (newCenter.x - rp.x) * 2,
-            height: (rp.y - newCenter.y) * 2,
-          };
-        },
-        (rp, newSize) => {
-          return {
-            x: rp.x,
-            y: rp.y - newSize.height,
-          };
-        }
-      );
-    }
-    return this;
-  }
-
-  // 移动元素整体
-  handleMoveElement(offsetX, offsetY) {
-    this.resizeElements.forEach((element) => {
-      element.move(offsetX, offsetY);
-    });
-    this.render();
-    return this;
-  }
-
-  // 旋转元素
-  handleRotateElement(e, mx, my) {
-    let resizeElement = this.resizeElements[0];
-    // 获取元素中心点
-    let centerPos = getElementCenterPoint(resizeElement);
-    // 获取鼠标移动的角度
-    let rotate = getTowPointRotate(
-      centerPos.x,
-      centerPos.y,
-      e.clientX,
-      this.app.coordinate.addScrollY(e.clientY),
-      mx,
-      my
-    );
-    resizeElement.offsetRotate(rotate);
-    this.render();
-    return this;
-  }
-
-  // 伸缩元素
-  handleStretchElement(e, calcSize, calcPos) {
-    let resizeElement = this.resizeElements[0];
-    let actClientX = e.clientX - this.mousedownPosAndElementPosOffset.x;
-    let actClientY = this.app.coordinate.addScrollY(
-      e.clientY - this.mousedownPosAndElementPosOffset.y
-    );
-    // 新的中心点
-    let newCenter = {
-      x: (actClientX + this.diagonalPoint.x) / 2,
-      y: (actClientY + this.diagonalPoint.y) / 2,
-    };
-    // 获取当前鼠标位置经新的中心点反向旋转元素的角度后的坐标
-    let rp = transformPointReverseRotate(
-      actClientX,
-      actClientY,
-      newCenter.x,
-      newCenter.y,
-      resizeElement.rotate
-    );
-    // 计算新尺寸
-    let newSize = calcSize(newCenter, rp);
-    // 判断是否翻转了，不允许翻转
-    let isWidthReverse = false;
-    if (newSize.width < 0) {
-      newSize.width = 0;
-      isWidthReverse = true;
-    }
-    let isHeightReverse = false;
-    if (newSize.height < 0) {
-      newSize.height = 0;
-      isHeightReverse = true;
-    }
-    // 计算新位置
-    let newPos = calcPos(rp, newSize);
-    // 元素和拖拽元素之间存在一点间距
-    let newRect = {
-      x: newPos.x,
-      y: newPos.y,
-      width: newSize.width,
-      height: newSize.height,
-    };
-    // 如果翻转了，那么位置保持为上一次的位置
-    if (isWidthReverse || isHeightReverse) {
-      newRect.x = resizeElement.x;
-      newRect.y = resizeElement.y;
-    }
-    // 更新尺寸位置信息
-    resizeElement.updateRect(
-      newRect.x,
-      newRect.y,
-      newRect.width,
-      newRect.height
-    );
-    this.render();
-    return this;
+    this.resizingElement.endResize();
+    this.resizingElement = null;
   }
 
   // 设置鼠标指针样式
