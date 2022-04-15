@@ -5,6 +5,7 @@ import Triangle from "./elements/Triangle";
 import Freedraw from "./elements/Freedraw";
 import Arrow from "./elements/Arrow";
 import Image from "./elements/Image";
+import Line from "./elements/Line";
 import { getTowPointDistance } from "./utils";
 import { computedLineWidthBySpeed } from "./utils";
 
@@ -126,6 +127,9 @@ export default class Render {
       case "arrow":
         element = new Arrow(opts, this.app);
         break;
+      case "line":
+        element = new Line(opts, this.app);
+        break;
       default:
         break;
     }
@@ -211,6 +215,12 @@ export default class Render {
     });
   }
 
+  // 完成箭头元素的创建
+  completeCreateArrow(e) {
+    let element = this.activeElements[0];
+    element.addPoint(e.clientX, this.app.coordinate.addScrollY(e.clientY));
+  }
+
   // 正在创建箭头元素
   creatingArrow(x, y, e) {
     this.createElement(
@@ -231,10 +241,51 @@ export default class Render {
     this.render();
   }
 
-  // 完成箭头元素的创建
-  completeCreateArrow(e) {
+  // 正在创建线段/折线元素
+  creatingLine(x, y, e, isSingle = false, notCreate = false) {
+    if (!notCreate) {
+      this.createElement(
+        {
+          type: "line",
+          x,
+          y,
+          isSingle,
+        },
+        (element) => {
+          element.addPoint(x, y);
+        }
+      );
+    }
     let element = this.activeElements[0];
-    element.addPoint(e.clientX, this.app.coordinate.addScrollY(e.clientY));
+    if (element) {
+      element.updateFictitiousPoint(
+        e.clientX,
+        this.app.coordinate.addScrollY(e.clientY)
+      );
+      this.render();
+    }
+  }
+
+  // 完成线段/折线元素的创建
+  completeCreateLine(e, completeCallback = () => {}) {
+    let element = this.activeElements[0];
+    let x = e.clientX;
+    let y = this.app.coordinate.addScrollY(e.clientY);
+    if (element && element.isSingle) {
+      // 单根线段模式
+      element.addPoint(x, y);
+      completeCallback();
+    } else {
+      // 绘制折线模式
+      this.createElement({
+        type: "line",
+        isSingle: false,
+      });
+      element = this.activeElements[0];
+      element.addPoint(x, y);
+      element.updateFictitiousPoint(x, y);
+      this.render();
+    }
   }
 
   // 创建元素完成
