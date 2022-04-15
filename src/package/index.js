@@ -1,5 +1,5 @@
 import EventEmitter from "eventemitter3";
-import { createCanvas, throttle } from "./utils";
+import { createCanvas, getTowPointDistance, throttle } from "./utils";
 import Coordinate from "./Coordinate";
 import Event from "./Event";
 import Render from "./Render";
@@ -52,6 +52,7 @@ export default class TinyWhiteboard extends EventEmitter {
     this.event.on("mousedown", this.onMousedown, this);
     this.event.on("mousemove", this.onMousemove, this);
     this.event.on("mouseup", this.onMouseup, this);
+    this.event.on("dblclick", this.onDblclick, this);
     // 图片选择类
     this.imageEdit = new ImageEdit(this);
     this.imageEdit.on("imageSelectChange", this.onImageSelectChange, this);
@@ -112,19 +113,21 @@ export default class TinyWhiteboard extends EventEmitter {
   onMousedown(e, event) {
     let mx = event.mousedownPos.x;
     let my = event.mousedownPos.y;
-    // 是否击中了某个元素
-    let hitElement = this.render.checkIsHitElement(e);
-    // 当前存在激活元素
-    if (this.render.hasActiveElements()) {
-      let isResizing = this.render.checkIsResize(mx, my, e);
-      // 不在调整元素中
-      if (!isResizing) {
-        this.render.setActiveElements(hitElement).render();
-      }
-    } else {
-      // 当前没有激活元素
-      if (hitElement) {
-        this.render.setActiveElements(hitElement).render();
+    if (!this.render.isCreatingElement) {
+      // 是否击中了某个元素
+      let hitElement = this.render.checkIsHitElement(e);
+      // 当前存在激活元素
+      if (this.render.hasActiveElements()) {
+        let isResizing = this.render.checkIsResize(mx, my, e);
+        // 不在调整元素中
+        if (!isResizing) {
+          this.render.setActiveElements(hitElement).render();
+        }
+      } else {
+        // 当前没有激活元素
+        if (hitElement) {
+          this.render.setActiveElements(hitElement).render();
+        }
       }
     }
   }
@@ -162,8 +165,19 @@ export default class TinyWhiteboard extends EventEmitter {
       } else if (this.drawType === "freedraw") {
         // 自由画笔模式
         this.render.creatingFreedraw(e, event);
-      } else if (this.drawType === 'arrow') {
+      } else if (this.drawType === "arrow") {
         this.render.creatingArrow(mx, my, e);
+      } else if (this.drawType === "line") {
+        if (
+          getTowPointDistance(
+            mx,
+            my,
+            e.clientX,
+            this.coordinate.addScrollY(e.clientY)
+          ) > 3
+        ) {
+          this.render.creatingLine(mx, my, e, true);
+        }
       }
     } else {
       // 鼠标没有按下状态
@@ -186,6 +200,9 @@ export default class TinyWhiteboard extends EventEmitter {
           // 检测是否划过元素
           this.checkIsOnElement(e);
         }
+      } else if (this.drawType === "line") {
+        // 线段绘制中
+        this.render.creatingLine(null, null, e, false, true);
       }
     }
   }
@@ -226,12 +243,24 @@ export default class TinyWhiteboard extends EventEmitter {
       // 箭头绘制模式
       this.render.completeCreateArrow(e);
       this.completeCreateNewElement();
+    } else if (this.drawType === "line") {
+      this.render.completeCreateLine(e, () => {
+        this.completeCreateNewElement();
+      });
     } else if (this.render.isCreatingElement) {
       // 创建新元素完成
       this.completeCreateNewElement();
     } else if (this.render.isResizing) {
       // 调整元素操作结束
       this.render.endResize();
+    }
+  }
+
+  // 双击事件
+  onDblclick(e) {
+    if (this.drawType === "line") {
+      // 结束折线绘制
+      this.completeCreateNewElement();
     }
   }
 }
