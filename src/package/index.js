@@ -1,8 +1,10 @@
 import EventEmitter from "eventemitter3";
-import { createCanvas, throttle, getTowPointDistance } from "./utils";
+import { createCanvas, throttle } from "./utils";
 import Coordinate from "./Coordinate";
 import Event from "./Event";
 import Render from "./Render";
+import ImageEdit from "./ImageEdit";
+import Cursor from "./Cursor";
 
 // 主类
 export default class TinyWhiteboard extends EventEmitter {
@@ -50,6 +52,11 @@ export default class TinyWhiteboard extends EventEmitter {
     this.event.on("mousedown", this.onMousedown, this);
     this.event.on("mousemove", this.onMousemove, this);
     this.event.on("mouseup", this.onMouseup, this);
+    // 图片选择类
+    this.imageEdit = new ImageEdit(this);
+    this.imageEdit.on("imageSelectChange", this.onImageSelectChange, this);
+    // 鼠标样式类
+    this.cursor = new Cursor(this);
     // 实例化渲染类
     this.render = new Render(this);
 
@@ -78,11 +85,27 @@ export default class TinyWhiteboard extends EventEmitter {
   // 更新当前绘制类型
   updateCurrentType(drawType) {
     this.drawType = drawType;
+    // 图形绘制类型
+    if (drawType === "image") {
+      this.imageEdit.selectImage();
+      this.resetCurrentType();
+    }
+    // 设置鼠标指针样式
+    if (drawType !== "selection") {
+      this.cursor.setCrosshair();
+    } else {
+      this.cursor.reset();
+    }
   }
 
   // 清除当前激活元素
   clearActiveElements() {
     this.render.clearActiveElements().render();
+  }
+
+  // 图片选择事件
+  onImageSelectChange() {
+    this.cursor.hide();
   }
 
   // 鼠标按下事件
@@ -138,24 +161,41 @@ export default class TinyWhiteboard extends EventEmitter {
         this.render.creatingCircle(mx, my, e);
       } else if (this.drawType === "freedraw") {
         // 自由画笔模式
-        this.render.creatingFreedraw(mx, my, e, event);
+        this.render.creatingFreedraw(e, event);
       }
     } else {
       // 鼠标没有按下状态
-      this.checkIsOnElement(e);
+      // 图片放置中
+      if (this.imageEdit.isReady) {
+        this.cursor.hide();
+        this.imageEdit.updatePreviewElPos(e.clientX, e.clientY);
+      } else if (this.drawType === "selection") {
+        if (this.render.hasActiveElements()) {
+          // 检测是否划过激活元素的各个收缩手柄
+          let handData = "";
+          if (
+            (handData = this.render.checkInResizeHand(e.clientX, e.clientY))
+          ) {
+            this.cursor.setResize(handData.hand);
+          } else {
+            this.checkIsOnElement(e);
+          }
+        } else {
+          // 检测是否划过元素
+          this.checkIsOnElement(e);
+        }
+      }
     }
   }
 
   // 检测是否滑过元素
   checkIsOnElement(e) {
     let hitElement = this.render.checkIsHitElement(e);
-    let type = "";
     if (hitElement) {
-      type = "move";
+      this.cursor.setMove();
     } else {
-      type = "default";
+      this.cursor.reset();
     }
-    this.render.setCursor(type);
   }
 
   // 复位当前类型到选择模式
@@ -174,8 +214,14 @@ export default class TinyWhiteboard extends EventEmitter {
 
   // 鼠标松开事件
   onMouseup(e) {
-    // 创建新元素完成
-    if (this.render.isCreatingElement) {
+    if (this.imageEdit.isReady) {
+      // 图片放置模式
+      this.render.creatingImage(e, this.imageEdit.imageData);
+      this.completeCreateNewElement();
+      this.cursor.reset();
+      this.imageEdit.reset();
+    } else if (this.render.isCreatingElement) {
+      // 创建新元素完成
       this.completeCreateNewElement();
     } else if (this.render.isResizing) {
       // 调整元素操作结束
