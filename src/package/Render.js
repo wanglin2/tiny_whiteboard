@@ -3,6 +3,7 @@ import Circle from "./elements/Circle";
 import Diamond from "./elements/Diamond";
 import Triangle from "./elements/Triangle";
 import Freedraw from "./elements/Freedraw";
+import Image from "./elements/Image";
 import { getTowPointDistance } from "./utils";
 import { computedLineWidthBySpeed } from "./utils";
 
@@ -118,6 +119,9 @@ export default class Render {
       case "freedraw":
         element = new Freedraw(opts, this.app);
         break;
+      case "image":
+        element = new Image(opts, this.app);
+        break;
       default:
         break;
     }
@@ -158,7 +162,7 @@ export default class Render {
   }
 
   // 正在创建自由画笔元素
-  creatingFreedraw(x, y, e, event) {
+  creatingFreedraw(e, event) {
     this.createElement({
       type: "freedraw",
     });
@@ -184,6 +188,20 @@ export default class Render {
       e.clientY
     );
     element.singleRender(tfp.x, tfp.y, ttp.x, ttp.y, lineWidth);
+  }
+
+  // 正在创建图片元素
+  creatingImage(e, { width, height, imageObj, url, ratio }) {
+    this.createElement({
+      type: "image",
+      x: e.clientX - width / 2,
+      y: this.app.coordinate.addScrollY(e.clientY) - height / 2,
+      url: url,
+      imageObj: imageObj,
+      width: width,
+      height: height,
+      ratio: ratio,
+    });
   }
 
   // 创建元素完成
@@ -246,25 +264,33 @@ export default class Render {
     return this;
   }
 
+  // 检测指定位置是否在元素调整手柄上
+  checkInResizeHand(x, y) {
+    for (let i = 0; i < this.activeElements.length; i++) {
+      // 按住了拖拽元素的某个部分
+      let element = this.activeElements[i];
+      let hand = element.dragElement.checkPointInDragElementWhere(x, y);
+      if (hand) {
+        return {
+          element,
+          hand,
+        };
+      }
+    }
+    return null;
+  }
+
   // 检查是否需要进行元素调整操作
   checkIsResize(x, y, e) {
     if (!this.hasActiveElements()) {
       return false;
     }
-    let element = null;
-    let isInDragElement = "";
-    for (let i = 0; i < this.activeElements.length; i++) {
-      // 按住了拖拽元素的某个部分
-      element = this.activeElements[i];
-      isInDragElement = element.dragElement.checkPointInDragElementWhere(x, y);
-      if (isInDragElement) {
-        break;
-      }
-    }
-    if (isInDragElement) {
+    let res = this.checkInResizeHand(x, y);
+    if (res) {
       this.isResizing = true;
-      this.resizingElement = element;
-      element.startResize(isInDragElement, e);
+      this.resizingElement = res.element;
+      this.resizingElement.startResize(res.hand, e);
+      this.app.cursor.setResize(res.hand);
       return true;
     }
     return false;
@@ -284,20 +310,5 @@ export default class Render {
     this.isResizing = false;
     this.resizingElement.endResize();
     this.resizingElement = null;
-  }
-
-  // 设置鼠标指针样式
-  setCursor(type = "default") {
-    this.app.canvas.style.cursor = type;
-  }
-
-  // 隐藏鼠标指针
-  hideCursor() {
-    this.app.canvas.style.cursor = "none";
-  }
-
-  // 复位鼠标指针
-  resetCursor() {
-    this.app.canvas.style.cursor = "default";
   }
 }
