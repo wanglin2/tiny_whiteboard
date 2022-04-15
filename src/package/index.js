@@ -162,6 +162,8 @@ export default class TinyWhiteboard extends EventEmitter {
       } else if (this.drawType === "freedraw") {
         // 自由画笔模式
         this.render.creatingFreedraw(e, event);
+      } else if (this.drawType === 'arrow') {
+        this.render.creatingArrow(mx, my, e);
       }
     } else {
       // 鼠标没有按下状态
@@ -220,6 +222,10 @@ export default class TinyWhiteboard extends EventEmitter {
       this.completeCreateNewElement();
       this.cursor.reset();
       this.imageEdit.reset();
+    } else if (this.drawType === "arrow") {
+      // 箭头绘制模式
+      this.render.completeCreateArrow(e);
+      this.completeCreateNewElement();
     } else if (this.render.isCreatingElement) {
       // 创建新元素完成
       this.completeCreateNewElement();

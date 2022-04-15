@@ -1,4 +1,4 @@
-import { degToRad, getBoundingRect } from "../utils";
+import { degToRad } from "../utils";
 
 // 基础元素类
 export default class BaseElement {
@@ -167,25 +167,6 @@ export default class BaseElement {
   // 调整元素中
   resize(...args) {
     this.dragElement.handleResizeElement(...args);
-    return this;
-  }
-
-  // 添加坐标，具有多个坐标数据的图形，如线段、自由线
-  addPoint(x, y, ...args) {
-    if (!Array.isArray(this.pointArr)) {
-      return;
-    }
-    this.pointArr.push([x, y, ...args]);
-    return this;
-  }
-
-  // 更新元素包围框，用于具有多个坐标数据的图形
-  updateMultiPointBoundingRect() {
-    let rect = getBoundingRect(this.pointArr);
-    this.x = rect.x;
-    this.y = rect.y;
-    this.width = rect.width;
-    this.height = rect.height;
     return this;
   }
 }
