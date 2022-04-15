@@ -138,54 +138,16 @@ export const drawFreeLine = (ctx, points) => {
 };
 
 // 绘制线段
-export const drawLineSegment = (
-  ctx,
-  mx,
-  my,
-  tx,
-  ty,
-  lineWidth = 0,
-  noResetStyle
-) => {
-  drawWrap(
-    ctx,
-    () => {
-      if (lineWidth > 0) {
-        ctx.lineWidth = lineWidth;
-      }
-      ctx.moveTo(mx, my);
-      ctx.lineTo(tx, ty);
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
-    },
-    noResetStyle
-  );
-};
-
-// 根据速度计算画笔粗细
-export const computedLineWidthBySpeed = (speed, lastLineWidth) => {
-  let lineWidth = 0;
-  let maxLineWidth = style.lineWidth + 2;
-  let maxSpeed = 10;
-  let minSpeed = 0.5;
-
-  // 速度超快，那么直接使用最小的笔画
-  if (speed >= maxSpeed) {
-    lineWidth = style.lineWidth;
-  } else if (speed <= minSpeed) {
-    // 速度超慢，那么直接使用最大的笔画
-    lineWidth = maxLineWidth + 1;
-  } else {
-    // 中间速度，那么根据速度的比例来计算
-    lineWidth =
-      maxLineWidth -
-      ((speed - minSpeed) / (maxSpeed - minSpeed)) * maxLineWidth;
-  }
-  if (lastLineWidth === -1) {
-    lastLineWidth = maxLineWidth;
-  }
-  // 最终的粗细为计算出来的一半加上上一次粗细的一半，防止两次粗细相差过大，出现明显突变
-  return lineWidth * (1 / 2) + lastLineWidth * (1 / 2);
+export const drawLineSegment = (ctx, mx, my, tx, ty, lineWidth = 0) => {
+  drawWrap(ctx, () => {
+    if (lineWidth > 0) {
+      ctx.lineWidth = lineWidth;
+    }
+    ctx.moveTo(mx, my);
+    ctx.lineTo(tx, ty);
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+  });
 };
 
 // 绘制文字

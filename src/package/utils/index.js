@@ -298,3 +298,32 @@ export const throttle = (fn, ctx, time = 100) => {
     }, time);
   };
 };
+
+// 根据速度计算画笔粗细
+export const computedLineWidthBySpeed = (
+  speed,
+  lastLineWidth,
+  baseLineWidth = 2
+) => {
+  let lineWidth = 0;
+  let maxLineWidth = baseLineWidth + 2;
+  let maxSpeed = 10;
+  let minSpeed = 0.5;
+  // 速度超快，那么直接使用最小的笔画
+  if (speed >= maxSpeed) {
+    lineWidth = baseLineWidth;
+  } else if (speed <= minSpeed) {
+    // 速度超慢，那么直接使用最大的笔画
+    lineWidth = maxLineWidth + 1;
+  } else {
+    // 中间速度，那么根据速度的比例来计算
+    lineWidth =
+      maxLineWidth -
+      ((speed - minSpeed) / (maxSpeed - minSpeed)) * maxLineWidth;
+  }
+  if (lastLineWidth === -1) {
+    lastLineWidth = maxLineWidth;
+  }
+  // 最终的粗细为计算出来的一半加上上一次粗细的一半，防止两次粗细相差过大，出现明显突变
+  return lineWidth * (1 / 2) + lastLineWidth * (1 / 2);
+};

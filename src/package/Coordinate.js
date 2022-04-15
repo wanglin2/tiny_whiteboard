@@ -9,6 +9,11 @@ export default class Coordinate {
     return y + this.app.state.scrollY;
   }
 
+  // 减去垂直滚动距离
+  subScrollY(y) {
+    return y - this.app.state.scrollY;
+  }
+
   // 屏幕坐标转换成画布坐标
   transformToCanvasCoordinate(x, y) {
     x -= this.app.width / 2;

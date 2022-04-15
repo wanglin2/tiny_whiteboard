@@ -136,6 +136,9 @@ export default class TinyWhiteboard extends EventEmitter {
       } else if (this.drawType === "circle") {
         // 绘制圆形模式
         this.render.creatingCircle(mx, my, e);
+      } else if (this.drawType === "freedraw") {
+        // 自由画笔模式
+        this.render.creatingFreedraw(mx, my, e, event);
       }
     } else {
       // 鼠标没有按下状态
