@@ -2,7 +2,9 @@ import Rectangle from "./elements/Rectangle";
 import Circle from "./elements/Circle";
 import Diamond from "./elements/Diamond";
 import Triangle from "./elements/Triangle";
+import Freedraw from "./elements/Freedraw";
 import { getTowPointDistance } from "./utils";
+import { computedLineWidthBySpeed } from "./utils";
 
 // 渲染类
 export default class Render {
@@ -113,6 +115,9 @@ export default class Render {
       case "circle":
         element = new Circle(opts, this.app);
         break;
+      case "freedraw":
+        element = new Freedraw(opts, this.app);
+        break;
       default:
         break;
     }
@@ -152,10 +157,42 @@ export default class Render {
     this.updateActiveElementSize(radius, radius).render();
   }
 
+  // 正在创建自由画笔元素
+  creatingFreedraw(x, y, e, event) {
+    this.createElement({
+      type: "freedraw",
+    });
+    let element = this.activeElements[0];
+    // 计算画笔粗细
+    let lineWidth = computedLineWidthBySpeed(
+      event.mouseSpeed,
+      element.lastLineWidth
+    );
+    element.lastLineWidth = lineWidth;
+    element.addPoint(
+      e.clientX,
+      this.app.coordinate.addScrollY(e.clientY),
+      lineWidth
+    );
+    // 绘制自由线不重绘，采用增量绘制，否则会卡顿
+    let tfp = this.app.coordinate.transformToCanvasCoordinate(
+      event.lastMousePos.x,
+      event.lastMousePos.y
+    );
+    let ttp = this.app.coordinate.transformToCanvasCoordinate(
+      e.clientX,
+      e.clientY
+    );
+    element.singleRender(tfp.x, tfp.y, ttp.x, ttp.y, lineWidth);
+  }
+
   // 创建元素完成
   completeCreateElement() {
     this.isCreatingElement = false;
     this.activeElements.forEach((element) => {
+      if (["freedraw"].includes(element.type)) {
+        element.updateMultiPointBoundingRect();
+      }
       element.isCreating = false;
     });
     return this;

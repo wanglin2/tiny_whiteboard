@@ -1,4 +1,4 @@
-import { degToRad } from "../utils";
+import { degToRad, getBoundingRect } from "../utils";
 
 // 基础元素类
 export default class BaseElement {
@@ -74,6 +74,7 @@ export default class BaseElement {
         this.ctx[key] = _style[key];
       }
     });
+    return this;
   }
 
   // 公共渲染操作
@@ -99,6 +100,7 @@ export default class BaseElement {
       cy,
     });
     this.ctx.restore();
+    return this;
   }
 
   // 保存元素初始状态
@@ -107,6 +109,7 @@ export default class BaseElement {
     this.startRotate = rotate;
     this.startX = x;
     this.startY = y;
+    return this;
   }
 
   // 移动元素
@@ -114,29 +117,34 @@ export default class BaseElement {
     let { startX, startY } = this;
     this.x = startX + ox;
     this.y = startY + oy;
+    return this;
   }
 
   // 更新元素包围框
   updateRect(x, y, width, height) {
     this.updatePos(x, y);
     this.updateSize(width, height);
+    return this;
   }
 
   // 更新激活元素尺寸
   updateSize(width, height) {
     this.width = width;
     this.height = height;
+    return this;
   }
 
   // 更新激活元素坐标
   updatePos(x, y) {
     this.x = x;
     this.y = y;
+    return this;
   }
 
   // 偏移元素角度
   offsetRotate(or) {
     this.rotate = this.startRotate + or;
+    return this;
   }
 
   // 检测元素是否被击中
@@ -147,15 +155,37 @@ export default class BaseElement {
   // 开始调整元素
   startResize(resizeType, e) {
     this.dragElement.startResize(resizeType, e);
+    return this;
   }
 
   // 结束调整元素操作
   endResize() {
     this.dragElement.endResize();
+    return this;
   }
 
   // 调整元素中
   resize(...args) {
     this.dragElement.handleResizeElement(...args);
+    return this;
+  }
+
+  // 添加坐标，具有多个坐标数据的图形，如线段、自由线
+  addPoint(x, y, ...args) {
+    if (!Array.isArray(this.pointArr)) {
+      return;
+    }
+    this.pointArr.push([x, y, ...args]);
+    return this;
+  }
+
+  // 更新元素包围框，用于具有多个坐标数据的图形
+  updateMultiPointBoundingRect() {
+    let rect = getBoundingRect(this.pointArr);
+    this.x = rect.x;
+    this.y = rect.y;
+    this.width = rect.width;
+    this.height = rect.height;
+    return this;
   }
 }
