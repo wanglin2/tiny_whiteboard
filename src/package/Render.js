@@ -3,6 +3,7 @@ import Circle from "./elements/Circle";
 import Diamond from "./elements/Diamond";
 import Triangle from "./elements/Triangle";
 import Freedraw from "./elements/Freedraw";
+import Arrow from "./elements/Arrow";
 import Image from "./elements/Image";
 import { getTowPointDistance } from "./utils";
 import { computedLineWidthBySpeed } from "./utils";
@@ -122,6 +123,9 @@ export default class Render {
       case "image":
         element = new Image(opts, this.app);
         break;
+      case "arrow":
+        element = new Arrow(opts, this.app);
+        break;
       default:
         break;
     }
@@ -140,9 +144,10 @@ export default class Render {
       y: y,
       width: offsetX,
       height: offsetY,
-    })
-      .updateActiveElementSize(offsetX, offsetY)
-      .render();
+    });
+    let element = this.activeElements[0];
+    element.updateSize(offsetX, offsetY);
+    this.render();
   }
 
   // 正在创建圆形元素
@@ -158,7 +163,9 @@ export default class Render {
       x,
       y
     );
-    this.updateActiveElementSize(radius, radius).render();
+    let element = this.activeElements[0];
+    element.updateSize(radius, radius);
+    this.render();
   }
 
   // 正在创建自由画笔元素
@@ -204,23 +211,40 @@ export default class Render {
     });
   }
 
+  // 正在创建箭头元素
+  creatingArrow(x, y, e) {
+    this.createElement(
+      {
+        type: "arrow",
+        x,
+        y,
+      },
+      (element) => {
+        element.addPoint(x, y);
+      }
+    );
+    let element = this.activeElements[0];
+    element.updateFictitiousPoint(
+      e.clientX,
+      this.app.coordinate.addScrollY(e.clientY)
+    );
+    this.render();
+  }
+
+  // 完成箭头元素的创建
+  completeCreateArrow(e) {
+    let element = this.activeElements[0];
+    element.addPoint(e.clientX, this.app.coordinate.addScrollY(e.clientY));
+  }
+
   // 创建元素完成
   completeCreateElement() {
     this.isCreatingElement = false;
     this.activeElements.forEach((element) => {
-      if (["freedraw"].includes(element.type)) {
+      if (["freedraw", "arrow", "line"].includes(element.type)) {
         element.updateMultiPointBoundingRect();
       }
       element.isCreating = false;
-    });
-    return this;
-  }
-
-  // 更新激活元素尺寸
-  updateActiveElementSize(width, height) {
-    this.activeElements.forEach((element) => {
-      element.width = width;
-      element.height = height;
     });
     return this;
   }
