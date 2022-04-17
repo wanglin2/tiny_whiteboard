@@ -1,5 +1,5 @@
 import EventEmitter from "eventemitter3";
-import { createCanvas, getTowPointDistance, throttle, deepCopy } from "./utils";
+import { createCanvas, getTowPointDistance, throttle } from "./utils";
 import Coordinate from "./Coordinate";
 import Event from "./Event";
 import Render from "./Render";

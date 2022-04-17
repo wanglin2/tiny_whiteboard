@@ -7,7 +7,7 @@ import Arrow from "./elements/Arrow";
 import Image from "./elements/Image";
 import Line from "./elements/Line";
 import Text from './elements/Text';
-import { getTowPointDistance } from "./utils";
+import { getTowPointDistance, throttle } from "./utils";
 import { computedLineWidthBySpeed } from "./utils";
 
 // 渲染类
@@ -25,6 +25,8 @@ export default class Render {
     this.isResizing = false;
     // 当前正在调整的元素
     this.resizingElement = null;
+    // 稍微缓解一下卡顿
+    this.handleResize = throttle(this.handleResize, this, 16);
   }
 
   // 添加元素
