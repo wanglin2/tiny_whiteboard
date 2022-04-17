@@ -148,6 +148,18 @@ export default class TinyWhiteboard extends EventEmitter {
     });
   }
 
+  // 放大
+  zoomIn() {
+    this.state.scale += 0.1;
+    this.render.render();
+  }
+
+  // 缩小
+  zoomOut() {
+    this.state.scale -= 0.1;
+    this.render.render();
+  }
+
   // 图片选择事件
   onImageSelectChange() {
     this.cursor.hide();
