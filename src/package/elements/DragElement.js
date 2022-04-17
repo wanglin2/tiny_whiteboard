@@ -234,9 +234,7 @@ export default class DragElement extends BaseElement {
     this.diagonalPoint.y = 2 * centerPos.y - pos.y;
     // 鼠标按下位置和元素的左上角坐标差值
     this.mousedownPosAndElementPosOffset.x = e.clientX - pos.x;
-    this.mousedownPosAndElementPosOffset.y = this.app.coordinate.addScrollY(
-      e.clientY - pos.y
-    );
+    this.mousedownPosAndElementPosOffset.y = e.clientY - pos.y;
     this.element.saveState();
   }
 
@@ -392,7 +390,7 @@ export default class DragElement extends BaseElement {
       centerPos.x,
       centerPos.y,
       e.clientX,
-      this.app.coordinate.addScrollY(e.clientY),
+      e.clientY,
       mx,
       my
     );
@@ -449,9 +447,7 @@ export default class DragElement extends BaseElement {
   // 伸缩元素
   handleStretchElement(e, calcSize, calcPos, fixPos) {
     let actClientX = e.clientX - this.mousedownPosAndElementPosOffset.x;
-    let actClientY = this.app.coordinate.addScrollY(
-      e.clientY - this.mousedownPosAndElementPosOffset.y
-    );
+    let actClientY = e.clientY - this.mousedownPosAndElementPosOffset.y;
     let { newRect, newCenter } = this.stretchCalc(
       actClientX,
       actClientY,

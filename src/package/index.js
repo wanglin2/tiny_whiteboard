@@ -173,7 +173,7 @@ export default class TinyWhiteboard extends EventEmitter {
             mx,
             my,
             e.clientX,
-            this.coordinate.addScrollY(e.clientY)
+            e.clientY
           ) > 3
         ) {
           this.render.creatingLine(mx, my, e, true);
@@ -184,7 +184,7 @@ export default class TinyWhiteboard extends EventEmitter {
       // 图片放置中
       if (this.imageEdit.isReady) {
         this.cursor.hide();
-        this.imageEdit.updatePreviewElPos(e.clientX, e.clientY);
+        this.imageEdit.updatePreviewElPos(e.originClientX, e.originClientY);
       } else if (this.drawType === "selection") {
         if (this.render.hasActiveElements()) {
           // 检测是否划过激活元素的各个收缩手柄
