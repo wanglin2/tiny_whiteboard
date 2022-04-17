@@ -1,10 +1,12 @@
 import EventEmitter from "eventemitter3";
-import { createCanvas, getTowPointDistance, throttle } from "./utils";
+import { createCanvas, getTowPointDistance, throttle, deepCopy } from "./utils";
 import Coordinate from "./Coordinate";
 import Event from "./Event";
 import Render from "./Render";
 import ImageEdit from "./ImageEdit";
 import Cursor from "./Cursor";
+import TextEdit from "./TextEdit";
+import { DRAG_ELEMENT_PARTS } from './constants';
 
 // 主类
 export default class TinyWhiteboard extends EventEmitter {
@@ -56,6 +58,9 @@ export default class TinyWhiteboard extends EventEmitter {
     // 图片选择类
     this.imageEdit = new ImageEdit(this);
     this.imageEdit.on("imageSelectChange", this.onImageSelectChange, this);
+    // 文字编辑类
+    this.textEdit = new TextEdit(this);
+    this.textEdit.on('blur', this.onTextInputBlur, this);
     // 鼠标样式类
     this.cursor = new Cursor(this);
     // 实例化渲染类
@@ -104,6 +109,45 @@ export default class TinyWhiteboard extends EventEmitter {
     this.render.clearActiveElements().render();
   }
 
+  // 删除元素
+  deleteElement(element) {
+    this.render.deleteElement(element).render();
+  }
+
+  // 复制元素
+  async copyElement(element) {
+    if (!element) {
+      return;
+    }
+    let data = element.serialize();
+    // 图片元素需要先加载图片
+    if (data.type === 'image') {
+      data.imageObj = await this.createImageObj(data.url);
+    }
+    this.render.clearActiveElements();
+    this.render.createElement(data, (element) => {
+      element.startResize(DRAG_ELEMENT_PARTS.BODY);
+      element.resize(null, null, null, 20, 20);
+      element.isCreating = false;
+      this.render.isCreatingElement = false;
+    }, this);
+    this.render.render();
+  }
+
+  // 创建图片对象
+  createImageObj(url) {
+    return new Promise((resolve) => {
+      let img = new Image();
+      img.onload = () => {
+        resolve(img);
+      }
+      img.onerror = () => {
+        resolve(null);
+      };
+      img.src = url;
+    });
+  }
+
   // 图片选择事件
   onImageSelectChange() {
     this.cursor.hide();
@@ -113,7 +157,7 @@ export default class TinyWhiteboard extends EventEmitter {
   onMousedown(e, event) {
     let mx = event.mousedownPos.x;
     let my = event.mousedownPos.y;
-    if (!this.render.isCreatingElement) {
+    if (!this.render.isCreatingElement && !this.textEdit.isEditing) {
       // 是否击中了某个元素
       let hitElement = this.render.checkIsHitElement(e);
       // 当前存在激活元素
@@ -233,7 +277,13 @@ export default class TinyWhiteboard extends EventEmitter {
 
   // 鼠标松开事件
   onMouseup(e) {
-    if (this.imageEdit.isReady) {
+    if (this.drawType === "text") {
+      // 文字编辑模式
+      if (!this.textEdit.isEditing) {
+        this.createTextElement(e);
+        this.resetCurrentType();
+      }
+    } else if (this.imageEdit.isReady) {
       // 图片放置模式
       this.render.creatingImage(e, this.imageEdit.imageData);
       this.completeCreateNewElement();
@@ -248,8 +298,15 @@ export default class TinyWhiteboard extends EventEmitter {
         this.completeCreateNewElement();
       });
     } else if (this.render.isCreatingElement) {
-      // 创建新元素完成
-      this.completeCreateNewElement();
+      // 正在创建元素中
+      if (this.drawType === "freedraw") {
+        // 自由绘画模式可以连续绘制
+        this.render.completeCreateElement();
+        this.render.setActiveElements();
+      } else {
+        // 创建新元素完成
+        this.completeCreateNewElement();
+      }
     } else if (this.render.isResizing) {
       // 调整元素操作结束
       this.render.endResize();
@@ -261,6 +318,35 @@ export default class TinyWhiteboard extends EventEmitter {
     if (this.drawType === "line") {
       // 结束折线绘制
       this.completeCreateNewElement();
+    } else {
+      // 是否击中了某个元素
+      let hitElement = this.render.checkIsHitElement(e);
+      if (hitElement) {
+        // 编辑文字
+        if (hitElement.type === "text") {
+          this.render.editingText(hitElement);
+        }
+      } else {
+        // 双击空白处新增文字
+        if (!this.textEdit.isEditing) {
+          this.createTextElement(e);
+        }
+      }
     }
+  }
+
+  // 文本框失焦事件
+  onTextInputBlur() {
+    this.render.completeEditingText();
+  }
+
+  // 创建文本元素
+  createTextElement(e) {
+    this.render.createElement({
+      type: "text",
+      x: e.clientX,
+      y: e.clientY
+    });
+    this.textEdit.showTextEdit();
   }
 }

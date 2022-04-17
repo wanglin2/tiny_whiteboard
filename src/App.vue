@@ -53,7 +53,7 @@
           <!-- 描边宽度 -->
           <div
             class="styleBlock"
-            v-if="!['image'].includes(activeElement?.type)"
+            v-if="!['image', 'text'].includes(activeElement?.type)"
           >
             <div class="styleBlockTitle">描边宽度</div>
             <div class="styleBlockContent">
@@ -82,7 +82,7 @@
           <!-- 边框样式 -->
           <div
             class="styleBlock"
-            v-if="!['freedraw', 'image'].includes(activeElement?.type)"
+            v-if="!['freedraw', 'image', 'text'].includes(activeElement?.type)"
           >
             <div class="styleBlockTitle">边框样式</div>
             <div class="styleBlockContent">

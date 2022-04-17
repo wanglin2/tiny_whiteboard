@@ -252,7 +252,7 @@ export const getWrapTextActWidth = (element) => {
   let textArr = splitTextLines(text);
   let maxWidth = -Infinity;
   textArr.forEach((textRow) => {
-    let width = getTextActWidth(textRow, element);
+    let width = getTextActWidth(textRow, element.style);
     if (width > maxWidth) {
       maxWidth = width;
     }
@@ -274,10 +274,10 @@ export const getWrapTextMaxRowTextNumber = (text) => {
 
 // 计算一个文本元素的宽高
 export const getTextElementSize = (element) => {
-  let { text, fontSize, lineHeightRatio } = element;
+  let { text, style } = element;
   let width = getWrapTextActWidth(element);
   const lines = Math.max(splitTextLines(text).length, 1);
-  let lineHeight = fontSize * lineHeightRatio;
+  let lineHeight = style.fontSize * style.lineHeightRatio;
   let height = lines * lineHeight;
   return {
     width,

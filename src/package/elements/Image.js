@@ -17,6 +17,16 @@ export default class Image extends BaseElement {
     this.ratio = opts.ratio || 1;
   }
 
+  // 序列化
+  serialize() {
+    let base = super.serialize()
+    return {
+      ...base,
+      url: this.url,
+      ratio: this.ratio
+    };
+  }
+
   // 渲染到画布
   render() {
     let { width, height } = this;

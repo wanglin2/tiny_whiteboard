@@ -6,6 +6,7 @@ import Freedraw from "./elements/Freedraw";
 import Arrow from "./elements/Arrow";
 import Image from "./elements/Image";
 import Line from "./elements/Line";
+import Text from './elements/Text';
 import { getTowPointDistance } from "./utils";
 import { computedLineWidthBySpeed } from "./utils";
 
@@ -39,6 +40,9 @@ export default class Render {
     });
     if (index !== -1) {
       this.elementList.splice(index, 1);
+      if (element.isActive) {
+        this.deleteActiveElement(element);
+      }
     }
     return this;
   }
@@ -75,6 +79,18 @@ export default class Render {
     return this;
   }
 
+  // 删除指定激活元素
+  deleteActiveElement(element) {
+    let index = this.activeElements.findIndex((item) => {
+      return item === element;
+    });
+    if (index !== -1) {
+      this.activeElements.splice(index, 1);
+    }
+    this.app.emit("activeElementChange", this.activeElements);
+    return this;
+  }
+
   // 清除当前激活元素
   clearActiveElements() {
     this.activeElements.forEach((element) => {
@@ -99,39 +115,40 @@ export default class Render {
     return null;
   }
 
+  // 纯创建元素
+  pureCreateElement(opts = {}) {
+    switch (opts.type) {
+      case "rectangle":
+        return new Rectangle(opts, this.app);
+      case "diamond":
+        return new Diamond(opts, this.app);
+      case "triangle":
+        return new Triangle(opts, this.app);
+      case "circle":
+        return new Circle(opts, this.app);
+      case "freedraw":
+        return new Freedraw(opts, this.app);
+      case "image":
+        return new Image(opts, this.app);
+      case "arrow":
+        return new Arrow(opts, this.app);
+      case "line":
+        return new Line(opts, this.app);
+      case "text":
+        return new Text(opts, this.app);
+      default:
+        return null;
+    }
+  }
+
   // 创建元素
   createElement(opts = {}, callback = () => {}, ctx = null) {
     if (this.hasActiveElements() || this.isCreatingElement) {
       return this;
     }
-    let element = null;
-    switch (opts.type) {
-      case "rectangle":
-        element = new Rectangle(opts, this.app);
-        break;
-      case "diamond":
-        element = new Diamond(opts, this.app);
-        break;
-      case "triangle":
-        element = new Triangle(opts, this.app);
-        break;
-      case "circle":
-        element = new Circle(opts, this.app);
-        break;
-      case "freedraw":
-        element = new Freedraw(opts, this.app);
-        break;
-      case "image":
-        element = new Image(opts, this.app);
-        break;
-      case "arrow":
-        element = new Arrow(opts, this.app);
-        break;
-      case "line":
-        element = new Line(opts, this.app);
-        break;
-      default:
-        break;
+    let element = this.pureCreateElement(opts);
+    if (!element) {
+      return this;
     }
     this.addElement(element);
     this.addActiveElement(element);
@@ -213,6 +230,33 @@ export default class Render {
       height: height,
       ratio: ratio,
     });
+  }
+
+  // 正在编辑文本元素
+  editingText(element) {
+    if (element.type !== 'text') {
+      return;
+    }
+    element.noRender = true;
+    this.setActiveElements(element);
+    this.render();
+    this.app.textEdit.showTextEdit();
+  }
+
+  // 完成文本元素的编辑
+  completeEditingText() {
+    let element = this.activeElements[0];
+    if (!element || element.type !== 'text') {
+      return;
+    }
+    if (!element.text.trim()) {
+      // 没有输入则删除该文字元素
+      this.deleteElement(element);
+      this.setActiveElements(null);
+      return ;
+    }
+    element.noRender = false;
+    this.render();
   }
 
   // 完成箭头元素的创建
