@@ -5,7 +5,6 @@ export default class BaseElement {
   constructor(opts = {}, app) {
     this.app = app;
     this.ctx = app.ctx;
-    this.draw = app.draw;
     // 类型
     this.type = opts.type || "";
     // 是否正在创建中
@@ -37,6 +36,21 @@ export default class BaseElement {
     };
     // 拖拽元素实例
     this.dragElement = null;
+  }
+
+  // 序列化
+  serialize() {
+    return {
+      type: this.type,
+      width: this.width,
+      height: this.height,
+      x: this.x,
+      y: this.y,
+      rotate: this.rotate,
+      style: {
+        ...this.style
+      }
+    }
   }
 
   // 渲染方法

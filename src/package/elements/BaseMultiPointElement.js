@@ -8,7 +8,7 @@ export default class BaseMultiPointElement extends BaseElement {
     // 记录初始点位，在拖动时
     this.startPointArr = [];
     // 点位
-    this.pointArr = [];
+    this.pointArr = opts.pointArr || [];
     // 记录初始大小，用于缩放时
     this.startWidth = 0;
     this.startHeight = 0;
@@ -16,6 +16,15 @@ export default class BaseMultiPointElement extends BaseElement {
     this.fictitiousPoint = {
       x: 0,
       y: 0,
+    };
+  }
+
+  // 序列化
+  serialize() {
+    let base = super.serialize()
+    return {
+      ...base,
+      pointArr: [...this.pointArr]
     };
   }
 

@@ -152,10 +152,10 @@ export const drawLineSegment = (ctx, mx, my, tx, ty, lineWidth = 0) => {
 
 // 绘制文字
 export const drawText = (ctx, textObj, x, y, width, height) => {
-  let { text, fontSize, fontFamily, lineHeightRatio } = textObj;
-  let lineHeight = fontSize * lineHeightRatio;
+  let { text, style } = textObj;
+  let lineHeight = style.fontSize * style.lineHeightRatio;
   drawWrap(ctx, () => {
-    ctx.font = getFontString(fontSize, fontFamily);
+    ctx.font = getFontString(style.fontSize, style.fontFamily);
     ctx.textBaseline = "middle";
     let textArr = splitTextLines(text);
     textArr.forEach((textRow, index) => {
