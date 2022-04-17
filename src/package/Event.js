@@ -60,18 +60,32 @@ export default class Event extends EventEmitter {
     this.app.canvas.removeEventListener("mousewheel", this.onMousewheel);
   }
 
+  // 转换事件对象e，将clientY添加上滚动距离scrollY
+  transformEvent(e) {
+    let newEvent = {
+      originEvent: e,
+      originClientX: e.clientX,
+      originClientY: e.clientY,
+      clientX: e.clientX,
+      clientY: this.app.coordinate.addScrollY(e.clientY)
+    }
+    return newEvent;
+  }
+
   // 鼠标按下事件
   onMousedown(e) {
+    e = this.transformEvent(e);
     this.isMousedown = true;
     this.mousedownPos.x = e.clientX;
-    this.mousedownPos.y = this.app.coordinate.addScrollY(e.clientY);
+    this.mousedownPos.y = e.clientY;
     this.emit("mousedown", e, this);
   }
 
   // 鼠标移动事件
   onMousemove(e) {
+    e = this.transformEvent(e);
     let x = e.clientX;
-    let y = this.app.coordinate.addScrollY(e.clientY);
+    let y = e.clientY;
     // 鼠标按下状态
     if (this.isMousedown) {
       this.mouseOffset.x = x - this.mousedownPos.x;
@@ -98,6 +112,7 @@ export default class Event extends EventEmitter {
 
   // 鼠标松开事件
   onMouseup(e) {
+    e = this.transformEvent(e);
     // 复位
     this.isMousedown = false;
     this.mousedownPos.x = 0;
@@ -107,11 +122,13 @@ export default class Event extends EventEmitter {
 
   // 双击事件
   onDblclick(e) {
+    e = this.transformEvent(e);
     this.emit("dblclick", e, this);
   }
 
   // 鼠标滚动事件
   onMousewheel(e) {
+    e = this.transformEvent(e);
     this.emit("mousewheel", e.wheelDelta < 0 ? "down" : "up");
   }
 }

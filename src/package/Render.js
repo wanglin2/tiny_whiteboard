@@ -89,7 +89,7 @@ export default class Render {
   checkIsHitElement(e) {
     // 判断是否选中元素
     let x = e.clientX;
-    let y = this.app.coordinate.addScrollY(e.clientY);
+    let y = e.clientY;
     for (let i = 0; i < this.elementList.length; i++) {
       let element = this.elementList[i];
       if (element.isHit(x, y)) {
@@ -163,7 +163,7 @@ export default class Render {
     });
     let radius = getTowPointDistance(
       e.clientX,
-      this.app.coordinate.addScrollY(e.clientY),
+      e.clientY,
       x,
       y
     );
@@ -186,7 +186,7 @@ export default class Render {
     element.lastLineWidth = lineWidth;
     element.addPoint(
       e.clientX,
-      this.app.coordinate.addScrollY(e.clientY),
+      e.clientY,
       lineWidth
     );
     // 绘制自由线不重绘，采用增量绘制，否则会卡顿
@@ -195,8 +195,8 @@ export default class Render {
       event.lastMousePos.y
     );
     let ttp = this.app.coordinate.transformToCanvasCoordinate(
-      e.clientX,
-      e.clientY
+      e.originClientX,
+      e.originClientY
     );
     element.singleRender(tfp.x, tfp.y, ttp.x, ttp.y, lineWidth);
   }
@@ -206,7 +206,7 @@ export default class Render {
     this.createElement({
       type: "image",
       x: e.clientX - width / 2,
-      y: this.app.coordinate.addScrollY(e.clientY) - height / 2,
+      y: e.clientY - height / 2,
       url: url,
       imageObj: imageObj,
       width: width,
@@ -218,7 +218,7 @@ export default class Render {
   // 完成箭头元素的创建
   completeCreateArrow(e) {
     let element = this.activeElements[0];
-    element.addPoint(e.clientX, this.app.coordinate.addScrollY(e.clientY));
+    element.addPoint(e.clientX, e.clientY);
   }
 
   // 正在创建箭头元素
@@ -236,7 +236,7 @@ export default class Render {
     let element = this.activeElements[0];
     element.updateFictitiousPoint(
       e.clientX,
-      this.app.coordinate.addScrollY(e.clientY)
+      e.clientY
     );
     this.render();
   }
@@ -260,7 +260,7 @@ export default class Render {
     if (element) {
       element.updateFictitiousPoint(
         e.clientX,
-        this.app.coordinate.addScrollY(e.clientY)
+        e.clientY
       );
       this.render();
     }
@@ -270,7 +270,7 @@ export default class Render {
   completeCreateLine(e, completeCallback = () => {}) {
     let element = this.activeElements[0];
     let x = e.clientX;
-    let y = this.app.coordinate.addScrollY(e.clientY);
+    let y = e.clientY;
     if (element && element.isSingle) {
       // 单根线段模式
       element.addPoint(x, y);
