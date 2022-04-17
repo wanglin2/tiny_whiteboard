@@ -114,14 +114,23 @@ export const drawArrow = (ctx, pointArr) => {
   });
 };
 
+// 转换自由线段的点
+const transformFreeLinePoint = (point, opt) => {
+  // 屏幕坐标在左上角，画布坐标在中心，所以屏幕坐标要先转成画布坐标
+  let { x, y } = opt.app.coordinate.transform(point[0], point[1]);
+  // 绘制前原点又由屏幕中心移动到了元素中心，所以还需要再转一次
+  return [x - opt.cx, y - opt.cy, ...point.slice(2)];
+}
+
 // 绘制自由线段
-export const drawFreeLine = (ctx, points) => {
+export const drawFreeLine = (ctx, points, opt) => {
   for (let i = 0; i < points.length - 1; i++) {
     drawWrap(
       ctx,
       () => {
-        let point = points[i];
-        let nextPoint = points[i + 1];
+        // 在这里转换可以减少一次额外的遍历
+        let point = transformFreeLinePoint(points[i], opt);
+        let nextPoint = transformFreeLinePoint(points[i + 1], opt);
         drawLineSegment(
           ctx,
           point[0],

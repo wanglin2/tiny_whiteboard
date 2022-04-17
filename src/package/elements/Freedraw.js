@@ -21,12 +21,12 @@ export default class Freedraw extends BaseMultiPointElement {
     this.warpRender(({ cx, cy }) => {
       drawFreeLine(
         this.ctx,
-        pointArr.map((point) => {
-          // 屏幕坐标在左上角，画布坐标在中心，所以屏幕坐标要先转成画布坐标
-          let { x, y } = this.app.coordinate.transform(point[0], point[1]);
-          // 绘制前原点又由屏幕中心移动到了元素中心，所以还需要再转一次
-          return [x - cx, y - cy, ...point.slice(2)];
-        })
+        pointArr,
+        {
+          app: this.app,
+          cx,
+          cy
+        }
       );
     });
     // 激活时显示拖拽框
