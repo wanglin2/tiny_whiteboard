@@ -138,8 +138,20 @@
     </Transition>
     <div class="footerLeft">
       <div class="scaleBox">
-        <el-button :icon="ZoomOut" circle @click="zoomOut" />
-        <el-button :icon="ZoomIn" circle @click="zoomIn" />
+        <el-tooltip effect="light" content="缩小" placement="top">
+          <el-button :icon="ZoomOut" circle @click="zoomOut" />
+        </el-tooltip>
+        <el-tooltip effect="light" content="重置缩放" placement="top">
+          <span class="zoom" @click="resetZoom">{{ currentZoom }}%</span>
+        </el-tooltip>
+        <el-tooltip effect="light" content="放大" placement="top">
+          <el-button :icon="ZoomIn" circle @click="zoomIn" />
+        </el-tooltip>
+      </div>
+      <div class="scaleBox">
+        <el-tooltip effect="light" :content="currentType === 'eraser' ? '关闭橡皮擦' : '橡皮擦'" placement="top">
+          <el-button :icon="Remove" circle :type="currentType === 'eraser' ? 'primary' : null" @click="toggleEraser" />
+        </el-tooltip>
       </div>
     </div>
   </div>
@@ -149,7 +161,7 @@
 import { onMounted, ref, watch, toRaw } from "vue";
 import TinyWhiteboard from "./package";
 import ColorPicker from "./components/ColorPicker.vue";
-import { Delete, CopyDocument, ZoomIn, ZoomOut } from "@element-plus/icons-vue";
+import { Delete, CopyDocument, ZoomIn, ZoomOut, Remove } from "@element-plus/icons-vue";
 
 // 当前操作类型
 const currentType = ref("selection");
@@ -168,6 +180,8 @@ const lineWidth = ref("small");
 const lineDash = ref(0);
 // 透明度
 const globalAlpha = ref(1);
+// 当前缩放
+const currentZoom = ref(100);
 
 // 通知app更当前类型
 watch(currentType, () => {
@@ -207,6 +221,16 @@ const zoomOut = () => {
   app.zoomOut();
 };
 
+// 恢复初始缩放
+const resetZoom = () => {
+  app.setZoom(1);
+};
+
+// 橡皮擦
+const toggleEraser = () => {
+  currentType.value = currentType.value === 'eraser' ? 'selection' : 'eraser';
+}
+
 // dom元素挂载完成
 onMounted(() => {
   // 创建实例
@@ -229,6 +253,10 @@ onMounted(() => {
       lineDash.value = style.lineDash;
       globalAlpha.value = style.globalAlpha;
     }
+  });
+  // 缩放变化
+  app.on("zoomChange", (scale) => {
+    currentZoom.value = parseInt(scale * 100);
   });
 });
 </script>
@@ -345,12 +373,24 @@ onMounted(() => {
     bottom: 10px;
     height: 40px;
     background-color: #fff;
+    display: flex;
+    align-items: center;
 
     .scaleBox {
       height: 100%;
       display: flex;
       align-items: center;
       padding: 0 10px;
+
+      .zoom {
+        margin: 0 10px;
+        user-select: none;
+        color: #606266;
+        cursor: pointer;
+        height: 32px;
+        display: flex;
+        align-items: center;
+      }
     }
   }
 }

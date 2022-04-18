@@ -98,7 +98,11 @@ export default class TinyWhiteboard extends EventEmitter {
       this.resetCurrentType();
     }
     // 设置鼠标指针样式
-    if (drawType !== "selection") {
+    // 开启橡皮擦模式
+    if (drawType === 'eraser') {
+      this.cursor.setEraser();
+      this.clearActiveElements();
+    } else if (drawType !== "selection") {
       this.cursor.setCrosshair();
     } else {
       this.cursor.reset();
@@ -107,6 +111,9 @@ export default class TinyWhiteboard extends EventEmitter {
 
   // 清除当前激活元素
   clearActiveElements() {
+    if (!this.render.hasActiveElements()) {
+      return;
+    }
     this.render.clearActiveElements().render();
   }
 
@@ -153,12 +160,24 @@ export default class TinyWhiteboard extends EventEmitter {
   zoomIn() {
     this.state.scale += 0.1;
     this.render.render();
+    this.emit('zoomChange', this.state.scale);
   }
 
   // 缩小
   zoomOut() {
     this.state.scale -= 0.1;
     this.render.render();
+    this.emit('zoomChange', this.state.scale);
+  }
+
+  // 设置指定缩放值
+  setZoom(zoom) {
+    if (zoom < 0 || zoom > 1) {
+      return;
+    }
+    this.state.scale = zoom;
+    this.render.render();
+    this.emit('zoomChange', this.state.scale);
   }
 
   // 图片选择事件
@@ -183,7 +202,12 @@ export default class TinyWhiteboard extends EventEmitter {
       } else {
         // 当前没有激活元素
         if (hitElement) {
-          this.render.setActiveElements(hitElement).render();
+          if (this.drawType === 'eraser') {
+            // 橡皮擦模式
+            this.deleteElement(hitElement);
+          } else {
+            this.render.setActiveElements(hitElement).render();
+          }
         }
       }
     }
