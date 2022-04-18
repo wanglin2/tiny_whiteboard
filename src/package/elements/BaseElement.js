@@ -33,6 +33,7 @@ export default class BaseElement {
       lineWidth: "small", // 线条宽度
       lineDash: 0, // 线条虚线大小
       globalAlpha: 1, // 透明度
+      ...(opts.style || {})
     };
     // 拖拽元素实例
     this.dragElement = null;

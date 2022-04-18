@@ -6,7 +6,8 @@ import Render from "./Render";
 import ImageEdit from "./ImageEdit";
 import Cursor from "./Cursor";
 import TextEdit from "./TextEdit";
-import { DRAG_ELEMENT_PARTS } from './constants';
+import History from "./History";
+import { DRAG_ELEMENT_PARTS } from "./constants";
 
 // 主类
 export default class TinyWhiteboard extends EventEmitter {
@@ -42,7 +43,7 @@ export default class TinyWhiteboard extends EventEmitter {
       scale: 1, // 缩放
       scrollY: 0, // 垂直方向的滚动偏移量
       backgroundColor: "", // 背景颜色
-      ...opts,
+      ...(opts.state || {}),
     };
 
     // 初始化画布
@@ -61,23 +62,37 @@ export default class TinyWhiteboard extends EventEmitter {
     this.imageEdit.on("imageSelectChange", this.onImageSelectChange, this);
     // 文字编辑类
     this.textEdit = new TextEdit(this);
-    this.textEdit.on('blur', this.onTextInputBlur, this);
+    this.textEdit.on("blur", this.onTextInputBlur, this);
     // 鼠标样式类
     this.cursor = new Cursor(this);
+    // 历史记录管理类
+    this.history = new History(this);
     // 实例化渲染类
     this.render = new Render(this);
 
     // 代理
     this.proxy();
     this.checkIsOnElement = throttle(this.checkIsOnElement, this);
+
+    this.emitChange();
   }
 
   // 代理各个类的方法到实例上
   proxy() {
+    // history类
+    ["undo", "redo"].forEach((method) => {
+      this[method] = this.history[method].bind(this.history);
+    });
     // render类
     ["setElementStyle"].forEach((method) => {
       this[method] = this.render[method].bind(this.render);
     });
+  }
+
+  // 设置数据，包括状态数据及元素数据
+  setData({ state = {}, elements = [] }) {
+    this.state = state;
+    this.render.deleteAllElements().setElements(elements).render();
   }
 
   // 初始化画布
@@ -87,6 +102,15 @@ export default class TinyWhiteboard extends EventEmitter {
     this.canvas = canvas;
     this.ctx = ctx;
     this.container.appendChild(this.canvas);
+  }
+
+  // 更新状态数据
+  updateState(data = {}) {
+    this.state = {
+      ...this.state,
+      ...data,
+    };
+    this.emitChange();
   }
 
   // 更新当前绘制类型
@@ -99,7 +123,7 @@ export default class TinyWhiteboard extends EventEmitter {
     }
     // 设置鼠标指针样式
     // 开启橡皮擦模式
-    if (drawType === 'eraser') {
+    if (drawType === "eraser") {
       this.cursor.setEraser();
       this.clearActiveElements();
     } else if (drawType !== "selection") {
@@ -120,6 +144,7 @@ export default class TinyWhiteboard extends EventEmitter {
   // 删除元素
   deleteElement(element) {
     this.render.deleteElement(element).render();
+    this.emitChange();
   }
 
   // 复制元素
@@ -129,17 +154,28 @@ export default class TinyWhiteboard extends EventEmitter {
     }
     let data = element.serialize();
     // 图片元素需要先加载图片
-    if (data.type === 'image') {
+    if (data.type === "image") {
       data.imageObj = await this.createImageObj(data.url);
     }
     this.render.clearActiveElements();
-    this.render.createElement(data, (element) => {
-      element.startResize(DRAG_ELEMENT_PARTS.BODY);
-      element.resize(null, null, null, 20, 20);
-      element.isCreating = false;
-      this.render.isCreatingElement = false;
-    }, this);
+    this.render.createElement(
+      data,
+      (element) => {
+        element.startResize(DRAG_ELEMENT_PARTS.BODY);
+        element.resize(null, null, null, 20, 20);
+        element.isCreating = false;
+        this.render.isCreatingElement = false;
+      },
+      this
+    );
     this.render.render();
+    this.emitChange();
+  }
+
+  // 清空元素
+  empty() {
+    this.render.deleteAllElements().render();
+    this.history.clear();
   }
 
   // 创建图片对象
@@ -148,7 +184,7 @@ export default class TinyWhiteboard extends EventEmitter {
       let img = new Image();
       img.onload = () => {
         resolve(img);
-      }
+      };
       img.onerror = () => {
         resolve(null);
       };
@@ -158,16 +194,20 @@ export default class TinyWhiteboard extends EventEmitter {
 
   // 放大
   zoomIn() {
-    this.state.scale += 0.1;
+    this.updateState({
+      scale: this.state.scale + 0.1,
+    });
     this.render.render();
-    this.emit('zoomChange', this.state.scale);
+    this.emit("zoomChange", this.state.scale);
   }
 
   // 缩小
   zoomOut() {
-    this.state.scale -= 0.1;
+    this.updateState({
+      scale: this.state.scale - 0.1,
+    });
     this.render.render();
-    this.emit('zoomChange', this.state.scale);
+    this.emit("zoomChange", this.state.scale);
   }
 
   // 设置指定缩放值
@@ -175,9 +215,11 @@ export default class TinyWhiteboard extends EventEmitter {
     if (zoom < 0 || zoom > 1) {
       return;
     }
-    this.state.scale = zoom;
+    this.updateState({
+      scale: zoom,
+    });
     this.render.render();
-    this.emit('zoomChange', this.state.scale);
+    this.emit("zoomChange", this.state.scale);
   }
 
   // 图片选择事件
@@ -202,7 +244,7 @@ export default class TinyWhiteboard extends EventEmitter {
       } else {
         // 当前没有激活元素
         if (hitElement) {
-          if (this.drawType === 'eraser') {
+          if (this.drawType === "eraser") {
             // 橡皮擦模式
             this.deleteElement(hitElement);
           } else {
@@ -249,14 +291,7 @@ export default class TinyWhiteboard extends EventEmitter {
       } else if (this.drawType === "arrow") {
         this.render.creatingArrow(mx, my, e);
       } else if (this.drawType === "line") {
-        if (
-          getTowPointDistance(
-            mx,
-            my,
-            e.clientX,
-            e.clientY
-          ) > 3
-        ) {
+        if (getTowPointDistance(mx, my, e.clientX, e.clientY) > 3) {
           this.render.creatingLine(mx, my, e, true);
         }
       }
@@ -347,6 +382,7 @@ export default class TinyWhiteboard extends EventEmitter {
     } else if (this.render.isResizing) {
       // 调整元素操作结束
       this.render.endResize();
+      this.emitChange();
     }
   }
 
@@ -375,6 +411,7 @@ export default class TinyWhiteboard extends EventEmitter {
   // 文本框失焦事件
   onTextInputBlur() {
     this.render.completeEditingText();
+    this.emitChange();
   }
 
   // 创建文本元素
@@ -382,7 +419,7 @@ export default class TinyWhiteboard extends EventEmitter {
     this.render.createElement({
       type: "text",
       x: e.clientX,
-      y: e.clientY
+      y: e.clientY,
     });
     this.textEdit.showTextEdit();
   }
@@ -390,7 +427,24 @@ export default class TinyWhiteboard extends EventEmitter {
   // 鼠标滚动事件
   onMousewheel(dir) {
     let step = dir === "down" ? 50 : -50;
-    this.state.scrollY += step;
+    this.updateState({
+      scrollY: this.state.scrollY + step,
+    });
     this.render.render();
+  }
+
+  // 触发更新事件
+  emitChange() {
+    let data = {
+      state: {
+        ...this.state,
+      },
+      elements: this.render.elementList.map((element) => {
+        return element.serialize();
+      }),
+    };
+    console.log(data);
+    this.history.add(data);
+    this.emit("change", data);
   }
 }
