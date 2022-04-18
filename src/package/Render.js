@@ -6,7 +6,7 @@ import Freedraw from "./elements/Freedraw";
 import Arrow from "./elements/Arrow";
 import Image from "./elements/Image";
 import Line from "./elements/Line";
-import Text from './elements/Text';
+import Text from "./elements/Text";
 import { getTowPointDistance, throttle } from "./utils";
 import { computedLineWidthBySpeed } from "./utils";
 
@@ -46,6 +46,25 @@ export default class Render {
         this.deleteActiveElement(element);
       }
     }
+    return this;
+  }
+
+  // 删除全部元素
+  deleteAllElements() {
+    this.activeElements = [];
+    this.elementList = [];
+    this.isCreatingElement = false;
+    this.isResizing = false;
+    this.resizingElement = null;
+    return this;
+  }
+
+  // 根据元素数据创建元素
+  setElements(data) {
+    data.forEach((item) => {
+      let element = this.pureCreateElement(item);
+      this.elementList.push(element);
+    })
     return this;
   }
 
@@ -180,12 +199,7 @@ export default class Render {
       x: x,
       y: y,
     });
-    let radius = getTowPointDistance(
-      e.clientX,
-      e.clientY,
-      x,
-      y
-    );
+    let radius = getTowPointDistance(e.clientX, e.clientY, x, y);
     let element = this.activeElements[0];
     element.updateSize(radius, radius);
     this.render();
@@ -203,11 +217,7 @@ export default class Render {
       element.lastLineWidth
     );
     element.lastLineWidth = lineWidth;
-    element.addPoint(
-      e.clientX,
-      e.clientY,
-      lineWidth
-    );
+    element.addPoint(e.clientX, e.clientY, lineWidth);
     // 绘制自由线不重绘，采用增量绘制，否则会卡顿
     let tfp = this.app.coordinate.transformToCanvasCoordinate(
       event.lastMousePos.x,
@@ -236,7 +246,7 @@ export default class Render {
 
   // 正在编辑文本元素
   editingText(element) {
-    if (element.type !== 'text') {
+    if (element.type !== "text") {
       return;
     }
     element.noRender = true;
@@ -248,14 +258,14 @@ export default class Render {
   // 完成文本元素的编辑
   completeEditingText() {
     let element = this.activeElements[0];
-    if (!element || element.type !== 'text') {
+    if (!element || element.type !== "text") {
       return;
     }
     if (!element.text.trim()) {
       // 没有输入则删除该文字元素
       this.deleteElement(element);
       this.setActiveElements(null);
-      return ;
+      return;
     }
     element.noRender = false;
     this.render();
@@ -280,10 +290,7 @@ export default class Render {
       }
     );
     let element = this.activeElements[0];
-    element.updateFictitiousPoint(
-      e.clientX,
-      e.clientY
-    );
+    element.updateFictitiousPoint(e.clientX, e.clientY);
     this.render();
   }
 
@@ -304,10 +311,7 @@ export default class Render {
     }
     let element = this.activeElements[0];
     if (element) {
-      element.updateFictitiousPoint(
-        e.clientX,
-        e.clientY
-      );
+      element.updateFictitiousPoint(e.clientX, e.clientY);
       this.render();
     }
   }
@@ -343,6 +347,7 @@ export default class Render {
       }
       element.isCreating = false;
     });
+    this.app.emitChange();
     return this;
   }
 
@@ -357,6 +362,9 @@ export default class Render {
       });
     });
     this.render();
+    if (!this.isCreatingElement) {
+      this.app.emitChange();
+    }
     return this;
   }
 

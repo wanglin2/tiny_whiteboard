@@ -137,7 +137,8 @@
       </div>
     </Transition>
     <div class="footerLeft">
-      <div class="scaleBox">
+      <!-- 缩放 -->
+      <div class="blockBox">
         <el-tooltip effect="light" content="缩小" placement="top">
           <el-button :icon="ZoomOut" circle @click="zoomOut" />
         </el-tooltip>
@@ -148,9 +149,22 @@
           <el-button :icon="ZoomIn" circle @click="zoomIn" />
         </el-tooltip>
       </div>
-      <div class="scaleBox">
+      <!-- 前进回退 -->
+      <div class="blockBox">
+        <el-tooltip effect="light" content="回退" placement="top">
+          <el-button :icon="RefreshLeft" circle :disabled="!canUndo" @click="undo" />
+        </el-tooltip>
+        <el-tooltip effect="light" content="前进" placement="top">
+          <el-button :icon="RefreshRight" circle :disabled="!canRedo" @click="redo" />
+        </el-tooltip>
+      </div>
+      <!-- 橡皮擦、清空 -->
+      <div class="blockBox">
         <el-tooltip effect="light" :content="currentType === 'eraser' ? '关闭橡皮擦' : '橡皮擦'" placement="top">
           <el-button :icon="Remove" circle :type="currentType === 'eraser' ? 'primary' : null" @click="toggleEraser" />
+        </el-tooltip>
+        <el-tooltip effect="light" content="清空" placement="top">
+          <el-button :icon="Delete" circle @click="empty" />
         </el-tooltip>
       </div>
     </div>
@@ -161,7 +175,7 @@
 import { onMounted, ref, watch, toRaw } from "vue";
 import TinyWhiteboard from "./package";
 import ColorPicker from "./components/ColorPicker.vue";
-import { Delete, CopyDocument, ZoomIn, ZoomOut, Remove } from "@element-plus/icons-vue";
+import { Delete, CopyDocument, ZoomIn, ZoomOut, Remove, RefreshLeft, RefreshRight } from "@element-plus/icons-vue";
 
 // 当前操作类型
 const currentType = ref("selection");
@@ -182,6 +196,9 @@ const lineDash = ref(0);
 const globalAlpha = ref(1);
 // 当前缩放
 const currentZoom = ref(100);
+// 缩放允许前进后退
+const canUndo = ref(false);
+const canRedo = ref(false);
 
 // 通知app更当前类型
 watch(currentType, () => {
@@ -231,6 +248,21 @@ const toggleEraser = () => {
   currentType.value = currentType.value === 'eraser' ? 'selection' : 'eraser';
 }
 
+// 回退
+const undo = () => {
+  app.undo();
+}
+
+// 前进
+const redo = () => {
+  app.redo();
+}
+
+// 清空
+const empty = () => {
+  app.empty();
+}
+
 // dom元素挂载完成
 onMounted(() => {
   // 创建实例
@@ -258,6 +290,11 @@ onMounted(() => {
   app.on("zoomChange", (scale) => {
     currentZoom.value = parseInt(scale * 100);
   });
+  // 监听前进后退事件
+  app.on("shuttle", (index, length) => {
+    canUndo.value = index > 0;
+    canRedo.value = index < length - 1;
+  })
 });
 </script>
 
@@ -376,7 +413,7 @@ onMounted(() => {
     display: flex;
     align-items: center;
 
-    .scaleBox {
+    .blockBox {
       height: 100%;
       display: flex;
       align-items: center;
