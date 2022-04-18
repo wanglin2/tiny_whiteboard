@@ -62,12 +62,18 @@ export default class Event extends EventEmitter {
 
   // 转换事件对象e，将clientY添加上滚动距离scrollY
   transformEvent(e) {
+    let { coordinate, state, width, height } = this.app;
+    // 屏幕坐标转画布坐标
+    let tp = coordinate.transformToCanvasCoordinate(e.clientX, e.clientY);
+    // 如果画布缩放了那么坐标也需要缩放
+    let x = tp.x / state.scale + width / 2;
+    let y = tp.y / state.scale + height / 2;
     let newEvent = {
       originEvent: e,
-      originClientX: e.clientX,
-      originClientY: e.clientY,
-      clientX: e.clientX,
-      clientY: this.app.coordinate.addScrollY(e.clientY)
+      originClientX: x,
+      originClientY: y,
+      clientX: x,
+      clientY: this.app.coordinate.addScrollY(y)
     }
     return newEvent;
   }
