@@ -73,7 +73,7 @@ export default class Event extends EventEmitter {
       originClientX: x,
       originClientY: y,
       clientX: x,
-      clientY: this.app.coordinate.addScrollY(y)
+      clientY: coordinate.addScrollY(y)// 向下滚动scroll值为正，而canvas坐标系向下为正，所以要造成元素向上滚动的效果显示的时候元素的y坐标需要减去scroll值，但是元素真实的y值并未改变，所以对于鼠标坐标来说需要加上scroll值，这样才能匹配元素真实的y坐标
     }
     return newEvent;
   }
@@ -135,6 +135,6 @@ export default class Event extends EventEmitter {
   // 鼠标滚动事件
   onMousewheel(e) {
     e = this.transformEvent(e);
-    this.emit("mousewheel", e.wheelDelta < 0 ? "down" : "up");
+    this.emit("mousewheel", e.originEvent.wheelDelta < 0 ? "down" : "up");
   }
 }

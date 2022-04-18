@@ -23,7 +23,7 @@ export default class Line extends BaseMultiPointElement {
       if (pointArr.length > 0 && this.isCreating) {
         let { x: fx, y: fy } = this.app.coordinate.transform(
           fictitiousPoint.x - cx,
-          this.app.coordinate.subScrollY(fictitiousPoint.y - cy)
+          fictitiousPoint.y - cy
         );
         realtimePoint = [[fx, fy]];
       }

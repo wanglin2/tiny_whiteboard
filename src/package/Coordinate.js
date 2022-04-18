@@ -29,7 +29,7 @@ export default class Coordinate {
     let t = this.transformToCanvasCoordinate(x, y);
     return {
       x: t.x,
-      y: this.addScrollY(t.y),
+      y: this.subScrollY(t.y),
     };
   }
 }

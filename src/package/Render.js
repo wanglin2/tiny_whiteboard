@@ -211,11 +211,11 @@ export default class Render {
     // 绘制自由线不重绘，采用增量绘制，否则会卡顿
     let tfp = this.app.coordinate.transformToCanvasCoordinate(
       event.lastMousePos.x,
-      event.lastMousePos.y
+      this.app.coordinate.subScrollY(event.lastMousePos.y)
     );
     let ttp = this.app.coordinate.transformToCanvasCoordinate(
-      e.originClientX,
-      e.originClientY
+      e.clientX,
+      this.app.coordinate.subScrollY(e.clientY)
     );
     element.singleRender(tfp.x, tfp.y, ttp.x, ttp.y, lineWidth);
   }

@@ -55,6 +55,7 @@ export default class TinyWhiteboard extends EventEmitter {
     this.event.on("mousemove", this.onMousemove, this);
     this.event.on("mouseup", this.onMouseup, this);
     this.event.on("dblclick", this.onDblclick, this);
+    this.event.on("mousewheel", this.onMousewheel, this);
     // 图片选择类
     this.imageEdit = new ImageEdit(this);
     this.imageEdit.on("imageSelectChange", this.onImageSelectChange, this);
@@ -360,5 +361,12 @@ export default class TinyWhiteboard extends EventEmitter {
       y: e.clientY
     });
     this.textEdit.showTextEdit();
+  }
+
+  // 鼠标滚动事件
+  onMousewheel(dir) {
+    let step = dir === "down" ? 50 : -50;
+    this.state.scrollY += step;
+    this.render.render();
   }
 }
