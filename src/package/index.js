@@ -210,6 +210,7 @@ export default class TinyWhiteboard extends EventEmitter {
   empty() {
     this.render.deleteAllElements().render();
     this.history.clear();
+    this.emitChange();
   }
 
   // 创建图片对象
