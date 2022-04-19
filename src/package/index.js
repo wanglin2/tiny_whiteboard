@@ -108,8 +108,13 @@ export default class TinyWhiteboard extends EventEmitter {
   }
 
   // 设置数据，包括状态数据及元素数据
-  setData({ state = {}, elements = [] }) {
+  async setData({ state = {}, elements = [] }) {
     this.state = state;
+    for(let i = 0; i < elements.length; i++) {
+      if (elements[i].type === "image") {
+        elements[i].imageObj = await this.createImageObj(elements[i].url);
+      }
+    }
     this.background.set();
     this.render.deleteAllElements().setElements(elements).render();
   }
