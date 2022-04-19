@@ -476,6 +476,10 @@ onMounted(() => {
     container: box.value,
     drawType: currentType.value,
   });
+  let storeData = localStorage.getItem("TINY_WHITEBOARD_DATA");
+  if (storeData) {
+    app.setData(JSON.parse(storeData));
+  }
   // 监听app内部修改类型事件
   app.on("currentTypeChange", (type) => {
     currentType.value = type;
@@ -500,6 +504,10 @@ onMounted(() => {
   app.on("shuttle", (index, length) => {
     canUndo.value = index > 0;
     canRedo.value = index < length - 1;
+  });
+  // 监听数据变化
+  app.on("change", (data) => {
+    localStorage.setItem("TINY_WHITEBOARD_DATA", JSON.stringify(data));
   });
   // 窗口尺寸变化
   let resizeTimer = null;
