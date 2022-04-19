@@ -28,6 +28,7 @@ export default class History {
       return;
     }
     this.index--;
+    console.log(this.index);
     this.shuttle();
   }
 
@@ -45,7 +46,7 @@ export default class History {
     let data = this.historyStack[this.index];
     await this.app.setData(data);
     this.emitChange();
-    this.app.emitChange();
+    this.app.emit("change", data);
   }
 
   // 清空数据
