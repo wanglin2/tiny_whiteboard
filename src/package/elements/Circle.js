@@ -19,7 +19,7 @@ export default class Circle extends BaseElement {
     let { width, height } = this;
     this.warpRender(({ halfWidth, halfHeight }) => {
       // 画布中心点修改了，所以元素的坐标也要相应修改
-      drawCircle(this.ctx, 0, 0, getCircleRadius(width, height), true);
+      drawCircle(this.app.ctx, 0, 0, getCircleRadius(width, height), true);
     });
     // 激活时显示拖拽框
     if (this.isActive && !this.isCreating) {

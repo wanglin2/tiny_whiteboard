@@ -51,8 +51,9 @@ export default class ImageEdit extends EventEmitter {
       this.previewEl.style.pointerEvents = "none";
       document.body.appendChild(this.previewEl);
     }
-    this.previewEl.style.left = x - width / 2 + "px";
-    this.previewEl.style.top = y - height / 2 + "px";
+    let tp = this.app.coordinate.containerToWindow(x, y);
+    this.previewEl.style.left = tp.x - width / 2 + "px";
+    this.previewEl.style.top = tp.y - height / 2 + "px";
   }
 
   // 获取图片宽高

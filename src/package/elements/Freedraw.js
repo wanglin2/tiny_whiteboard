@@ -20,7 +20,7 @@ export default class Freedraw extends BaseMultiPointElement {
     let { pointArr } = this;
     this.warpRender(({ cx, cy }) => {
       drawFreeLine(
-        this.ctx,
+        this.app.ctx,
         pointArr,
         {
           app: this.app,
@@ -43,8 +43,8 @@ export default class Freedraw extends BaseMultiPointElement {
 
   // 绘制单条线段
   singleRender(mx, my, tx, ty, lineWidth) {
-    this.ctx.save();
-    drawLineSegment(this.ctx, mx, my, tx, ty, lineWidth);
-    this.ctx.restore();
+    this.app.ctx.save();
+    drawLineSegment(this.app.ctx, mx, my, tx, ty, lineWidth);
+    this.app.ctx.restore();
   }
 }

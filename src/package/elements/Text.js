@@ -36,7 +36,7 @@ export default class Text extends BaseElement {
 		this.warpRender(({ halfWidth, halfHeight }) => {
 			// 画布中心点修改了，所以元素的坐标也要相应修改
 			drawText(
-				this.ctx,
+				this.app.ctx,
 				this,
 				-halfWidth,
 				-halfHeight,

@@ -1,7 +1,4 @@
-import {
-  getFontString,
-  getTextElementSize,
-} from "./utils";
+import { getFontString, getTextElementSize } from "./utils";
 import EventEmitter from "eventemitter3";
 
 // 文字编辑类
@@ -9,7 +6,6 @@ export default class TextEdit extends EventEmitter {
   constructor(app) {
     super();
     this.app = app;
-    this.ctx = app.ctx;
     this.editable = null;
     this.isEditing = false;
     this.onTextInput = this.onTextInput.bind(this);
@@ -48,21 +44,15 @@ export default class TextEdit extends EventEmitter {
     if (!activeElement) {
       return;
     }
-    let {
-      x,
-      y,
-      width,
-      height,
-      style,
-      text,
-      rotate,
-    } = activeElement;
+    let { x, y, width, height, style, text, rotate } = activeElement;
     this.editable.value = text;
+    y = this.app.coordinate.subScrollY(y);
+    let tp = this.app.coordinate.containerToWindow(x, y);
     let styles = {
       font: getFontString(style.fontSize, style.fontFamily),
       lineHeight: `${style.fontSize * style.lineHeightRatio}px`,
-      left: `${x}px`,
-      top: `${this.app.coordinate.subScrollY(y)}px`,
+      left: `${tp.x}px`,
+      top: `${tp.y}px`,
       color: style.fillStyle,
       width: Math.max(width, 100) + "px",
       height: height + "px",
@@ -89,7 +79,7 @@ export default class TextEdit extends EventEmitter {
   onTextBlur() {
     this.editable.style.display = "none";
     this.editable.value = "";
-    this.emit('blur');
+    this.emit("blur");
     this.isEditing = false;
   }
 
