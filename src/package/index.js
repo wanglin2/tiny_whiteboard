@@ -349,7 +349,7 @@ export default class TinyWhiteboard extends EventEmitter {
       // 图片放置中
       if (this.imageEdit.isReady) {
         this.cursor.hide();
-        this.imageEdit.updatePreviewElPos(e.originClientX, e.originClientY);
+        this.imageEdit.updatePreviewElPos(e.originEvent.clientX, e.originEvent.clientY);
       } else if (this.drawType === "selection") {
         if (this.render.hasActiveElements()) {
           // 检测是否划过激活元素的各个收缩手柄
