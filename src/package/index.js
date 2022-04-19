@@ -103,6 +103,7 @@ export default class TinyWhiteboard extends EventEmitter {
   // 设置数据，包括状态数据及元素数据
   setData({ state = {}, elements = [] }) {
     this.state = state;
+    this.background.set();
     this.render.deleteAllElements().setElements(elements).render();
   }
 
