@@ -41,10 +41,11 @@ export default class History {
   }
 
   // 前进后退
-  shuttle() {
+  async shuttle() {
     let data = this.historyStack[this.index];
-    this.app.setData(data);
+    await this.app.setData(data);
     this.emitChange();
+    this.app.emitChange();
   }
 
   // 清空数据
