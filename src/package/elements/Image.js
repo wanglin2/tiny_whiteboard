@@ -31,7 +31,7 @@ export default class Image extends BaseElement {
   render() {
     let { width, height } = this;
     this.warpRender(({ halfWidth, halfHeight }) => {
-      drawImage(this.ctx, this, -halfWidth, -halfHeight, width, height);
+      drawImage(this.app.ctx, this, -halfWidth, -halfHeight, width, height);
     });
     // 激活时显示拖拽框
     if (this.isActive && !this.isCreating) {

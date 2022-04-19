@@ -32,4 +32,20 @@ export default class Coordinate {
       y: this.subScrollY(t.y),
     };
   }
+
+  // 相对窗口的坐标转换成相对容器的，用于当容器非全屏的时候
+  windowToContainer(x, y) {
+    return {
+      x: x - this.app.left,
+      y: y - this.app.top,
+    };
+  }
+
+  // 相对容器的坐标转换成相对窗口的，用于当容器非全屏的时候
+  containerToWindow(x, y) {
+    return {
+      x: x + this.app.left,
+      y: y + this.app.top,
+    };
+  }
 }

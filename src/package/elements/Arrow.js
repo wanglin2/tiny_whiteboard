@@ -26,7 +26,7 @@ export default class Arrow extends BaseMultiPointElement {
         realtimePoint = [[fx, fy]];
       }
       drawArrow(
-        this.ctx,
+        this.app.ctx,
         pointArr
           .map((point) => {
             // 屏幕坐标在左上角，画布坐标在中心，所以屏幕坐标要先转成画布坐标

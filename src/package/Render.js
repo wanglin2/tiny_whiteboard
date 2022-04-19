@@ -14,7 +14,6 @@ import { computedLineWidthBySpeed } from "./utils";
 export default class Render {
   constructor(app) {
     this.app = app;
-    this.ctx = app.ctx;
     // 所有元素
     this.elementList = [];
     // 当前激活元素
@@ -373,7 +372,7 @@ export default class Render {
   // 清除画布
   clearCanvas() {
     let { width, height } = this.app;
-    this.ctx.clearRect(-width / 2, -height / 2, width, height);
+    this.app.ctx.clearRect(-width / 2, -height / 2, width, height);
     return this;
   }
 
@@ -381,9 +380,9 @@ export default class Render {
   render() {
     let { state } = this.app;
     this.clearCanvas();
-    this.ctx.save();
+    this.app.ctx.save();
     // 整体缩放
-    this.ctx.scale(state.scale, state.scale);
+    this.app.ctx.scale(state.scale, state.scale);
     this.elementList.forEach((element) => {
       // 不需要渲染
       if (element.noRender) {
@@ -391,7 +390,7 @@ export default class Render {
       }
       element.render();
     });
-    this.ctx.restore();
+    this.app.ctx.restore();
     return this;
   }
 

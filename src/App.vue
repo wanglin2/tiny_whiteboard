@@ -501,6 +501,14 @@ onMounted(() => {
     canUndo.value = index > 0;
     canRedo.value = index < length - 1;
   });
+  // 窗口尺寸变化
+  let resizeTimer = null;
+  window.addEventListener("resize", () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      app.resize();
+    }, 300);
+  });
 });
 </script>
 
@@ -540,10 +548,12 @@ ol {
 
   .canvasBox {
     position: absolute;
-    left: 0;
-    top: 0;
+    left: 50%;
+    top: 50%;
     width: 100%;
     height: 100%;
+    transform: translate(-50%, -50%);
+    background-color: #fff;
   }
 
   .sidebar {

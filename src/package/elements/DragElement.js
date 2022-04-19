@@ -77,13 +77,13 @@ export default class DragElement extends BaseElement {
     let { width, height } = this;
     this.warpRender(({ halfWidth, halfHeight }) => {
       // 主体
-      this.ctx.save();
-      this.ctx.setLineDash([5]);
-      drawRect(this.ctx, -halfWidth, -halfHeight, width, height);
-      this.ctx.restore();
+      this.app.ctx.save();
+      this.app.ctx.setLineDash([5]);
+      drawRect(this.app.ctx, -halfWidth, -halfHeight, width, height);
+      this.app.ctx.restore();
       // 左上角
       drawRect(
-        this.ctx,
+        this.app.ctx,
         -halfWidth - this.size,
         -halfHeight - this.size,
         this.size,
@@ -91,7 +91,7 @@ export default class DragElement extends BaseElement {
       );
       // 右上角
       drawRect(
-        this.ctx,
+        this.app.ctx,
         -halfWidth + this.element.width + this.size,
         -halfHeight - this.size,
         this.size,
@@ -99,7 +99,7 @@ export default class DragElement extends BaseElement {
       );
       // 右下角
       drawRect(
-        this.ctx,
+        this.app.ctx,
         -halfWidth + this.element.width + this.size,
         -halfHeight + this.element.height + this.size,
         this.size,
@@ -107,7 +107,7 @@ export default class DragElement extends BaseElement {
       );
       // 左下角
       drawRect(
-        this.ctx,
+        this.app.ctx,
         -halfWidth - this.size,
         -halfHeight + this.element.height + this.size,
         this.size,
@@ -115,7 +115,7 @@ export default class DragElement extends BaseElement {
       );
       // 旋转按钮
       drawCircle(
-        this.ctx,
+        this.app.ctx,
         -halfWidth + this.element.width / 2 + this.size / 2,
         -halfHeight - this.size * 2,
         this.size

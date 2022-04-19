@@ -33,9 +33,7 @@ export default class TinyWhiteboard extends EventEmitter {
       throw new Error("container元素需要设置定位！");
     }
     // 宽高
-    let { width, height } = this.container.getBoundingClientRect();
-    this.width = width;
-    this.height = height;
+    this.getContainerRectInfo();
     // 主要的渲染canvas元素
     this.canvas = null;
     // canvas绘制上下文
@@ -100,6 +98,15 @@ export default class TinyWhiteboard extends EventEmitter {
     });
   }
 
+  // 获取容器尺寸位置信息
+  getContainerRectInfo() {
+    let { width, height, left, top } = this.container.getBoundingClientRect();
+    this.width = width;
+    this.height = height;
+    this.left = left;
+    this.top = top;
+  }
+
   // 设置数据，包括状态数据及元素数据
   setData({ state = {}, elements = [] }) {
     this.state = state;
@@ -114,6 +121,16 @@ export default class TinyWhiteboard extends EventEmitter {
     this.canvas = canvas;
     this.ctx = ctx;
     this.container.appendChild(this.canvas);
+  }
+
+  // 容器尺寸调整
+  resize() {
+    this.getContainerRectInfo();
+    this.event.unbindEvent();
+    this.container.removeChild(this.canvas);
+    this.initCanvas();
+    this.event.bindEvent();
+    this.render.render();
   }
 
   // 更新状态数据

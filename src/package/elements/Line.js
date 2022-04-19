@@ -28,7 +28,7 @@ export default class Line extends BaseMultiPointElement {
         realtimePoint = [[fx, fy]];
       }
       drawLine(
-        this.ctx,
+        this.app.ctx,
         pointArr
           .map((point) => {
             // 屏幕坐标在左上角，画布坐标在中心，所以屏幕坐标要先转成画布坐标

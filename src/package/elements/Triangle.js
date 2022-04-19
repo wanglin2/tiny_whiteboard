@@ -17,7 +17,7 @@ export default class Triangle extends BaseElement {
     let { width, height } = this;
     this.warpRender(({ halfWidth, halfHeight }) => {
       // 画布中心点修改了，所以元素的坐标也要相应修改
-      drawTriangle(this.ctx, -halfWidth, -halfHeight, width, height, true);
+      drawTriangle(this.app.ctx, -halfWidth, -halfHeight, width, height, true);
     });
     // 激活时显示拖拽框
     if (this.isActive && !this.isCreating) {

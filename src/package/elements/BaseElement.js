@@ -4,7 +4,6 @@ import { degToRad } from "../utils";
 export default class BaseElement {
   constructor(opts = {}, app) {
     this.app = app;
-    this.ctx = app.ctx;
     // 类型
     this.type = opts.type || "";
     // 是否正在创建中
@@ -83,14 +82,14 @@ export default class BaseElement {
       // 处理虚线
       if (key === "lineDash") {
         if (_style.lineDash > 0) {
-          this.ctx.setLineDash([_style.lineDash]);
+          this.app.ctx.setLineDash([_style.lineDash]);
         }
       } else if (
         _style[key] !== undefined &&
         _style[key] !== "" &&
         _style[key] !== null
       ) {
-        this.ctx[key] = _style[key];
+        this.app.ctx[key] = _style[key];
       }
     });
     return this;
@@ -106,9 +105,9 @@ export default class BaseElement {
     let halfHeight = height / 2;
     let cx = tx + halfWidth;
     let cy = ty + halfHeight;
-    this.ctx.save();
-    this.ctx.translate(cx, cy);
-    this.ctx.rotate(degToRad(rotate));
+    this.app.ctx.save();
+    this.app.ctx.translate(cx, cy);
+    this.app.ctx.rotate(degToRad(rotate));
     this.setStyle(style);
     renderFn({
       halfWidth,
@@ -118,7 +117,7 @@ export default class BaseElement {
       cx,
       cy,
     });
-    this.ctx.restore();
+    this.app.ctx.restore();
     return this;
   }
 
