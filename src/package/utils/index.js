@@ -1,15 +1,19 @@
 // 通用工具方法
 
 // 创建canvas元素
-export const createCanvas = (width, height) => {
+export const createCanvas = (
+  width,
+  height,
+  opt = { noStyle: false, noTranslate: false }
+) => {
   let canvas = document.createElement("canvas");
-  canvas.style.cssText = `
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-  `;
+  if (!opt.noStyle) {
+    canvas.style.cssText = `
+      position: absolute;
+      left: 0;
+      top: 0;
+    `;
+  }
   // 获取绘图上下文
   let ctx = canvas.getContext("2d");
   // 设置显示大小（css像素）
@@ -21,7 +25,9 @@ export const createCanvas = (width, height) => {
   // 规范化坐标系以使用css像素
   ctx.scale(scale, scale);
   // 画布原点移动到画布中心
-  ctx.translate(canvas.width / 2, canvas.height / 2);
+  if (!opt.noTranslate) {
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+  }
   return {
     canvas,
     ctx,
@@ -326,4 +332,12 @@ export const computedLineWidthBySpeed = (
   }
   // 最终的粗细为计算出来的一半加上上一次粗细的一半，防止两次粗细相差过大，出现明显突变
   return lineWidth * (1 / 2) + lastLineWidth * (1 / 2);
+};
+
+// 下载文件
+export const downloadFile = (file, fileName) => {
+  let a = document.createElement("a");
+  a.href = file;
+  a.download = fileName;
+  a.click();
 };

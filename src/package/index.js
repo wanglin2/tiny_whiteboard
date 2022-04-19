@@ -7,6 +7,8 @@ import ImageEdit from "./ImageEdit";
 import Cursor from "./Cursor";
 import TextEdit from "./TextEdit";
 import History from "./History";
+import Export from "./Export";
+import Background from "./Background";
 import { DRAG_ELEMENT_PARTS } from "./constants";
 
 // 主类
@@ -67,6 +69,10 @@ export default class TinyWhiteboard extends EventEmitter {
     this.cursor = new Cursor(this);
     // 历史记录管理类
     this.history = new History(this);
+    // 导入导出类
+    this.export = new Export(this);
+    // 背景设置类
+    this.background = new Background(this);
     // 实例化渲染类
     this.render = new Render(this);
 
@@ -75,6 +81,7 @@ export default class TinyWhiteboard extends EventEmitter {
     this.checkIsOnElement = throttle(this.checkIsOnElement, this);
 
     this.emitChange();
+    this.background.set();
   }
 
   // 代理各个类的方法到实例上
@@ -86,6 +93,10 @@ export default class TinyWhiteboard extends EventEmitter {
     // render类
     ["setElementStyle"].forEach((method) => {
       this[method] = this.render[method].bind(this.render);
+    });
+    // 导入导出类
+    ["exportImage", "exportJson"].forEach((method) => {
+      this[method] = this.export[method].bind(this.export);
     });
   }
 
@@ -220,6 +231,26 @@ export default class TinyWhiteboard extends EventEmitter {
     });
     this.render.render();
     this.emit("zoomChange", this.state.scale);
+  }
+
+  // 设置背景颜色
+  setBackgroundColor(color) {
+    this.updateState({
+      backgroundColor: color,
+    });
+    this.background.set();
+  }
+
+  // 获取数据，包括状态数据及元素数据
+  getData() {
+    return {
+      state: {
+        ...this.state,
+      },
+      elements: this.render.elementList.map((element) => {
+        return element.serialize();
+      }),
+    };
   }
 
   // 图片选择事件
@@ -435,15 +466,7 @@ export default class TinyWhiteboard extends EventEmitter {
 
   // 触发更新事件
   emitChange() {
-    let data = {
-      state: {
-        ...this.state,
-      },
-      elements: this.render.elementList.map((element) => {
-        return element.serialize();
-      }),
-    };
-    console.log(data);
+    let data = this.getData();
     this.history.add(data);
     this.emit("change", data);
   }
