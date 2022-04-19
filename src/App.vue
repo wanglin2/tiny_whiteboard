@@ -188,6 +188,14 @@
       </div>
       <!-- 导入导出 -->
       <div class="blockBox">
+        <el-tooltip effect="light" content="从json文件导入" placement="top">
+          <el-button
+            :icon="Upload"
+            circle
+            style="margin-right: 10px"
+            @click="importFromJson"
+          />
+        </el-tooltip>
         <el-dropdown @command="handleExportCommand">
           <span class="el-dropdown-link">
             <el-button :icon="Download" circle />
@@ -293,6 +301,7 @@ import {
   RefreshLeft,
   RefreshRight,
   Download,
+  Upload,
 } from "@element-plus/icons-vue";
 
 // 当前操作类型
@@ -393,6 +402,24 @@ const redo = () => {
 // 清空
 const empty = () => {
   app.empty();
+};
+
+// 导入
+const importFromJson = () => {
+  let el = document.createElement("input");
+  el.type = "file";
+  el.accept = "application/json";
+  el.addEventListener("input", () => {
+    let reader = new FileReader();
+    reader.onload = () => {
+      el.value = null;
+      if (reader.result) {
+        app.setData(JSON.parse(reader.result));
+      }
+    };
+    reader.readAsText(el.files[0]);
+  });
+  el.click();
 };
 
 // 导出

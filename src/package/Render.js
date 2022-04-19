@@ -63,8 +63,10 @@ export default class Render {
   setElements(data) {
     data.forEach((item) => {
       let element = this.pureCreateElement(item);
-      this.elementList.push(element);
-    })
+      element.isActive = false;
+      element.isCreating = false;
+      this.addElement(element);
+    });
     return this;
   }
 
