@@ -136,7 +136,7 @@
         </div>
       </div>
     </Transition>
-    <div class="footerLeft">
+    <div class="footerLeft" @click.stop>
       <!-- 缩放 -->
       <div class="blockBox">
         <el-tooltip effect="light" content="缩小" placement="top">
@@ -152,30 +152,148 @@
       <!-- 前进回退 -->
       <div class="blockBox">
         <el-tooltip effect="light" content="回退" placement="top">
-          <el-button :icon="RefreshLeft" circle :disabled="!canUndo" @click="undo" />
+          <el-button
+            :icon="RefreshLeft"
+            circle
+            :disabled="!canUndo"
+            @click="undo"
+          />
         </el-tooltip>
         <el-tooltip effect="light" content="前进" placement="top">
-          <el-button :icon="RefreshRight" circle :disabled="!canRedo" @click="redo" />
+          <el-button
+            :icon="RefreshRight"
+            circle
+            :disabled="!canRedo"
+            @click="redo"
+          />
         </el-tooltip>
       </div>
       <!-- 橡皮擦、清空 -->
       <div class="blockBox">
-        <el-tooltip effect="light" :content="currentType === 'eraser' ? '关闭橡皮擦' : '橡皮擦'" placement="top">
-          <el-button :icon="Remove" circle :type="currentType === 'eraser' ? 'primary' : null" @click="toggleEraser" />
+        <el-tooltip
+          effect="light"
+          :content="currentType === 'eraser' ? '关闭橡皮擦' : '橡皮擦'"
+          placement="top"
+        >
+          <el-button
+            :icon="Remove"
+            circle
+            :type="currentType === 'eraser' ? 'primary' : null"
+            @click="toggleEraser"
+          />
         </el-tooltip>
         <el-tooltip effect="light" content="清空" placement="top">
           <el-button :icon="Delete" circle @click="empty" />
         </el-tooltip>
       </div>
+      <!-- 导入导出 -->
+      <div class="blockBox">
+        <el-dropdown @command="handleExportCommand">
+          <span class="el-dropdown-link">
+            <el-button :icon="Download" circle />
+          </span>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item command="png">导出为图片</el-dropdown-item>
+              <el-dropdown-item command="json">导出为json</el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+      </div>
+      <!-- 背景 -->
+      <div class="blockBox">
+        <ColorPicker
+          style="width: 280px"
+          type="background"
+          :value="backgroundColor"
+          :showEmptySelect="true"
+          placement="top"
+          name="背景颜色"
+          @change="setBackgroundColor"
+        ></ColorPicker>
+      </div>
     </div>
+    <!-- 导出图片弹窗 -->
+    <el-dialog
+      v-model="exportImageDialogVisible"
+      title="导出为图片"
+      :width="800"
+    >
+      <div class="exportImageContainer">
+        <div class="imagePreviewBox">
+          <img :src="exportImageUrl" alt="" />
+        </div>
+        <div class="handleBox">
+          <el-checkbox
+            v-model="exportRenderBackground"
+            label="背景"
+            size="large"
+            @change="reRenderExportImage"
+            style="margin-right: 10px"
+          />
+          <el-input
+            v-model="exportFileName"
+            style="width: 150px; margin-right: 10px"
+          ></el-input>
+          <el-input-number
+            v-model="exportImagePaddingX"
+            :min="10"
+            :max="100"
+            :step="5"
+            controls-position="right"
+            @change="reRenderExportImage"
+            style="margin-right: 10px"
+          />
+          <el-input-number
+            v-model="exportImagePaddingY"
+            :min="10"
+            :max="100"
+            :step="5"
+            controls-position="right"
+            @change="reRenderExportImage"
+            style="margin-right: 10px"
+          />
+          <el-button type="primary" @click="downloadExportImage"
+            >下载</el-button
+          >
+        </div>
+      </div>
+    </el-dialog>
+    <!-- 导出json弹窗 -->
+    <el-dialog
+      v-model="exportJsonDialogVisible"
+      title="导出为json"
+      :width="800"
+    >
+      <div class="exportJsonContainer">
+        <div class="jsonPreviewBox" ref="jsonPreviewBox"></div>
+        <div class="handleBox">
+          <el-input
+            v-model="exportFileName"
+            style="width: 150px; margin-right: 10px"
+          ></el-input>
+          <el-button type="primary" @click="downloadExportJson">下载</el-button>
+        </div>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { onMounted, ref, watch, toRaw } from "vue";
+import { onMounted, ref, watch, toRaw, nextTick } from "vue";
 import TinyWhiteboard from "./package";
+import { downloadFile } from "./package/utils";
 import ColorPicker from "./components/ColorPicker.vue";
-import { Delete, CopyDocument, ZoomIn, ZoomOut, Remove, RefreshLeft, RefreshRight } from "@element-plus/icons-vue";
+import {
+  Delete,
+  CopyDocument,
+  ZoomIn,
+  ZoomOut,
+  Remove,
+  RefreshLeft,
+  RefreshRight,
+  Download,
+} from "@element-plus/icons-vue";
 
 // 当前操作类型
 const currentType = ref("selection");
@@ -199,6 +317,20 @@ const currentZoom = ref(100);
 // 缩放允许前进后退
 const canUndo = ref(false);
 const canRedo = ref(false);
+// 图片导出弹窗
+const exportImageDialogVisible = ref(false);
+const exportImageUrl = ref("");
+const exportRenderBackground = ref(true);
+const exportFileName = ref("未命名");
+const exportImagePaddingX = ref(10);
+const exportImagePaddingY = ref(10);
+// json导出弹窗
+const exportJsonDialogVisible = ref(false);
+const exportJsonData = ref("");
+const tree = ref(null);
+const jsonPreviewBox = ref(null);
+// 背景颜色
+const backgroundColor = ref("");
 
 // 通知app更当前类型
 watch(currentType, () => {
@@ -245,23 +377,70 @@ const resetZoom = () => {
 
 // 橡皮擦
 const toggleEraser = () => {
-  currentType.value = currentType.value === 'eraser' ? 'selection' : 'eraser';
-}
+  currentType.value = currentType.value === "eraser" ? "selection" : "eraser";
+};
 
 // 回退
 const undo = () => {
   app.undo();
-}
+};
 
 // 前进
 const redo = () => {
   app.redo();
-}
+};
 
 // 清空
 const empty = () => {
   app.empty();
-}
+};
+
+// 导出
+const handleExportCommand = (type) => {
+  if (type === "png") {
+    exportImageUrl.value = app.exportImage();
+    exportImageDialogVisible.value = true;
+  } else if (type === "json") {
+    exportJsonData.value = app.exportJson();
+    exportJsonDialogVisible.value = true;
+    nextTick(() => {
+      if (!tree.value) {
+        tree.value = jsonTree.create(
+          exportJsonData.value,
+          jsonPreviewBox.value
+        );
+      } else {
+        tree.value.loadData(exportJsonData.value);
+      }
+    });
+  }
+};
+
+// 重新生成导出图片
+const reRenderExportImage = () => {
+  exportImageUrl.value = app.exportImage({
+    renderBg: exportRenderBackground.value,
+    paddingX: exportImagePaddingX.value,
+    paddingY: exportImagePaddingY.value,
+  });
+};
+
+// 下载导出的图片
+const downloadExportImage = () => {
+  downloadFile(exportImageUrl.value, exportFileName.value + ".png");
+};
+
+// 下载导出的json
+const downloadExportJson = () => {
+  let str = JSON.stringify(exportJsonData.value, null, 4);
+  let blob = new Blob([str]);
+  downloadFile(URL.createObjectURL(blob), exportFileName.value + ".json");
+};
+
+// 更新背景颜色
+const setBackgroundColor = (value) => {
+  app.setBackgroundColor(value);
+};
 
 // dom元素挂载完成
 onMounted(() => {
@@ -294,11 +473,15 @@ onMounted(() => {
   app.on("shuttle", (index, length) => {
     canUndo.value = index > 0;
     canRedo.value = index < length - 1;
-  })
+  });
 });
 </script>
 
 <style lang="less">
+ul,
+ol {
+  list-style: none;
+}
 .v-enter-active,
 .v-leave-active {
   transition: all 0.5s ease;
@@ -409,7 +592,6 @@ onMounted(() => {
     left: 10px;
     bottom: 10px;
     height: 40px;
-    background-color: #fff;
     display: flex;
     align-items: center;
 
@@ -427,8 +609,54 @@ onMounted(() => {
         height: 32px;
         display: flex;
         align-items: center;
+        background-color: #fff;
+        border-radius: 5px;
+        padding: 0 5px;
       }
     }
+  }
+}
+
+.exportImageContainer {
+  .imagePreviewBox {
+    height: 400px;
+    background: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAMUlEQVQ4T2NkYGAQYcAP3uCTZhw1gGGYhAGBZIA/nYDCgBDAm9BGDWAAJyRCgLaBCAAgXwixzAS0pgAAAABJRU5ErkJggg==")
+      0;
+    padding: 10px;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: scale-down;
+    }
+  }
+
+  .handleBox {
+    display: flex;
+    align-items: center;
+    height: 50px;
+    justify-content: center;
+  }
+}
+
+.exportJsonContainer {
+  .jsonPreviewBox {
+    height: 400px;
+    overflow: auto;
+    background-color: #f5f5f5;
+    font-size: 14px;
+    color: #000;
+
+    /deep/ .jsontree_tree {
+      font-family: "Trebuchet MS", Arial, sans-serif !important;
+    }
+  }
+
+  .handleBox {
+    display: flex;
+    align-items: center;
+    height: 50px;
+    justify-content: center;
   }
 }
 </style>

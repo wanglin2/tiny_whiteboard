@@ -33,7 +33,7 @@ export default class BaseElement {
       lineWidth: "small", // 线条宽度
       lineDash: 0, // 线条虚线大小
       globalAlpha: 1, // 透明度
-      ...(opts.style || {})
+      ...(opts.style || {}),
     };
     // 拖拽元素实例
     this.dragElement = null;
@@ -49,9 +49,9 @@ export default class BaseElement {
       y: this.y,
       rotate: this.rotate,
       style: {
-        ...this.style
-      }
-    }
+        ...this.style,
+      },
+    };
   }
 
   // 渲染方法
@@ -85,7 +85,11 @@ export default class BaseElement {
         if (_style.lineDash > 0) {
           this.ctx.setLineDash([_style.lineDash]);
         }
-      } else {
+      } else if (
+        _style[key] !== undefined &&
+        _style[key] !== "" &&
+        _style[key] !== null
+      ) {
         this.ctx[key] = _style[key];
       }
     });
