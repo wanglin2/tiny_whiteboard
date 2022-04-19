@@ -62,14 +62,11 @@ export default class Event extends EventEmitter {
 
   // 转换事件对象e，将clientY添加上滚动距离scrollY
   transformEvent(e) {
-    let { coordinate, state, width, height } = this.app;
+    let { coordinate } = this.app;
     // 容器和窗口左上角存在距离时转换
     let wp = coordinate.windowToContainer(e.clientX, e.clientY);
-    // 屏幕坐标转画布坐标
-    let tp = coordinate.transformToCanvasCoordinate(wp.x, wp.y);
-    // 如果画布缩放了那么坐标也需要缩放
-    let x = tp.x / state.scale + width / 2;
-    let y = tp.y / state.scale + height / 2;
+    // 元素缩放是*scale，所以视觉上我们点击到了元素，但是实际上元素的位置还是原来的x,y，所以鼠标的坐标需要/scale
+    let { x, y } = coordinate.reverseScale(wp.x, wp.y);
     let newEvent = {
       originEvent: e,
       originClientX: x,

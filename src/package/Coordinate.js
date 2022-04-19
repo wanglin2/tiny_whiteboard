@@ -48,4 +48,30 @@ export default class Coordinate {
       y: y + this.app.top,
     };
   }
+
+  // 屏幕坐标在应用画布缩放后的位置
+  scale(x, y) {
+    let { state, width, height } = this.app;
+    // 屏幕坐标转画布坐标
+    let wp = this.transformToCanvasCoordinate(x, y);
+    let _x = wp.x * state.scale + width / 2;
+    let _y = wp.y * state.scale + height / 2;
+    return {
+      x: _x,
+      y: _y,
+    };
+  }
+
+  // 屏幕坐标在反向应用画布缩放后的位置
+  reverseScale(x, y) {
+    let { state, width, height } = this.app;
+    // 屏幕坐标转画布坐标
+    let tp = this.transformToCanvasCoordinate(x, y);
+    let _x = tp.x / state.scale + width / 2;
+    let _y = tp.y / state.scale + height / 2;
+    return {
+      x: _x,
+      y: _y,
+    };
+  }
 }

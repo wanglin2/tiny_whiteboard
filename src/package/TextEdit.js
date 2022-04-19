@@ -45,17 +45,21 @@ export default class TextEdit extends EventEmitter {
       return;
     }
     let { x, y, width, height, style, text, rotate } = activeElement;
+    let { coordinate, state } = this.app;
     this.editable.value = text;
-    y = this.app.coordinate.subScrollY(y);
-    let tp = this.app.coordinate.containerToWindow(x, y);
+    y = coordinate.subScrollY(y);
+    // 屏幕坐标转画布坐标
+    let sp = coordinate.scale(x, y);
+    let tp = coordinate.containerToWindow(sp.x, sp.y);
+    let fontSize = style.fontSize * state.scale;
     let styles = {
-      font: getFontString(style.fontSize, style.fontFamily),
-      lineHeight: `${style.fontSize * style.lineHeightRatio}px`,
+      font: getFontString(fontSize, style.fontFamily),
+      lineHeight: `${fontSize * style.lineHeightRatio}px`,
       left: `${tp.x}px`,
       top: `${tp.y}px`,
       color: style.fillStyle,
-      width: Math.max(width, 100) + "px",
-      height: height + "px",
+      width: Math.max(width, 100) * state.scale + "px",
+      height: height * state.scale + "px",
       transform: `rotate(${rotate}deg)`,
       opacity: style.globalAlpha,
     };
