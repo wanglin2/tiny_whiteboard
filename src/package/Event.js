@@ -44,20 +44,20 @@ export default class Event extends EventEmitter {
 
   // 绑定canvas事件
   bindEvent() {
-    this.app.canvas.addEventListener("mousedown", this.onMousedown);
-    this.app.canvas.addEventListener("mousemove", this.onMousemove);
-    this.app.canvas.addEventListener("mouseup", this.onMouseup);
-    this.app.canvas.addEventListener("dblclick", this.onDblclick);
-    this.app.canvas.addEventListener("mousewheel", this.onMousewheel);
+    this.app.container.addEventListener("mousedown", this.onMousedown);
+    this.app.container.addEventListener("mousemove", this.onMousemove);
+    this.app.container.addEventListener("mouseup", this.onMouseup);
+    this.app.container.addEventListener("dblclick", this.onDblclick);
+    this.app.container.addEventListener("mousewheel", this.onMousewheel);
   }
 
   // 解绑事件
   unbindEvent() {
-    this.app.canvas.removeEventListener("mousedown", this.onMousedown);
-    this.app.canvas.removeEventListener("mousemove", this.onMousemove);
-    this.app.canvas.removeEventListener("mouseup", this.onMouseup);
-    this.app.canvas.removeEventListener("dblclick", this.onDblclick);
-    this.app.canvas.removeEventListener("mousewheel", this.onMousewheel);
+    this.app.container.removeEventListener("mousedown", this.onMousedown);
+    this.app.container.removeEventListener("mousemove", this.onMousemove);
+    this.app.container.removeEventListener("mouseup", this.onMouseup);
+    this.app.container.removeEventListener("dblclick", this.onDblclick);
+    this.app.container.removeEventListener("mousewheel", this.onMousewheel);
   }
 
   // 转换事件对象e，将clientY添加上滚动距离scrollY

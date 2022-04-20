@@ -228,7 +228,11 @@ export default class Render {
       e.clientX,
       this.app.coordinate.subScrollY(e.clientY)
     );
+    this.app.ctx.save();
+    // 整体缩放
+    this.app.ctx.scale(this.app.state.scale, this.app.state.scale);
     element.singleRender(tfp.x, tfp.y, ttp.x, ttp.y, lineWidth);
+    this.app.ctx.restore();
   }
 
   // 正在创建图片元素

@@ -168,6 +168,16 @@
           />
         </el-tooltip>
       </div>
+      <!-- 滚动 -->
+      <div class="blockBox">
+        <el-tooltip effect="light" content="滚动至顶部" placement="top">
+          <el-button
+            :icon="scrollY > 0 ? CaretTop : scrollY < 0 ? CaretBottom : Minus"
+            @click="scrollToTop"
+            >{{ scrollY }}</el-button
+          >
+        </el-tooltip>
+      </div>
       <!-- 橡皮擦、清空 -->
       <div class="blockBox">
         <el-tooltip
@@ -302,6 +312,9 @@ import {
   RefreshRight,
   Download,
   Upload,
+  CaretTop,
+  CaretBottom,
+  Minus,
 } from "@element-plus/icons-vue";
 
 // 当前操作类型
@@ -340,6 +353,8 @@ const tree = ref(null);
 const jsonPreviewBox = ref(null);
 // 背景颜色
 const backgroundColor = ref("");
+// 当前滚动距离
+const scrollY = ref(0);
 
 // 通知app更当前类型
 watch(currentType, () => {
@@ -469,6 +484,11 @@ const setBackgroundColor = (value) => {
   app.setBackgroundColor(value);
 };
 
+// 滚动至底部
+const scrollToTop = () => {
+  app.scrollToTop();
+}
+
 // dom元素挂载完成
 onMounted(() => {
   // 创建实例
@@ -478,7 +498,10 @@ onMounted(() => {
   });
   let storeData = localStorage.getItem("TINY_WHITEBOARD_DATA");
   if (storeData) {
-    app.setData(JSON.parse(storeData));
+    storeData = JSON.parse(storeData);
+    currentZoom.value = parseInt(storeData.state.scale * 100);
+    scrollY.value = parseInt(storeData.state.scrollY);
+    app.setData(storeData);
   }
   // 监听app内部修改类型事件
   app.on("currentTypeChange", (type) => {
@@ -508,6 +531,10 @@ onMounted(() => {
   // 监听数据变化
   app.on("change", (data) => {
     localStorage.setItem("TINY_WHITEBOARD_DATA", JSON.stringify(data));
+  });
+  // 监听滚动变化
+  app.on("scrollChange", (y) => {
+    scrollY.value = parseInt(y);
   });
   // 窗口尺寸变化
   let resizeTimer = null;
@@ -647,6 +674,7 @@ ol {
       padding: 0 10px;
 
       .zoom {
+        width: 40px;
         margin: 0 10px;
         user-select: none;
         color: #606266;
@@ -657,6 +685,7 @@ ol {
         background-color: #fff;
         border-radius: 5px;
         padding: 0 5px;
+        justify-content: center;
       }
     }
   }
