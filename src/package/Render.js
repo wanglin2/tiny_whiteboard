@@ -164,7 +164,7 @@ export default class Render {
   }
 
   // 创建元素
-  createElement(opts = {}, callback = () => {}, ctx = null) {
+  createElement(opts = {}, callback = () => {}, ctx = null, notActive) {
     if (this.hasActiveElements() || this.isCreatingElement) {
       return this;
     }
@@ -173,7 +173,9 @@ export default class Render {
       return this;
     }
     this.addElement(element);
-    this.addActiveElement(element);
+    if (!notActive) {
+      this.addActiveElement(element);
+    }
     this.isCreatingElement = true;
     callback.call(ctx, element);
     return this;
@@ -356,8 +358,8 @@ export default class Render {
     return this;
   }
 
-  // 为元素设置样式
-  setElementStyle(style = {}) {
+  // 为激活元素设置样式
+  setActiveElementStyle(style = {}) {
     if (!this.hasActiveElements()) {
       return this;
     }

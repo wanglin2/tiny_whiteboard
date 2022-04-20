@@ -34,9 +34,7 @@ export default class Image extends BaseElement {
       drawImage(this.app.ctx, this, -halfWidth, -halfHeight, width, height);
     });
     // 激活时显示拖拽框
-    if (this.isActive && !this.isCreating) {
-      this.dragElement.render();
-    }
+    this.renderDragElement();
   }
 
   // 检测是否被击中

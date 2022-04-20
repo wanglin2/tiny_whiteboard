@@ -60,6 +60,18 @@ export default class BaseElement {
     throw new Error("子类需要实现该方法！");
   }
 
+  // 渲染拖拽元素
+  renderDragElement() {
+    if (this.isActive && !this.isCreating) {
+      this.dragElement.showAll();
+      this.dragElement.render();
+    } else if (this.isSelected) {
+      // 被多选选中
+      this.dragElement.onlyShowBody();
+      this.dragElement.render();
+    }
+  }
+
   // 处理样式数据
   handleStyle(style) {
     Object.keys(style).forEach((key) => {
