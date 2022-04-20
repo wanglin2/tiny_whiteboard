@@ -16,12 +16,15 @@
       </el-radio-group>
     </div>
     <Transition>
-      <div class="sidebar" v-show="activeElement">
+      <div class="sidebar" v-show="activeElement || hasSelectedElements">
         <div class="elementStyle">
           <!-- 描边 -->
           <div
             class="styleBlock"
-            v-if="!['text', 'image'].includes(activeElement?.type)"
+            v-if="
+              !['text', 'image'].includes(activeElement?.type) ||
+              hasSelectedElements
+            "
           >
             <div class="styleBlockTitle">描边</div>
             <div class="styleBlockContent">
@@ -38,7 +41,7 @@
             v-if="
               !['image', 'line', 'arrow', 'freedraw'].includes(
                 activeElement?.type
-              )
+              ) || hasSelectedElements
             "
           >
             <div class="styleBlockTitle">填充</div>
@@ -53,7 +56,10 @@
           <!-- 描边宽度 -->
           <div
             class="styleBlock"
-            v-if="!['image', 'text'].includes(activeElement?.type)"
+            v-if="
+              !['image', 'text'].includes(activeElement?.type) ||
+              hasSelectedElements
+            "
           >
             <div class="styleBlockTitle">描边宽度</div>
             <div class="styleBlockContent">
@@ -82,7 +88,10 @@
           <!-- 边框样式 -->
           <div
             class="styleBlock"
-            v-if="!['freedraw', 'image', 'text'].includes(activeElement?.type)"
+            v-if="
+              !['freedraw', 'image', 'text'].includes(activeElement?.type) ||
+              hasSelectedElements
+            "
           >
             <div class="styleBlockTitle">边框样式</div>
             <div class="styleBlockContent">
@@ -298,7 +307,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref, watch, toRaw, nextTick } from "vue";
+import { onMounted, ref, watch, toRaw, nextTick, computed } from "vue";
 import TinyWhiteboard from "./package";
 import { downloadFile } from "./package/utils";
 import ColorPicker from "./components/ColorPicker.vue";
@@ -328,6 +337,12 @@ let app = null;
 // 当前激活的元素
 const activeElement = ref(null);
 let originActiveElement = null;
+// 当前多选的元素
+const selectedElements = ref([]);
+let originSelectedElements = [];
+const hasSelectedElements = computed(() => {
+  return selectedElements.value.length > 0;
+});
 // 描边宽度
 const lineWidth = ref("small");
 // 边框样式
@@ -363,9 +378,15 @@ watch(currentType, () => {
 
 // 更新样式
 const updateStyle = (key, value) => {
-  app.setElementStyle({
-    [key]: value,
-  });
+  if (hasSelectedElements) {
+    app.setSelectedElementStyle({
+      [key]: value,
+    });
+  } else {
+    app.setActiveElementStyle({
+      [key]: value,
+    });
+  }
 };
 
 // 类型变化
@@ -376,12 +397,24 @@ const onCurrentTypeChange = () => {
 
 // 删除元素
 const deleteElement = () => {
-  app.deleteElement(originActiveElement);
+  if (hasSelectedElements.value) {
+    originSelectedElements.forEach((element) => {
+      app.deleteElement(element);
+    });
+  } else {
+    app.deleteElement(originActiveElement);
+  }
 };
 
 // 复制元素
 const copyElement = () => {
-  app.copyElement(originActiveElement);
+  if (hasSelectedElements.value) {
+    originSelectedElements.forEach((element) => {
+      app.copyElement(element, true);
+    });
+  } else {
+    app.copyElement(originActiveElement);
+  }
 };
 
 // 放大
@@ -487,7 +520,7 @@ const setBackgroundColor = (value) => {
 // 滚动至底部
 const scrollToTop = () => {
   app.scrollToTop();
-}
+};
 
 // dom元素挂载完成
 onMounted(() => {
@@ -518,6 +551,11 @@ onMounted(() => {
       lineDash.value = style.lineDash;
       globalAlpha.value = style.globalAlpha;
     }
+  });
+  // 元素多选变化
+  app.on("multiSelectChange", (elements) => {
+    selectedElements.value = elements;
+    originSelectedElements = elements;
   });
   // 缩放变化
   app.on("zoomChange", (scale) => {

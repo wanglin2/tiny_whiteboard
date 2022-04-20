@@ -20,9 +20,7 @@ export default class Rectangle extends BaseElement {
       drawRect(this.app.ctx, -halfWidth, -halfHeight, width, height, true);
     });
     // 激活时显示拖拽框
-    if (this.isActive && !this.isCreating) {
-      this.dragElement.render();
-    }
+    this.renderDragElement();
   }
 
   // 检测是否被击中

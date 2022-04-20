@@ -60,6 +60,29 @@ export default class DragElement extends BaseElement {
     };
     // 元素的长宽比
     this.elementRatio = 0;
+    // 隐藏的部分
+    this.hideParts = [];
+  }
+
+  // 设置隐藏的部分
+  setHideParts(parts = []) {
+    this.hideParts = parts;
+  }
+
+  // 显示所有部分
+  showAll() {
+    this.setHideParts([]);
+  }
+
+  // 只显示主体部分
+  onlyShowBody() {
+    this.setHideParts([
+      DRAG_ELEMENT_PARTS.ROTATE,
+      DRAG_ELEMENT_PARTS.TOP_LEFT_BTN,
+      DRAG_ELEMENT_PARTS.TOP_RIGHT_BTN,
+      DRAG_ELEMENT_PARTS.BOTTOM_RIGHT_BTN,
+      DRAG_ELEMENT_PARTS.BOTTOM_LEFT_BTN,
+    ]);
   }
 
   // 更新数据
@@ -78,48 +101,60 @@ export default class DragElement extends BaseElement {
     this.warpRender(({ halfWidth, halfHeight }) => {
       // 主体
       this.app.ctx.save();
-      this.app.ctx.setLineDash([5]);
-      drawRect(this.app.ctx, -halfWidth, -halfHeight, width, height);
-      this.app.ctx.restore();
+      if (!this.hideParts.includes(DRAG_ELEMENT_PARTS.BODY)) {
+        this.app.ctx.setLineDash([5]);
+        drawRect(this.app.ctx, -halfWidth, -halfHeight, width, height);
+        this.app.ctx.restore();
+      }
       // 左上角
-      drawRect(
-        this.app.ctx,
-        -halfWidth - this.size,
-        -halfHeight - this.size,
-        this.size,
-        this.size
-      );
+      if (!this.hideParts.includes(DRAG_ELEMENT_PARTS.TOP_LEFT_BTN)) {
+        drawRect(
+          this.app.ctx,
+          -halfWidth - this.size,
+          -halfHeight - this.size,
+          this.size,
+          this.size
+        );
+      }
       // 右上角
-      drawRect(
-        this.app.ctx,
-        -halfWidth + this.element.width + this.size,
-        -halfHeight - this.size,
-        this.size,
-        this.size
-      );
+      if (!this.hideParts.includes(DRAG_ELEMENT_PARTS.TOP_RIGHT_BTN)) {
+        drawRect(
+          this.app.ctx,
+          -halfWidth + this.element.width + this.size,
+          -halfHeight - this.size,
+          this.size,
+          this.size
+        );
+      }
       // 右下角
-      drawRect(
-        this.app.ctx,
-        -halfWidth + this.element.width + this.size,
-        -halfHeight + this.element.height + this.size,
-        this.size,
-        this.size
-      );
+      if (!this.hideParts.includes(DRAG_ELEMENT_PARTS.BOTTOM_RIGHT_BTN)) {
+        drawRect(
+          this.app.ctx,
+          -halfWidth + this.element.width + this.size,
+          -halfHeight + this.element.height + this.size,
+          this.size,
+          this.size
+        );
+      }
       // 左下角
-      drawRect(
-        this.app.ctx,
-        -halfWidth - this.size,
-        -halfHeight + this.element.height + this.size,
-        this.size,
-        this.size
-      );
+      if (!this.hideParts.includes(DRAG_ELEMENT_PARTS.BOTTOM_LEFT_BTN)) {
+        drawRect(
+          this.app.ctx,
+          -halfWidth - this.size,
+          -halfHeight + this.element.height + this.size,
+          this.size,
+          this.size
+        );
+      }
       // 旋转按钮
-      drawCircle(
-        this.app.ctx,
-        -halfWidth + this.element.width / 2 + this.size / 2,
-        -halfHeight - this.size * 2,
-        this.size
-      );
+      if (!this.hideParts.includes(DRAG_ELEMENT_PARTS.ROTATE)) {
+        drawCircle(
+          this.app.ctx,
+          -halfWidth + this.element.width / 2 + this.size / 2,
+          -halfHeight - this.size * 2,
+          this.size
+        );
+      }
     });
   }
 
@@ -153,6 +188,9 @@ export default class DragElement extends BaseElement {
     } else if (this._checkPointIsInBtn(rp.x, rp.y, CORNERS.BOTTOM_LEFT)) {
       // 在左下角伸缩手柄
       part = DRAG_ELEMENT_PARTS.BOTTOM_LEFT_BTN;
+    }
+    if (this.hideParts.includes(part)) {
+      part = "";
     }
     return part;
   }

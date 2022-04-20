@@ -37,9 +37,7 @@ export default class Arrow extends BaseMultiPointElement {
       );
     });
     // 激活时显示拖拽框
-    if (this.isActive && !this.isCreating) {
-      this.dragElement.render();
-    }
+    this.renderDragElement();
   }
 
   // 检测是否被击中
