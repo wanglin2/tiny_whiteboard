@@ -341,3 +341,55 @@ export const downloadFile = (file, fileName) => {
   a.download = fileName;
   a.click();
 };
+
+// 获取元素的四个角的坐标，应用了旋转之后的
+export const getElementCorners = (element) => {
+  // 左上角
+  let topLeft = getElementRotatedCornerPoint(element, "topLeft")
+  // 右上角
+  let topRight = getElementRotatedCornerPoint(element, "topRight");
+  // 左下角
+  let bottomLeft = getElementRotatedCornerPoint(element, "bottomLeft");
+  // 右下角
+  let bottomRight = getElementRotatedCornerPoint(element, "bottomRight");
+  return [topLeft, topRight, bottomLeft, bottomRight];
+}
+
+// 获取多个元素的最外层包围框信息
+export const getMultiElementRectInfo = (elementList = []) => {
+  if (elementList.length <= 0) {
+    return {
+      minx: 0,
+      maxx: 0,
+      miny: 0,
+      maxy: 0,
+    };
+  }
+  let minx = Infinity;
+  let maxx = -Infinity;
+  let miny = Infinity;
+  let maxy = -Infinity;
+  elementList.forEach((element) => {
+    let pointList = getElementCorners(element);
+    pointList.forEach(({ x, y }) => {
+      if (x < minx) {
+        minx = x;
+      }
+      if (x > maxx) {
+        maxx = x;
+      }
+      if (y < miny) {
+        miny = y;
+      }
+      if (y > maxy) {
+        maxy = y;
+      }
+    });
+  });
+  return {
+    minx,
+    maxx,
+    miny,
+    maxy,
+  };
+}

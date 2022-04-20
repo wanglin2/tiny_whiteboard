@@ -24,7 +24,17 @@ export default class Coordinate {
     };
   }
 
-  // 综合转换
+  // 画布转换转屏幕坐标
+  transformToScreenCoordinate(x, y) {
+    x += this.app.width / 2;
+    y += this.app.height / 2;
+    return {
+      x,
+      y,
+    };
+  }
+
+  // 综合转换，屏幕坐标转画布坐标，再减去滚动值
   transform(x, y) {
     let t = this.transformToCanvasCoordinate(x, y);
     return {
@@ -51,27 +61,25 @@ export default class Coordinate {
 
   // 屏幕坐标在应用画布缩放后的位置
   scale(x, y) {
-    let { state, width, height } = this.app;
+    let { state } = this.app;
     // 屏幕坐标转画布坐标
     let wp = this.transformToCanvasCoordinate(x, y);
-    let _x = wp.x * state.scale + width / 2;
-    let _y = wp.y * state.scale + height / 2;
+    let sp = this.transformToScreenCoordinate(wp.x * state.scale, wp.y * state.scale);
     return {
-      x: _x,
-      y: _y,
+      x: sp.x,
+      y: sp.y,
     };
   }
 
   // 屏幕坐标在反向应用画布缩放后的位置
   reverseScale(x, y) {
-    let { state, width, height } = this.app;
+    let { state } = this.app;
     // 屏幕坐标转画布坐标
     let tp = this.transformToCanvasCoordinate(x, y);
-    let _x = tp.x / state.scale + width / 2;
-    let _y = tp.y / state.scale + height / 2;
+    let sp = this.transformToScreenCoordinate(tp.x / state.scale, tp.y / state.scale);
     return {
-      x: _x,
-      y: _y,
+      x: sp.x,
+      y: sp.y,
     };
   }
 }

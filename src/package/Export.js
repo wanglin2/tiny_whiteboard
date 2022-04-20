@@ -3,6 +3,7 @@ import {
   getElementCornerPoint,
   getElementCenterPoint,
   createCanvas,
+  getMultiElementRectInfo
 } from "./utils";
 
 // 导入导出
@@ -17,63 +18,6 @@ export default class Export {
       scrollY: 0,
       width: 0,
       height: 0,
-    };
-  }
-
-  // 坐标转换
-  transformPoint(x, y, element) {
-    let center = getElementCenterPoint(element);
-    // 旋转
-    let rp = getRotatedPoint(x, y, center.x, center.y, element.rotate);
-    return rp;
-  }
-
-  // 获取元素的四个角的坐标
-  getElementCorners(element) {
-    // 左上角
-    let topLeft = getElementCornerPoint(element, "topLeft");
-    topLeft = this.transformPoint(topLeft.x, topLeft.y, element);
-    // 右上角
-    let topRight = getElementCornerPoint(element, "topRight");
-    topRight = this.transformPoint(topRight.x, topRight.y, element);
-    // 左下角
-    let bottomLeft = getElementCornerPoint(element, "bottomLeft");
-    bottomLeft = this.transformPoint(bottomLeft.x, bottomLeft.y, element);
-    // 右下角
-    let bottomRight = getElementCornerPoint(element, "bottomRight");
-    bottomRight = this.transformPoint(bottomRight.x, bottomRight.y, element);
-    return [topLeft, topRight, bottomLeft, bottomRight];
-  }
-
-  // 获取所有元素的包围框
-  getAllElementsBoundingRect() {
-    let elements = this.app.render.elementList;
-    let minx = Infinity;
-    let maxx = -Infinity;
-    let miny = Infinity;
-    let maxy = -Infinity;
-    elements.forEach((element) => {
-      let pointList = this.getElementCorners(element);
-      pointList.forEach(({ x, y }) => {
-        if (x < minx) {
-          minx = x;
-        }
-        if (x > maxx) {
-          maxx = x;
-        }
-        if (y < miny) {
-          miny = y;
-        }
-        if (y > maxy) {
-          maxy = y;
-        }
-      });
-    });
-    return {
-      minx,
-      maxx,
-      miny,
-      maxy,
     };
   }
 
@@ -99,7 +43,7 @@ export default class Export {
     paddingY = 10,
   } = {}) {
     // 计算所有元素的外包围框
-    let { minx, maxx, miny, maxy } = this.getAllElementsBoundingRect();
+    let { minx, maxx, miny, maxy } = getMultiElementRectInfo(this.app.render.elementList);
     let width = maxx - minx + paddingX * 2;
     let height = maxy - miny + paddingY * 2;
     // 创建导出canvas

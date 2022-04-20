@@ -10,6 +10,8 @@ export default class BaseElement {
     this.isCreating = true;
     // 是否被激活
     this.isActive = true;
+    // 是否被多选选中
+    this.isSelected = false;
     // 记录初始位置，用于拖动时
     this.startX = 0;
     this.startY = 0;
