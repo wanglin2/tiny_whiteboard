@@ -6,13 +6,15 @@ export default class Grid {
     this.app = app;
     this.canvas = null;
     this.ctx = null;
-    this.state = this.app.state;
     this.width = this.app.width;
     this.height = this.app.height;
 
     this.init();
+    this.app.on("zoomChange", this.showGrid, this);
+    this.app.on("scrollChange", this.showGrid, this);
   }
 
+  // 初始化
   init() {
     this.canvas = new Canvas(this.width, this.height, {
       className: "grid",
@@ -24,19 +26,45 @@ export default class Grid {
     );
   }
 
+  // 绘制水平线
+  renderHorizontalLine(i) {
+    let _i = this.app.coordinate.subScrollY(i);
+    this.ctx.beginPath();
+    this.ctx.moveTo(-this.width / 2, _i);
+    this.ctx.lineTo(this.width / 2, _i);
+    this.ctx.stroke();
+  }
+
   // 显示网格
   showGrid() {
-    let { gridConfig } = this.state;
+    this.canvas.clearCanvas();
+    let { gridConfig, scale } = this.app.state;
     this.ctx.save();
+    this.ctx.scale(scale, scale);
     this.ctx.strokeStyle = gridConfig.strokeStyle;
     this.ctx.lineWidth = gridConfig.lineWidth;
+
     // 水平
     for (let i = -this.height / 2; i < this.height / 2; i += gridConfig.size) {
-      this.ctx.beginPath();
-      this.ctx.moveTo(-this.width / 2, i);
-      this.ctx.lineTo(this.width / 2, i);
-      this.ctx.stroke();
+      this.renderHorizontalLine(i);
     }
+    // 向下滚时绘制上方超出的线
+    for (
+      let i = -this.height / 2;
+      i > -this.app.coordinate.subScrollY(this.height / 2);
+      i -= gridConfig.size
+    ) {
+      this.renderHorizontalLine(i);
+    }
+    // 向上滚时绘制下方超出的线
+    for (
+      let i = this.height / 2;
+      i < this.app.coordinate.addScrollY(this.height / 2);
+      i += gridConfig.size
+    ) {
+      this.renderHorizontalLine(i);
+    }
+
     // 垂直
     for (let i = -this.width / 2; i < this.width / 2; i += gridConfig.size) {
       this.ctx.beginPath();
@@ -66,7 +94,6 @@ export default class Grid {
         ...config,
       },
     });
-    this.state = this.app.state;
     if (this.app.state.showGrid) {
       this.hideGrid();
       this.showGrid();

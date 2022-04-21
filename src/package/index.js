@@ -16,6 +16,7 @@ import Export from "./Export";
 import Background from "./Background";
 import Selection from "./Selection";
 import Grid from "./Grid";
+import Mode from "./Mode";
 import { DRAG_ELEMENT_PARTS } from "./constants";
 
 // 主类
@@ -49,8 +50,10 @@ export default class TinyWhiteboard extends EventEmitter {
     this.state = {
       scale: 1, // 缩放
       scrollY: 0, // 垂直方向的滚动偏移量
+      scrollStep: 50, // 滚动步长
       backgroundColor: "", // 背景颜色
       showGrid: false, // 是否显示网格
+      readonly: false, // 是否是只读模式
       gridConfig: {
         size: 20, // 网格大小
         strokeStyle: "#dfe0e1", // 网格线条颜色
@@ -86,8 +89,10 @@ export default class TinyWhiteboard extends EventEmitter {
     this.background = new Background(this);
     // 多选类
     this.selection = new Selection(this);
-    // 网格
+    // 网格类
     this.grid = new Grid(this);
+    // 模式类
+    this.mode = new Mode(this);
     // 实例化渲染类
     this.render = new Render(this);
 
@@ -96,10 +101,7 @@ export default class TinyWhiteboard extends EventEmitter {
     this.checkIsOnElement = throttle(this.checkIsOnElement, this);
 
     this.emitChange();
-    this.background.set();
-    if (this.state.showGrid) {
-      this.grid.showGrid();
-    }
+    this.helpUpdate();
   }
 
   // 代理各个类的方法到实例上
@@ -124,6 +126,10 @@ export default class TinyWhiteboard extends EventEmitter {
     ["showGrid", "hideGrid", "updateGrid"].forEach((method) => {
       this[method] = this.grid[method].bind(this.grid);
     });
+    // 模式类
+    ["setEditMode", "setReadonlyMode"].forEach((method) => {
+      this[method] = this.mode[method].bind(this.mode);
+    });
   }
 
   // 获取容器尺寸位置信息
@@ -135,6 +141,17 @@ export default class TinyWhiteboard extends EventEmitter {
     this.top = top;
   }
 
+  // 必要的重新渲染
+  helpUpdate() {
+    this.background.set();
+    if (this.state.showGrid) {
+      this.grid.showGrid();
+    }
+    if (this.state.readonly) {
+      this.setReadonlyMode();
+    }
+  }
+
   // 设置数据，包括状态数据及元素数据
   async setData({ state = {}, elements = [] }, noEmitChange) {
     this.state = state;
@@ -143,10 +160,7 @@ export default class TinyWhiteboard extends EventEmitter {
         elements[i].imageObj = await this.createImageObj(elements[i].url);
       }
     }
-    this.background.set();
-    if (this.state.showGrid) {
-      this.grid.showGrid();
-    }
+    this.helpUpdate();
     this.render.deleteAllElements().setElements(elements).render();
     if (!noEmitChange) {
       this.emitChange();
@@ -341,12 +355,19 @@ export default class TinyWhiteboard extends EventEmitter {
   onMousedown(e, event) {
     let mx = event.mousedownPos.x;
     let my = event.mousedownPos.y;
+    if (this.state.readonly) {
+      return;
+    }
     if (!this.render.isCreatingElement && !this.textEdit.isEditing) {
       // 是否击中了某个元素
       let hitElement = this.render.checkIsHitElement(e);
       // 当前存在激活元素
       if (this.render.hasActiveElements()) {
-        let isResizing = this.render.checkIsResize(mx, my, e);
+        let isResizing = this.render.checkIsResize(
+          event.mousedownPos.unGridClientX,
+          event.mousedownPos.unGridClientY,
+          e
+        );
         // 不在调整元素中
         if (!isResizing) {
           this.render.setActiveElements(hitElement).render();
@@ -355,7 +376,11 @@ export default class TinyWhiteboard extends EventEmitter {
         // 当前没有激活元素
         if (this.selection.hasSelection) {
           // 当前存在多选元素
-          let isResizing = this.selection.checkIsResize(mx, my, e);
+          let isResizing = this.selection.checkIsResize(
+            event.mousedownPos.unGridClientX,
+            event.mousedownPos.unGridClientY,
+            e
+          );
           // 不在调整元素中
           if (!isResizing) {
             this.selection.reset();
@@ -379,6 +404,12 @@ export default class TinyWhiteboard extends EventEmitter {
 
   // 鼠标移动事件
   onMousemove(e, event) {
+    if (this.state.readonly) {
+      if (event.isMousedown) {
+        // this.mode.onMove(event.mouseOffset.x, event.mouseOffset.y);
+      }
+      return;
+    }
     // 鼠标按下状态
     if (event.isMousedown) {
       let mx = event.mousedownPos.x;
@@ -446,7 +477,10 @@ export default class TinyWhiteboard extends EventEmitter {
           // 检测是否划过激活元素的各个收缩手柄
           let handData = "";
           if (
-            (handData = this.render.checkInResizeHand(e.clientX, e.clientY))
+            (handData = this.render.checkInResizeHand(
+              e.unGridClientX,
+              e.unGridClientY
+            ))
           ) {
             this.cursor.setResize(handData.hand);
           } else {
@@ -454,7 +488,10 @@ export default class TinyWhiteboard extends EventEmitter {
           }
         } else if (this.selection.hasSelection) {
           // 多选中检测是否可进行调整元素
-          let hand = this.selection.checkInResizeHand(e.clientX, e.clientY);
+          let hand = this.selection.checkInResizeHand(
+            e.unGridClientX,
+            e.unGridClientY
+          );
           if (hand) {
             this.cursor.setResize(hand);
           } else {
@@ -497,6 +534,10 @@ export default class TinyWhiteboard extends EventEmitter {
 
   // 鼠标松开事件
   onMouseup(e) {
+    if (this.state.readonly) {
+      // this.mode.onEnd();
+      return;
+    }
     if (this.drawType === "text") {
       // 文字编辑模式
       if (!this.textEdit.isEditing) {
@@ -581,7 +622,8 @@ export default class TinyWhiteboard extends EventEmitter {
 
   // 鼠标滚动事件
   onMousewheel(dir) {
-    let step = dir === "down" ? 50 : -50;
+    let stepNum = this.state.scrollStep * this.state.scale;
+    let step = dir === "down" ? stepNum : -stepNum;
     this.scrollTo(this.state.scrollY + step);
   }
 

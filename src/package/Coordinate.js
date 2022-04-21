@@ -64,7 +64,10 @@ export default class Coordinate {
     let { state } = this.app;
     // 屏幕坐标转画布坐标
     let wp = this.transformToCanvasCoordinate(x, y);
-    let sp = this.transformToScreenCoordinate(wp.x * state.scale, wp.y * state.scale);
+    let sp = this.transformToScreenCoordinate(
+      wp.x * state.scale,
+      wp.y * state.scale
+    );
     return {
       x: sp.x,
       y: sp.y,
@@ -76,10 +79,29 @@ export default class Coordinate {
     let { state } = this.app;
     // 屏幕坐标转画布坐标
     let tp = this.transformToCanvasCoordinate(x, y);
-    let sp = this.transformToScreenCoordinate(tp.x / state.scale, tp.y / state.scale);
+    let sp = this.transformToScreenCoordinate(
+      tp.x / state.scale,
+      tp.y / state.scale
+    );
     return {
       x: sp.x,
       y: sp.y,
+    };
+  }
+
+  // 网格吸附
+  gridAdsorbent(x, y) {
+    let { gridConfig, showGrid } = this.app.state;
+    if (!showGrid) {
+      return {
+        x,
+        y,
+      };
+    }
+    let gridSize = gridConfig.size;
+    return {
+      x: x - (x % gridSize),
+      y: y - (y % gridSize),
     };
   }
 }
