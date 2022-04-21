@@ -16,11 +16,15 @@ export default class Event extends EventEmitter {
       y: 0,
       unGridClientX: 0,
       unGridClientY: 0,
+      originClientX: 0,
+      originClientY: 0
     };
     // 鼠标当前位置和按下时位置的差值
     this.mouseOffset = {
       x: 0,
       y: 0,
+      originX: 0,
+      originY: 0
     };
     // 记录上一时刻的鼠标位置
     this.lastMousePos = {
@@ -73,6 +77,8 @@ export default class Event extends EventEmitter {
     let wp = coordinate.windowToContainer(e.clientX, e.clientY);
     // 元素缩放是*scale，所以视觉上我们点击到了元素，但是实际上元素的位置还是原来的x,y，所以鼠标的坐标需要/scale
     let { x, y } = coordinate.reverseScale(wp.x, wp.y);
+    // 加上滚动偏移
+    x = coordinate.addScrollX(x);
     y = coordinate.addScrollY(y);
     // 保存未吸附到网格的坐标，用于位置检测等不需要吸附的场景
     let unGridClientX = x;
@@ -97,6 +103,8 @@ export default class Event extends EventEmitter {
     this.mousedownPos.y = e.clientY;
     this.mousedownPos.unGridClientX = e.unGridClientX;
     this.mousedownPos.unGridClientY = e.unGridClientY;
+    this.mousedownPos.originClientX = e.originEvent.clientX;
+    this.mousedownPos.originClientY = e.originEvent.clientY;
     this.emit("mousedown", e, this);
   }
 
@@ -109,6 +117,8 @@ export default class Event extends EventEmitter {
     if (this.isMousedown) {
       this.mouseOffset.x = x - this.mousedownPos.x;
       this.mouseOffset.y = y - this.mousedownPos.y;
+      this.mouseOffset.originX = e.originEvent.clientX - this.mousedownPos.originClientX;
+      this.mouseOffset.originY = e.originEvent.clientY - this.mousedownPos.originClientY;
     }
     let curTime = Date.now();
     // 距离上一次的时间

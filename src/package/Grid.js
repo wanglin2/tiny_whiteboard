@@ -27,12 +27,69 @@ export default class Grid {
   }
 
   // 绘制水平线
-  renderHorizontalLine(i) {
+  drawHorizontalLine(i, width, height) {
     let _i = this.app.coordinate.subScrollY(i);
     this.ctx.beginPath();
-    this.ctx.moveTo(-this.width / 2, _i);
-    this.ctx.lineTo(this.width / 2, _i);
+    this.ctx.moveTo(-width / 2, _i);
+    this.ctx.lineTo(width / 2, _i);
     this.ctx.stroke();
+  }
+
+  // 渲染水平线
+  renderHorizontalLines(width, height) {
+    let { gridConfig } = this.app.state;
+    for (let i = -height / 2; i < height / 2; i += gridConfig.size) {
+      this.drawHorizontalLine(i, width, height);
+    }
+    // 向下滚时绘制上方超出的线
+    for (
+      let i = -height / 2 - gridConfig.size;
+      i > -this.app.coordinate.subScrollY(height / 2);
+      i -= gridConfig.size
+    ) {
+      this.drawHorizontalLine(i, width, height);
+    }
+    // 向上滚时绘制下方超出的线
+    for (
+      let i = height / 2 + gridConfig.size;
+      i < this.app.coordinate.addScrollY(height / 2);
+      i += gridConfig.size
+    ) {
+      this.drawHorizontalLine(i, width, height);
+    }
+  }
+
+  // 绘制重置线
+  drawVerticalLine(i, width, height) {
+    let _i = this.app.coordinate.subScrollX(i);
+    this.ctx.beginPath();
+    this.ctx.moveTo(_i, -height / 2);
+    this.ctx.lineTo(_i, height / 2);
+    this.ctx.stroke();
+  }
+
+  // 渲染垂直线
+  renderVerticalLines(width, height) {
+    let { gridConfig } = this.app.state;
+    for (let i = -width / 2; i < width / 2; i += gridConfig.size) {
+      this.drawVerticalLine(i, width, height);
+    }
+    // 向右滚时绘制右方超出的线
+    for (
+      let i = -width / 2 - gridConfig.size;
+      i > -this.app.coordinate.subScrollX(width / 2);
+      i -= gridConfig.size
+    ) {
+      this.drawVerticalLine(i, width, height);
+    }
+    // 向左滚时绘制左方超出的线
+    for (
+      let i = width / 2 + gridConfig.size;
+      i < this.app.coordinate.addScrollX(width / 2);
+      i += gridConfig.size
+    ) {
+      this.drawVerticalLine(i, width, height);
+    }
   }
 
   // 渲染网格
@@ -46,35 +103,15 @@ export default class Grid {
     this.ctx.scale(scale, scale);
     this.ctx.strokeStyle = gridConfig.strokeStyle;
     this.ctx.lineWidth = gridConfig.lineWidth;
+    let width = this.width / this.app.state.scale;
+    let height = this.height / this.app.state.scale;
 
     // 水平
-    for (let i = -this.height / 2; i < this.height / 2; i += gridConfig.size) {
-      this.renderHorizontalLine(i);
-    }
-    // 向下滚时绘制上方超出的线
-    for (
-      let i = -this.height / 2;
-      i > -this.app.coordinate.subScrollY(this.height / 2);
-      i -= gridConfig.size
-    ) {
-      this.renderHorizontalLine(i);
-    }
-    // 向上滚时绘制下方超出的线
-    for (
-      let i = this.height / 2;
-      i < this.app.coordinate.addScrollY(this.height / 2);
-      i += gridConfig.size
-    ) {
-      this.renderHorizontalLine(i);
-    }
+    this.renderHorizontalLines(width, height);
 
     // 垂直
-    for (let i = -this.width / 2; i < this.width / 2; i += gridConfig.size) {
-      this.ctx.beginPath();
-      this.ctx.moveTo(i, -this.height / 2);
-      this.ctx.lineTo(i, this.height / 2);
-      this.ctx.stroke();
-    }
+    this.renderVerticalLines(width, height);
+
     this.ctx.restore();
   }
 

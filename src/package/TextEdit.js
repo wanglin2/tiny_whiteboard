@@ -47,6 +47,7 @@ export default class TextEdit extends EventEmitter {
     let { x, y, width, height, style, text, rotate } = activeElement;
     let { coordinate, state } = this.app;
     this.editable.value = text;
+    x = coordinate.subScrollY(x);
     y = coordinate.subScrollY(y);
     // 屏幕坐标转画布坐标
     let sp = coordinate.scale(x, y);
