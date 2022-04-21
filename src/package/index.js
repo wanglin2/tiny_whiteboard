@@ -15,6 +15,7 @@ import History from "./History";
 import Export from "./Export";
 import Background from "./Background";
 import Selection from "./Selection";
+import Grid from "./Grid";
 import { DRAG_ELEMENT_PARTS } from "./constants";
 
 // 主类
@@ -49,6 +50,12 @@ export default class TinyWhiteboard extends EventEmitter {
       scale: 1, // 缩放
       scrollY: 0, // 垂直方向的滚动偏移量
       backgroundColor: "", // 背景颜色
+      showGrid: false, // 是否显示网格
+      gridConfig: {
+        size: 20, // 网格大小
+        strokeStyle: "#dfe0e1", // 网格线条颜色
+        lineWidth: 1, // 网格线条宽度
+      },
       ...(opts.state || {}),
     };
 
@@ -79,6 +86,8 @@ export default class TinyWhiteboard extends EventEmitter {
     this.background = new Background(this);
     // 多选类
     this.selection = new Selection(this);
+    // 网格
+    this.grid = new Grid(this);
     // 实例化渲染类
     this.render = new Render(this);
 
@@ -88,6 +97,9 @@ export default class TinyWhiteboard extends EventEmitter {
 
     this.emitChange();
     this.background.set();
+    if (this.state.showGrid) {
+      this.grid.showGrid();
+    }
   }
 
   // 代理各个类的方法到实例上
@@ -107,6 +119,10 @@ export default class TinyWhiteboard extends EventEmitter {
     // 多选类
     ["setSelectedElementStyle"].forEach((method) => {
       this[method] = this.selection[method].bind(this.selection);
+    });
+    // 网格类
+    ["showGrid", "hideGrid", "updateGrid"].forEach((method) => {
+      this[method] = this.grid[method].bind(this.grid);
     });
   }
 
@@ -128,6 +144,9 @@ export default class TinyWhiteboard extends EventEmitter {
       }
     }
     this.background.set();
+    if (this.state.showGrid) {
+      this.grid.showGrid();
+    }
     this.render.deleteAllElements().setElements(elements).render();
     if (!noEmitChange) {
       this.emitChange();
@@ -137,7 +156,9 @@ export default class TinyWhiteboard extends EventEmitter {
   // 初始化画布
   initCanvas() {
     // 创建canvas元素
-    let { canvas, ctx } = createCanvas(this.width, this.height);
+    let { canvas, ctx } = createCanvas(this.width, this.height, {
+      className: "main",
+    });
     this.canvas = canvas;
     this.ctx = ctx;
     this.container.appendChild(this.canvas);
