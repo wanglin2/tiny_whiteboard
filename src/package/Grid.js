@@ -38,7 +38,10 @@ export default class Grid {
   // 显示网格
   showGrid() {
     this.canvas.clearCanvas();
-    let { gridConfig, scale } = this.app.state;
+    let { gridConfig, scale, showGrid } = this.app.state;
+    if (!showGrid) {
+      return;
+    }
     this.ctx.save();
     this.ctx.scale(scale, scale);
     this.ctx.strokeStyle = gridConfig.strokeStyle;
