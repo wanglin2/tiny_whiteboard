@@ -1,4 +1,4 @@
-import { getBoundingRect, deepCopy } from "../utils";
+import { getBoundingRect, deepCopy, getRotatedPoint } from "../utils";
 import BaseElement from "./BaseElement";
 
 // 基础多个点的组件的元素类
@@ -21,10 +21,10 @@ export default class BaseMultiPointElement extends BaseElement {
 
   // 序列化
   serialize() {
-    let base = super.serialize()
+    let base = super.serialize();
     return {
       ...base,
-      pointArr: [...this.pointArr]
+      pointArr: [...this.pointArr],
     };
   }
 
@@ -98,5 +98,14 @@ export default class BaseMultiPointElement extends BaseElement {
     this.updatePos(x, y);
     this.updateSize(width, height);
     return this;
+  }
+
+  // 根据指定中心点旋转元素的各个点
+  rotateByCenter(rotate, cx, cy) {
+    this.pointArr = this.startPointArr.map((point) => {
+      let np = getRotatedPoint(point[0], point[1], cx, cy, rotate);
+      return [np.x, np.y, ...point.slice(2)];
+    });
+    this.updateMultiPointBoundingRect();
   }
 }
