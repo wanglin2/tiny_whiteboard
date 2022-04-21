@@ -405,9 +405,6 @@ export default class TinyWhiteboard extends EventEmitter {
   // 鼠标移动事件
   onMousemove(e, event) {
     if (this.state.readonly) {
-      if (event.isMousedown) {
-        // this.mode.onMove(event.mouseOffset.x, event.mouseOffset.y);
-      }
       return;
     }
     // 鼠标按下状态
@@ -535,7 +532,6 @@ export default class TinyWhiteboard extends EventEmitter {
   // 鼠标松开事件
   onMouseup(e) {
     if (this.state.readonly) {
-      // this.mode.onEnd();
       return;
     }
     if (this.drawType === "text") {
