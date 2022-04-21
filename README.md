@@ -22,13 +22,61 @@
 
 - [x] 支持多选
 
-- [x] 显示网格
+- [x] 支持网格模式
+
+- [x] 支持只读模式，只读模式支持随意拖拽
+
+- [ ] 小地图
 
 - [ ] 支持快捷键
 
 - [ ] 优化：非激活元素绘制到另一个canvas上
 
 - [ ] 优化：超出视口的元素不进行绘制
+
+# 目录简介
+
+1.tiny-whiteboard
+
+在线白板工具库。
+
+2.app
+
+使用tiny-whiteboard工具库，基于vue3.x、ElementPlus搭建的在线demo。
+
+# 本地开发
+
+开发
+
+```bash
+git clone https://github.com/wanglin2/tiny_whiteboard.git
+cd tiny_whiteboard
+cd tiny-whiteboard
+npm i
+npm link
+cd ..
+cd app
+npm i
+npm link tiny-whiteboard
+npm run dev
+```
+
+打包
+
+```bash
+cd app
+npm run build
+```
+
+# 安装
+
+```bash
+npm i tiny-whiteboard
+```
+
+# 使用
+
+
 
 # 坐标转换相关
 
@@ -45,3 +93,6 @@
 5.当元素旋转后，元素的大小和位置的值是没有变化的，只是通过rotate值进行了旋转，所以当通过鼠标位置检测元素时，鼠标的位置需要以元素的中心为旋转中心，反向进行旋转，然后再进行计算。
 
 6.当开启网格时，坐标会和网格对齐，也就是坐标需要对网格的大小取余，然后减去该余数。
+
+# 文档
+

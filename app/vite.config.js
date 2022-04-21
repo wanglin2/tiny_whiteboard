@@ -16,4 +16,10 @@ export default defineConfig({
       resolvers: [ElementPlusResolver()],
     }),
   ],
+  server: {
+    fs: {
+      // 可以为项目根目录的上一级提供服务
+      allow: ['..']
+    }
+  }
 });
