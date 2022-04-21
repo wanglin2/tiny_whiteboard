@@ -631,7 +631,7 @@ export default class TinyWhiteboard extends EventEmitter {
 
   // 鼠标滚动事件
   onMousewheel(dir) {
-    let stepNum = this.state.scrollStep * this.state.scale;
+    let stepNum = this.state.scrollStep / this.state.scale;
     let step = dir === "down" ? stepNum : -stepNum;
     this.scrollTo(this.state.scrollX, this.state.scrollY + step);
   }
