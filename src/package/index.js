@@ -49,6 +49,7 @@ export default class TinyWhiteboard extends EventEmitter {
     // 画布状态
     this.state = {
       scale: 1, // 缩放
+      scrollX: 0, // 水平方向的滚动偏移量
       scrollY: 0, // 垂直方向的滚动偏移量
       scrollStep: 50, // 滚动步长
       backgroundColor: "", // 背景颜色
@@ -332,18 +333,26 @@ export default class TinyWhiteboard extends EventEmitter {
   }
 
   // 滚动至指定位置
-  scrollTo(scrollY) {
+  scrollTo(scrollX, scrollY) {
     this.updateState({
+      scrollX,
       scrollY,
     });
     this.render.render();
-    this.emit("scrollChange", this.state.scrollY);
+    this.emit("scrollChange", this.state.scrollX, this.state.scrollY);
   }
 
-  // 滚动至顶部，即回到最上方的元素
-  scrollToTop() {
-    let { miny } = getMultiElementRectInfo(this.render.elementList);
-    this.scrollTo(miny);
+  // 滚动至中心，即回到所有元素的中心位置
+  scrollToCenter() {
+    let { minx, maxx, miny, maxy } = getMultiElementRectInfo(
+      this.render.elementList
+    );
+    let width = maxx - minx;
+    let height = maxy - miny;
+    this.scrollTo(
+      minx - (this.width - width) / 2,
+      miny - (this.height - height) / 2
+    );
   }
 
   // 图片选择事件
@@ -353,9 +362,9 @@ export default class TinyWhiteboard extends EventEmitter {
 
   // 鼠标按下事件
   onMousedown(e, event) {
-    let mx = event.mousedownPos.x;
-    let my = event.mousedownPos.y;
     if (this.state.readonly) {
+      // 只读模式下即将进行整体拖动
+      this.mode.onStart();
       return;
     }
     if (!this.render.isCreatingElement && !this.textEdit.isEditing) {
@@ -405,6 +414,10 @@ export default class TinyWhiteboard extends EventEmitter {
   // 鼠标移动事件
   onMousemove(e, event) {
     if (this.state.readonly) {
+      if (event.isMousedown) {
+        // 只读模式下进行整体拖动
+        this.mode.onMove(e, event);
+      }
       return;
     }
     // 鼠标按下状态
@@ -620,7 +633,7 @@ export default class TinyWhiteboard extends EventEmitter {
   onMousewheel(dir) {
     let stepNum = this.state.scrollStep * this.state.scale;
     let step = dir === "down" ? stepNum : -stepNum;
-    this.scrollTo(this.state.scrollY + step);
+    this.scrollTo(this.state.scrollX, this.state.scrollY + step);
   }
 
   // 触发更新事件

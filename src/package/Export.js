@@ -1,10 +1,4 @@
-import {
-  getRotatedPoint,
-  getElementCornerPoint,
-  getElementCenterPoint,
-  createCanvas,
-  getMultiElementRectInfo
-} from "./utils";
+import { createCanvas, getMultiElementRectInfo } from "./utils";
 
 // 导入导出
 export default class Export {
@@ -15,6 +9,7 @@ export default class Export {
     // 数据保存
     this.saveState = {
       scale: 0,
+      scrollX: 0,
       scrollY: 0,
       width: 0,
       height: 0,
@@ -43,7 +38,9 @@ export default class Export {
     paddingY = 10,
   } = {}) {
     // 计算所有元素的外包围框
-    let { minx, maxx, miny, maxy } = getMultiElementRectInfo(this.app.render.elementList);
+    let { minx, maxx, miny, maxy } = getMultiElementRectInfo(
+      this.app.render.elementList
+    );
     let width = maxx - minx + paddingX * 2;
     let height = maxy - miny + paddingY * 2;
     // 创建导出canvas
@@ -88,6 +85,7 @@ export default class Export {
     this.saveState.width = width;
     this.saveState.height = height;
     this.saveState.scale = state.scale;
+    this.saveState.scrollX = state.scrollX;
     this.saveState.scrollY = state.scrollY;
     this.saveState.ctx = ctx;
   }
@@ -96,6 +94,7 @@ export default class Export {
   changeAppState(minx, miny, ctx) {
     this.app.ctx = ctx;
     this.app.state.scale = 1;
+    this.app.state.scrollX = 0;
     this.app.state.scrollY = 0;
     // 这里为什么要这么修改呢，原因是要把元素的坐标转换成当前导出画布的坐标，当前导出画布的坐标在左上角，比如一个元素的左上角原始坐标为(100,100),假设刚好minx和miny也是100，那么相当于元素的这个坐标要绘制到导出画布时的坐标应为(0,0)，所以元素绘制到导出画布的坐标均需要减去minx,miny，而元素在绘制时都会调用this.app.coordinate.transform方法进行转换，这个方法里使用的是this.app.width和this.app.height，所以方便起见直接修改这两个属性。
     this.app.width = minx * 2;
@@ -104,8 +103,9 @@ export default class Export {
 
   // 恢复app类状态数据
   recoveryAppState() {
-    let { width, height, scale, scrollY, ctx } = this.saveState;
+    let { width, height, scale, scrollX, scrollY, ctx } = this.saveState;
     this.app.state.scale = scale;
+    this.app.state.scrollX = scrollX;
     this.app.state.scrollY = scrollY;
     this.app.width = width;
     this.app.height = height;

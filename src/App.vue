@@ -179,12 +179,10 @@
       </div>
       <!-- 滚动 -->
       <div class="blockBox">
-        <el-tooltip effect="light" content="滚动至顶部" placement="top">
-          <el-button
-            :icon="scrollY > 0 ? CaretTop : scrollY < 0 ? CaretBottom : Minus"
-            @click="scrollToTop"
-            >{{ scrollY }}</el-button
-          >
+        <el-tooltip effect="light" content="滚动至中心" placement="top">
+          <el-button @click="scrollToCenter"
+            >X:{{ scroll.x }} Y:{{ scroll.y }}
+          </el-button>
         </el-tooltip>
       </div>
       <!-- 橡皮擦、显示网格、清空 -->
@@ -336,7 +334,15 @@
 </template>
 
 <script setup>
-import { onMounted, ref, watch, toRaw, nextTick, computed } from "vue";
+import {
+  onMounted,
+  ref,
+  watch,
+  toRaw,
+  nextTick,
+  computed,
+  reactive,
+} from "vue";
 import TinyWhiteboard from "./package";
 import { downloadFile } from "./package/utils";
 import ColorPicker from "./components/ColorPicker.vue";
@@ -401,7 +407,10 @@ const jsonPreviewBox = ref(null);
 // 背景颜色
 const backgroundColor = ref("");
 // 当前滚动距离
-const scrollY = ref(0);
+const scroll = reactive({
+  x: 0,
+  y: 0,
+});
 // 切换显示网格
 const showGrid = ref(false);
 // 模式切换
@@ -554,8 +563,8 @@ const setBackgroundColor = (value) => {
 };
 
 // 滚动至底部
-const scrollToTop = () => {
-  app.scrollToTop();
+const scrollToCenter = () => {
+  app.scrollToCenter();
 };
 
 // 切换显示网格
@@ -591,7 +600,8 @@ onMounted(() => {
   if (storeData) {
     storeData = JSON.parse(storeData);
     currentZoom.value = parseInt(storeData.state.scale * 100);
-    scrollY.value = parseInt(storeData.state.scrollY);
+    scroll.x = parseInt(storeData.state.scrollX);
+    scroll.y = parseInt(storeData.state.scrollY);
     showGrid.value = storeData.state.showGrid;
     readonly.value = storeData.state.readonly;
     app.setData(storeData);
@@ -631,8 +641,9 @@ onMounted(() => {
     localStorage.setItem("TINY_WHITEBOARD_DATA", JSON.stringify(data));
   });
   // 监听滚动变化
-  app.on("scrollChange", (y) => {
-    scrollY.value = parseInt(y);
+  app.on("scrollChange", (x, y) => {
+    scroll.y = parseInt(y);
+    scroll.x = parseInt(x);
   });
   // 窗口尺寸变化
   let resizeTimer = null;

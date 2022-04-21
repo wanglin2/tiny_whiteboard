@@ -223,11 +223,11 @@ export default class Render {
     element.addPoint(e.clientX, e.clientY, lineWidth);
     // 绘制自由线不重绘，采用增量绘制，否则会卡顿
     let tfp = this.app.coordinate.transformToCanvasCoordinate(
-      event.lastMousePos.x,
+      this.app.coordinate.subScrollX(event.lastMousePos.x),
       this.app.coordinate.subScrollY(event.lastMousePos.y)
     );
     let ttp = this.app.coordinate.transformToCanvasCoordinate(
-      e.clientX,
+      this.app.coordinate.subScrollX(e.clientX),
       this.app.coordinate.subScrollY(e.clientY)
     );
     this.app.ctx.save();

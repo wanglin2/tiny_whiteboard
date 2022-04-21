@@ -9,9 +9,19 @@ export default class Coordinate {
     return y + this.app.state.scrollY;
   }
 
+  // 添加水平滚动距离
+  addScrollX(x) {
+    return x + this.app.state.scrollX;
+  }
+
   // 减去垂直滚动距离
   subScrollY(y) {
     return y - this.app.state.scrollY;
+  }
+
+  // 减去水平滚动距离
+  subScrollX(x) {
+    return x - this.app.state.scrollX;
   }
 
   // 屏幕坐标转换成画布坐标
@@ -38,7 +48,7 @@ export default class Coordinate {
   transform(x, y) {
     let t = this.transformToCanvasCoordinate(x, y);
     return {
-      x: t.x,
+      x: this.subScrollX(t.x),
       y: this.subScrollY(t.y),
     };
   }
