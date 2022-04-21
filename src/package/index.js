@@ -120,7 +120,7 @@ export default class TinyWhiteboard extends EventEmitter {
   }
 
   // 设置数据，包括状态数据及元素数据
-  async setData({ state = {}, elements = [] }) {
+  async setData({ state = {}, elements = [] }, noEmitChange) {
     this.state = state;
     for (let i = 0; i < elements.length; i++) {
       if (elements[i].type === "image") {
@@ -129,7 +129,9 @@ export default class TinyWhiteboard extends EventEmitter {
     }
     this.background.set();
     this.render.deleteAllElements().setElements(elements).render();
-    this.emitChange();
+    if (!noEmitChange) {
+      this.emitChange();
+    }
   }
 
   // 初始化画布

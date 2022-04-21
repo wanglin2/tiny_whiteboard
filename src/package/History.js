@@ -28,7 +28,6 @@ export default class History {
       return;
     }
     this.index--;
-    console.log(this.index);
     this.shuttle();
   }
 
@@ -44,7 +43,7 @@ export default class History {
   // 前进后退
   async shuttle() {
     let data = this.historyStack[this.index];
-    await this.app.setData(data);
+    await this.app.setData(data, true);
     this.emitChange();
     this.app.emit("change", data);
   }
