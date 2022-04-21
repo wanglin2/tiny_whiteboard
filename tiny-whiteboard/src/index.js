@@ -216,6 +216,7 @@ export default class TinyWhiteboard extends EventEmitter {
     } else {
       this.cursor.reset();
     }
+    this.emit("currentTypeChange", drawType);
   }
 
   // 清除当前激活元素
@@ -283,18 +284,18 @@ export default class TinyWhiteboard extends EventEmitter {
   }
 
   // 放大
-  zoomIn() {
+  zoomIn(num = 0.1) {
     this.updateState({
-      scale: this.state.scale + 0.1,
+      scale: this.state.scale + num,
     });
     this.render.render();
     this.emit("zoomChange", this.state.scale);
   }
 
   // 缩小
-  zoomOut() {
+  zoomOut(num = 0.1) {
     this.updateState({
-      scale: this.state.scale - 0.1,
+      scale: this.state.scale - num,
     });
     this.render.render();
     this.emit("zoomChange", this.state.scale);
