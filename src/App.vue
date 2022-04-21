@@ -1,7 +1,7 @@
 <template>
   <div class="container">
     <div class="canvasBox" ref="box"></div>
-    <div class="toolbar">
+    <div class="toolbar" v-if="!readonly">
       <el-radio-group v-model="currentType" @change="onCurrentTypeChange">
         <el-radio-button label="selection">选择</el-radio-button>
         <el-radio-button label="rectangle">矩形</el-radio-button>
@@ -159,7 +159,7 @@
         </el-tooltip>
       </div>
       <!-- 前进回退 -->
-      <div class="blockBox">
+      <div class="blockBox" v-if="!readonly">
         <el-tooltip effect="light" content="回退" placement="top">
           <el-button
             :icon="RefreshLeft"
@@ -196,6 +196,7 @@
           placement="top"
         >
           <el-button
+            v-if="!readonly"
             :icon="Remove"
             circle
             :type="currentType === 'eraser' ? 'primary' : null"
@@ -215,15 +216,28 @@
             @click="toggleGrid"
           />
         </el-tooltip>
+        <!-- 只读、编辑模式切换 -->
+        <el-tooltip
+          effect="light"
+          :content="readonly ? '切换到编辑模式' : '切换到只读模式'"
+          placement="top"
+        >
+          <el-button
+            :icon="readonly ? View : Edit"
+            circle
+            @click="toggleMode"
+          />
+        </el-tooltip>
         <!-- 清空 -->
         <el-tooltip effect="light" content="清空" placement="top">
-          <el-button :icon="Delete" circle @click="empty" />
+          <el-button v-if="!readonly" :icon="Delete" circle @click="empty" />
         </el-tooltip>
       </div>
       <!-- 导入导出 -->
       <div class="blockBox">
         <el-tooltip effect="light" content="从json文件导入" placement="top">
           <el-button
+            v-if="!readonly"
             :icon="Upload"
             circle
             style="margin-right: 10px"
@@ -340,6 +354,8 @@ import {
   CaretBottom,
   Minus,
   Grid,
+  View,
+  Edit,
 } from "@element-plus/icons-vue";
 
 // 当前操作类型
@@ -388,6 +404,8 @@ const backgroundColor = ref("");
 const scrollY = ref(0);
 // 切换显示网格
 const showGrid = ref(false);
+// 模式切换
+const readonly = ref(false);
 
 // 通知app更当前类型
 watch(currentType, () => {
@@ -551,6 +569,17 @@ const toggleGrid = () => {
   }
 };
 
+// 模式切换
+const toggleMode = () => {
+  if (readonly.value) {
+    readonly.value = false;
+    app.setEditMode();
+  } else {
+    readonly.value = true;
+    app.setReadonlyMode();
+  }
+};
+
 // dom元素挂载完成
 onMounted(() => {
   // 创建实例
@@ -564,6 +593,7 @@ onMounted(() => {
     currentZoom.value = parseInt(storeData.state.scale * 100);
     scrollY.value = parseInt(storeData.state.scrollY);
     showGrid.value = storeData.state.showGrid;
+    readonly.value = storeData.state.readonly;
     app.setData(storeData);
   }
   // 监听app内部修改类型事件

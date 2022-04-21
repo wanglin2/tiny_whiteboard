@@ -14,6 +14,8 @@ export default class Event extends EventEmitter {
     this.mousedownPos = {
       x: 0,
       y: 0,
+      unGridClientX: 0,
+      unGridClientY: 0,
     };
     // 鼠标当前位置和按下时位置的差值
     this.mouseOffset = {
@@ -60,19 +62,29 @@ export default class Event extends EventEmitter {
     this.app.container.removeEventListener("mousewheel", this.onMousewheel);
   }
 
-  // 转换事件对象e，将clientY添加上滚动距离scrollY
+  // 转换事件对象e
+  // 1.将相当于浏览器窗口左上角的坐标转换成相对容器左上角
+  // 2.如果画布进行了缩放，那么鼠标坐标要反向进行缩放
+  // 3.y坐标加上垂直的滚动距离scrollY
+  // 4.如果开启了网格，那么坐标要吸附到网格上
   transformEvent(e) {
     let { coordinate } = this.app;
     // 容器和窗口左上角存在距离时转换
     let wp = coordinate.windowToContainer(e.clientX, e.clientY);
     // 元素缩放是*scale，所以视觉上我们点击到了元素，但是实际上元素的位置还是原来的x,y，所以鼠标的坐标需要/scale
     let { x, y } = coordinate.reverseScale(wp.x, wp.y);
+    y = coordinate.addScrollY(y);
+    // 保存未吸附到网格的坐标，用于位置检测等不需要吸附的场景
+    let unGridClientX = x;
+    let unGridClientY = y;
+    // 如果开启了网格，那么要坐标要吸附到网格
+    let gp = coordinate.gridAdsorbent(x, y);
     let newEvent = {
       originEvent: e,
-      originClientX: x,
-      originClientY: y,
-      clientX: x,
-      clientY: coordinate.addScrollY(y), // 向下滚动scroll值为正，而canvas坐标系向下为正，所以要造成元素向上滚动的效果显示的时候元素的y坐标需要减去scroll值，但是元素真实的y值并未改变，所以对于鼠标坐标来说需要加上scroll值，这样才能匹配元素真实的y坐标
+      unGridClientX,
+      unGridClientY,
+      clientX: gp.x,
+      clientY: gp.y, // 向下滚动scroll值为正，而canvas坐标系向下为正，所以要造成元素向上滚动的效果显示的时候元素的y坐标需要减去scroll值，但是元素真实的y值并未改变，所以对于鼠标坐标来说需要加上scroll值，这样才能匹配元素真实的y坐标
     };
     return newEvent;
   }
@@ -83,6 +95,8 @@ export default class Event extends EventEmitter {
     this.isMousedown = true;
     this.mousedownPos.x = e.clientX;
     this.mousedownPos.y = e.clientY;
+    this.mousedownPos.unGridClientX = e.unGridClientX;
+    this.mousedownPos.unGridClientY = e.unGridClientY;
     this.emit("mousedown", e, this);
   }
 

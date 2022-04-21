@@ -126,8 +126,8 @@ export default class Render {
   // 检测是否点击选中元素
   checkIsHitElement(e) {
     // 判断是否选中元素
-    let x = e.clientX;
-    let y = e.clientY;
+    let x = e.unGridClientX;
+    let y = e.unGridClientY;
     for (let i = 0; i < this.elementList.length; i++) {
       let element = this.elementList[i];
       if (element.isHit(x, y)) {
@@ -239,10 +239,14 @@ export default class Render {
 
   // 正在创建图片元素
   creatingImage(e, { width, height, imageObj, url, ratio }) {
+    let gp = this.app.coordinate.gridAdsorbent(
+      e.unGridClientX - width / 2,
+      e.unGridClientY - height / 2
+    );
     this.createElement({
       type: "image",
-      x: e.clientX - width / 2,
-      y: e.clientY - height / 2,
+      x: gp.x,
+      y: gp.y,
       url: url,
       imageObj: imageObj,
       width: width,

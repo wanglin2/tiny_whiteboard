@@ -15,12 +15,12 @@ export default class Background {
 
   // 添加背景颜色
   addBackgroundColor() {
-    this.app.canvas.style.backgroundColor = this.app.state.backgroundColor;
+    this.app.container.style.backgroundColor = this.app.state.backgroundColor;
   }
 
   // 移除背景
   remove() {
-    this.app.canvas.style.backgroundColor = "";
+    this.app.container.style.backgroundColor = "";
   }
 
   // 在canvas内设置背景颜色，非css样式
