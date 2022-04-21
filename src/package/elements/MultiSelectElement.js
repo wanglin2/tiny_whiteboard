@@ -1,6 +1,10 @@
 import BaseElement from "./BaseElement";
 import DragElement from "./DragElement";
-import { getMultiElementRectInfo } from "../utils";
+import {
+  getMultiElementRectInfo,
+  getElementCenterPoint,
+  getTowPointRotate,
+} from "../utils";
 
 // 用于多选情况下的虚拟元素类
 export default class MultiSelectElement extends BaseElement {
@@ -11,6 +15,8 @@ export default class MultiSelectElement extends BaseElement {
     this.dragElement = new DragElement(this, this.app);
     // 被选中的元素集合
     this.selectedElementList = [];
+    // 被选中元素整体的中心点
+    this.wholeCenterPos = { x: 0, y: 0 };
   }
 
   // 设置选中元素
@@ -50,6 +56,10 @@ export default class MultiSelectElement extends BaseElement {
   // 开始调整
   startResize(...args) {
     this.selectedElementList.forEach((element) => {
+      if (args[0] === "rotate") {
+        // 计算多选元素整体中心点
+        this.wholeCenterPos = getElementCenterPoint(this);
+      }
       element.startResize(...args);
     });
   }
@@ -57,9 +67,31 @@ export default class MultiSelectElement extends BaseElement {
   // 调整中
   resize(...args) {
     this.selectedElementList.forEach((element) => {
-      console.log(...args);
-      element.resize(...args);
+      if (element.dragElement.resizeType === "rotate") {
+        // 旋转操作特殊处理
+        this.handleRotate(element, ...args);
+      } else {
+        element.resize(...args);
+      }
     });
+  }
+
+  // 旋转元素
+  handleRotate(element, e, mx, my, offsetX, offsetY) {
+    // 获取鼠标移动的角度
+    let rotate = getTowPointRotate(
+      this.wholeCenterPos.x,
+      this.wholeCenterPos.y,
+      e.clientX,
+      e.clientY,
+      mx,
+      my
+    );
+    element.rotateByCenter(
+      rotate,
+      this.wholeCenterPos.x,
+      this.wholeCenterPos.y
+    );
   }
 
   // 结束调整

@@ -1,4 +1,4 @@
-import { degToRad } from "../utils";
+import { degToRad, getRotatedPoint } from "../utils";
 
 // 基础元素类
 export default class BaseElement {
@@ -177,6 +177,13 @@ export default class BaseElement {
   offsetRotate(or) {
     this.rotate = this.startRotate + or;
     return this;
+  }
+
+  // 根据指定中心点旋转元素的各个点
+  rotateByCenter(rotate, cx, cy) {
+    this.offsetRotate(rotate);
+    let np = getRotatedPoint(this.startX, this.startY, cx, cy, rotate);
+    this.updatePos(np.x, np.y);
   }
 
   // 检测元素是否被击中
