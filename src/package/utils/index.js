@@ -4,7 +4,7 @@
 export const createCanvas = (
   width,
   height,
-  opt = { noStyle: false, noTranslate: false }
+  opt = { noStyle: false, noTranslate: false, className: '' }
 ) => {
   let canvas = document.createElement("canvas");
   if (!opt.noStyle) {
@@ -13,6 +13,9 @@ export const createCanvas = (
       left: 0;
       top: 0;
     `;
+  }
+  if (opt.className) {
+    canvas.className = opt.className;
   }
   // 获取绘图上下文
   let ctx = canvas.getContext("2d");

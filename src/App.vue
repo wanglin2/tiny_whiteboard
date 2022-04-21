@@ -187,8 +187,9 @@
           >
         </el-tooltip>
       </div>
-      <!-- 橡皮擦、清空 -->
+      <!-- 橡皮擦、显示网格、清空 -->
       <div class="blockBox">
+        <!-- 橡皮擦 -->
         <el-tooltip
           effect="light"
           :content="currentType === 'eraser' ? '关闭橡皮擦' : '橡皮擦'"
@@ -201,6 +202,20 @@
             @click="toggleEraser"
           />
         </el-tooltip>
+        <!-- 网格 -->
+        <el-tooltip
+          effect="light"
+          :content="showGrid ? '隐藏网格' : '显示网格'"
+          placement="top"
+        >
+          <el-button
+            :icon="Grid"
+            circle
+            :type="showGrid ? 'primary' : null"
+            @click="toggleGrid"
+          />
+        </el-tooltip>
+        <!-- 清空 -->
         <el-tooltip effect="light" content="清空" placement="top">
           <el-button :icon="Delete" circle @click="empty" />
         </el-tooltip>
@@ -324,6 +339,7 @@ import {
   CaretTop,
   CaretBottom,
   Minus,
+  Grid,
 } from "@element-plus/icons-vue";
 
 // 当前操作类型
@@ -370,6 +386,8 @@ const jsonPreviewBox = ref(null);
 const backgroundColor = ref("");
 // 当前滚动距离
 const scrollY = ref(0);
+// 切换显示网格
+const showGrid = ref(false);
 
 // 通知app更当前类型
 watch(currentType, () => {
@@ -522,6 +540,17 @@ const scrollToTop = () => {
   app.scrollToTop();
 };
 
+// 切换显示网格
+const toggleGrid = () => {
+  if (showGrid.value) {
+    showGrid.value = false;
+    app.hideGrid();
+  } else {
+    showGrid.value = true;
+    app.showGrid();
+  }
+};
+
 // dom元素挂载完成
 onMounted(() => {
   // 创建实例
@@ -534,6 +563,7 @@ onMounted(() => {
     storeData = JSON.parse(storeData);
     currentZoom.value = parseInt(storeData.state.scale * 100);
     scrollY.value = parseInt(storeData.state.scrollY);
+    showGrid.value = storeData.state.showGrid;
     app.setData(storeData);
   }
   // 监听app内部修改类型事件

@@ -2,10 +2,10 @@ import { createCanvas } from "./utils";
 
 // 画布类
 export default class Canvas {
-  constructor(width, height) {
+  constructor(width, height, opt) {
     this.width = width;
     this.height = height;
-    let { canvas, ctx } = createCanvas(width, height);
+    let { canvas, ctx } = createCanvas(width, height, opt);
     this.el = canvas;
     this.ctx = ctx;
   }

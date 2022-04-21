@@ -45,7 +45,9 @@ export default class Selection {
   // 初始化
   init() {
     // 创建canvas元素
-    this.canvas = new Canvas(this.width, this.height);
+    this.canvas = new Canvas(this.width, this.height, {
+      className: "selection",
+    });
     this.ctx = this.canvas.ctx;
     this.app.container.appendChild(this.canvas.el);
     this.app.on("change", () => {
