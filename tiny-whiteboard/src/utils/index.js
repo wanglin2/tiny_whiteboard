@@ -19,14 +19,8 @@ export const createCanvas = (
   }
   // 获取绘图上下文
   let ctx = canvas.getContext("2d");
-  // 设置显示大小（css像素）
-  canvas.style.width = width + "px";
-  canvas.style.height = height + "px";
-  let scale = window.devicePixelRatio;
-  canvas.width = Math.floor(width * scale);
-  canvas.height = Math.floor(height * scale);
-  // 规范化坐标系以使用css像素
-  ctx.scale(scale, scale);
+  canvas.width = width;
+  canvas.height = height;
   // 画布原点移动到画布中心
   if (!opt.noTranslate) {
     ctx.translate(canvas.width / 2, canvas.height / 2);

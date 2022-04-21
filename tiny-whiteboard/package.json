@@ -2,7 +2,8 @@
     "name": "tiny-whiteboard",
     "version": "0.1.0",
     "description": "一个简单的在线白板",
-    "authors": [{
+    "authors": [
+        {
             "name": "街角小林",
             "email": "1013335014@qq.com"
         },
