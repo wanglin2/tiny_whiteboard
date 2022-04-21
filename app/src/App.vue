@@ -343,8 +343,8 @@ import {
   computed,
   reactive,
 } from "vue";
-import TinyWhiteboard from "./package";
-import { downloadFile } from "./package/utils";
+import TinyWhiteboard from "tiny-whiteboard";
+import { downloadFile } from "tiny-whiteboard/src/utils";
 import ColorPicker from "./components/ColorPicker.vue";
 import {
   Delete,

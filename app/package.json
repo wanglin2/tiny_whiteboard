@@ -1,5 +1,5 @@
 {
-  "name": "tiny_whiteboard",
+  "name": "tiny_whiteboard_demo",
   "private": true,
   "version": "0.0.0",
   "scripts": {
@@ -9,8 +9,6 @@
   },
   "dependencies": {
     "element-plus": "^2.1.6",
-    "eventemitter3": "^4.0.7",
-    "roughjs": "^4.5.2",
     "vue": "^3.2.25"
   },
   "devDependencies": {
