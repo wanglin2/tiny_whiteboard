@@ -10,8 +10,8 @@ export default class Grid {
     this.height = this.app.height;
 
     this.init();
-    this.app.on("zoomChange", this.showGrid, this);
-    this.app.on("scrollChange", this.showGrid, this);
+    this.app.on("zoomChange", this.renderGrid, this);
+    this.app.on("scrollChange", this.renderGrid, this);
   }
 
   // 初始化
@@ -35,8 +35,8 @@ export default class Grid {
     this.ctx.stroke();
   }
 
-  // 显示网格
-  showGrid() {
+  // 渲染网格
+  renderGrid() {
     this.canvas.clearCanvas();
     let { gridConfig, scale, showGrid } = this.app.state;
     if (!showGrid) {
@@ -76,17 +76,22 @@ export default class Grid {
       this.ctx.stroke();
     }
     this.ctx.restore();
+  }
+
+  // 显示网格
+  showGrid() {
     this.app.updateState({
       showGrid: true,
     });
+    this.renderGrid();
   }
 
   // 隐藏网格
   hideGrid() {
-    this.canvas.clearCanvas();
     this.app.updateState({
       showGrid: false,
     });
+    this.canvas.clearCanvas();
   }
 
   // 更新网格配置
