@@ -41,6 +41,21 @@ export default class Selection {
     this.handleResize = throttle(this.handleResize, this, 16);
     this.init();
     this.bindEvent();
+    this.registerShortcutKeys();
+  }
+
+  // 注册快捷键
+  registerShortcutKeys() {
+    // 删除当前选中元素
+    this.app.keyCommand.addShortcut("Del|Backspace", () => {
+      this.multiSelectElement.selectedElementList.forEach((element) => {
+        this.app.render.deleteElement(element);
+      });
+      this.app.render.render();
+      this.app.emitChange();
+      this.app.emit("multiSelectChange", []);
+      this.multiSelectElement.setSelectedElementList([]);
+    });
   }
 
   // 初始化

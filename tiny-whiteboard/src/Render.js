@@ -24,8 +24,36 @@ export default class Render {
     this.isResizing = false;
     // 当前正在调整的元素
     this.resizingElement = null;
+    // 将被复制的元素
+    this.canBeCopyElements = [];
     // 稍微缓解一下卡顿
     this.handleResize = throttle(this.handleResize, this, 16);
+    this.registerShortcutKeys();
+  }
+
+  // 注册快捷键
+  registerShortcutKeys() {
+    // 删除当前激活元素
+    this.app.keyCommand.addShortcut("Del|Backspace", () => {
+      this.activeElements.forEach((element) => {
+        this.deleteElement(element);
+      });
+      this.render();
+      this.app.emitChange();
+    });
+    // 复制元素
+    this.app.keyCommand.addShortcut("Control+c", () => {
+      this.canBeCopyElements = [...this.activeElements];
+    });
+    // 粘贴元素
+    this.app.keyCommand.addShortcut("Control+v", () => {
+      this.canBeCopyElements.forEach((element) => {
+        this.app.copyElement(element, false, {
+          x: this.app.event.lastMousePos.x,
+          y: this.app.event.lastMousePos.y,
+        });
+      });
+    });
   }
 
   // 添加元素

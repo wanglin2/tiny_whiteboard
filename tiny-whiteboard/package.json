@@ -20,14 +20,7 @@
         "build": "vite build"
     },
     "files": ["dist"],
-    "main": "./dist/tiny-whiteboard.umd.js",
-    "module": "./dist/tiny-whiteboard.es.js",
-    "exports": {
-        ".": {
-            "import": "./dist/tiny-whiteboard.es.js",
-            "require": "./dist/tiny-whiteboard.umd.js"
-        }
-    },
+    "main": "./src/index.js",
     "dependencies": {
         "eventemitter3": "^4.0.7"
     },
