@@ -20,6 +20,7 @@ import Background from "./Background";
 import Selection from "./Selection";
 import Grid from "./Grid";
 import Mode from "./Mode";
+import KeyCommand from "./KeyCommand";
 import { DRAG_ELEMENT_PARTS } from "./constants";
 import elements from "./elements";
 
@@ -69,6 +70,8 @@ class TinyWhiteboard extends EventEmitter {
 
     // 初始化画布
     this.initCanvas();
+    // 快捷键类
+    this.keyCommand = new KeyCommand(this);
     // 实例化坐标转换类
     this.coordinate = new Coordinate(this);
     // 实例化事件类
@@ -241,7 +244,7 @@ class TinyWhiteboard extends EventEmitter {
   }
 
   // 复制元素
-  async copyElement(element, notActive = false) {
+  async copyElement(element, notActive = false, pos) {
     if (!element) {
       return;
     }
@@ -255,7 +258,18 @@ class TinyWhiteboard extends EventEmitter {
       data,
       (element) => {
         element.startResize(DRAG_ELEMENT_PARTS.BODY);
-        element.resize(null, null, null, 20, 20);
+        if (pos) {
+          // 指定了坐标
+          element.resize(
+            null,
+            null,
+            null,
+            pos.x - element.x,
+            pos.y - element.y
+          );
+        } else {
+          element.resize(null, null, null, 20, 20);
+        }
         element.isCreating = false;
         if (notActive) {
           element.isActive = false;

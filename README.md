@@ -315,15 +315,17 @@ let app = new TinyWhiteboard({
 
 清除当前激活元素。
 
-#### `deleteElement(*element*)`
+#### `deleteElement(element)`
 
 删除某个元素。
 
-#### `copyElement(*element*, *notActive* = false)`
+#### `copyElement(element, notActive = false, pos)`
 
 复制某个元素。
 
 - `notActive`：只复制而不激活，`Boolean`，默认为`false`。
+
+- `pos`：是否指定坐标，否则会偏移原位置`20`像素，`Object`，格式为`{x, y}`。
 
 #### `empty()`
 
@@ -1000,4 +1002,6 @@ TinyWhiteboard.checkHit.xxx
     ]
 }
 ```
+
+# 16.内置元素类
 
