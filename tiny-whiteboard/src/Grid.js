@@ -6,8 +6,6 @@ export default class Grid {
     this.app = app;
     this.canvas = null;
     this.ctx = null;
-    this.width = this.app.width;
-    this.height = this.app.height;
 
     this.init();
     this.app.on("zoomChange", this.renderGrid, this);
@@ -16,7 +14,11 @@ export default class Grid {
 
   // 初始化
   init() {
-    this.canvas = new Canvas(this.width, this.height, {
+    if (this.canvas) {
+      this.app.container.removeChild(this.canvas.el);
+    }
+    let { width, height } = this.app;
+    this.canvas = new Canvas(width, height, {
       className: "grid",
     });
     this.ctx = this.canvas.ctx;
@@ -27,68 +29,76 @@ export default class Grid {
   }
 
   // 绘制水平线
-  drawHorizontalLine(i, width, height) {
-    let _i = this.app.coordinate.subScrollY(i);
+  drawHorizontalLine(i) {
+    let { coordinate, width, state } = this.app;
+    let _i = coordinate.subScrollY(i);
     this.ctx.beginPath();
-    this.ctx.moveTo(-width / 2, _i);
-    this.ctx.lineTo(width / 2, _i);
+    this.ctx.moveTo(-width / state.scale / 2, _i);
+    this.ctx.lineTo(width / state.scale / 2, _i);
     this.ctx.stroke();
   }
 
   // 渲染水平线
-  renderHorizontalLines(width, height) {
-    let { gridConfig } = this.app.state;
+  renderHorizontalLines() {
+    let { coordinate, height, state } = this.app;
+    let { gridConfig, scale } = state;
+    let maxBottom = 0;
     for (let i = -height / 2; i < height / 2; i += gridConfig.size) {
-      this.drawHorizontalLine(i, width, height);
+      this.drawHorizontalLine(i);
+      maxBottom = i;
     }
     // 向下滚时绘制上方超出的线
     for (
       let i = -height / 2 - gridConfig.size;
-      i > -this.app.coordinate.subScrollY(height / 2);
+      i > -coordinate.subScrollY(height / scale / 2);
       i -= gridConfig.size
     ) {
-      this.drawHorizontalLine(i, width, height);
+      this.drawHorizontalLine(i);
     }
     // 向上滚时绘制下方超出的线
     for (
-      let i = height / 2 + gridConfig.size;
-      i < this.app.coordinate.addScrollY(height / 2);
+      let i = maxBottom + gridConfig.size;
+      i < coordinate.addScrollY(height / scale / 2);
       i += gridConfig.size
     ) {
-      this.drawHorizontalLine(i, width, height);
+      this.drawHorizontalLine(i);
     }
   }
 
   // 绘制重置线
-  drawVerticalLine(i, width, height) {
-    let _i = this.app.coordinate.subScrollX(i);
+  drawVerticalLine(i) {
+    let { coordinate, height, state } = this.app;
+    let _i = coordinate.subScrollX(i);
     this.ctx.beginPath();
-    this.ctx.moveTo(_i, -height / 2);
-    this.ctx.lineTo(_i, height / 2);
+    this.ctx.moveTo(_i, -height / state.scale / 2);
+    this.ctx.lineTo(_i, height / state.scale / 2);
     this.ctx.stroke();
   }
 
   // 渲染垂直线
-  renderVerticalLines(width, height) {
-    let { gridConfig } = this.app.state;
+  renderVerticalLines() {
+    let { coordinate, width, state } = this.app;
+    let { gridConfig, scale } = state;
+    let maxRight = 0;
     for (let i = -width / 2; i < width / 2; i += gridConfig.size) {
-      this.drawVerticalLine(i, width, height);
+      this.drawVerticalLine(i);
+      maxRight = i;
     }
-    // 向右滚时绘制右方超出的线
+    // 向右滚时绘制左方超出的线
     for (
       let i = -width / 2 - gridConfig.size;
-      i > -this.app.coordinate.subScrollX(width / 2);
+      i > -coordinate.subScrollX(width / scale / 2);
       i -= gridConfig.size
     ) {
-      this.drawVerticalLine(i, width, height);
+      this.drawVerticalLine(i);
     }
-    // 向左滚时绘制左方超出的线
+    // 向左滚时绘制右方超出的线
     for (
-      let i = width / 2 + gridConfig.size;
-      i < this.app.coordinate.addScrollX(width / 2);
+      let i = maxRight + gridConfig.size;
+      i < coordinate.addScrollX(width / scale / 2);
       i += gridConfig.size
     ) {
-      this.drawVerticalLine(i, width, height);
+      this.drawVerticalLine(i);
     }
   }
 
@@ -103,14 +113,12 @@ export default class Grid {
     this.ctx.scale(scale, scale);
     this.ctx.strokeStyle = gridConfig.strokeStyle;
     this.ctx.lineWidth = gridConfig.lineWidth;
-    let width = this.width / this.app.state.scale;
-    let height = this.height / this.app.state.scale;
 
     // 水平
-    this.renderHorizontalLines(width, height);
+    this.renderHorizontalLines();
 
     // 垂直
-    this.renderVerticalLines(width, height);
+    this.renderVerticalLines();
 
     this.ctx.restore();
   }

@@ -40,16 +40,26 @@ export default class Selection {
     // 稍微缓解一下卡顿
     this.handleResize = throttle(this.handleResize, this, 16);
     this.init();
+    this.bindEvent();
   }
 
   // 初始化
   init() {
+    if (this.canvas) {
+      this.app.container.removeChild(this.canvas.el);
+    }
+    this.width = this.app.width;
+    this.height = this.app.height;
     // 创建canvas元素
     this.canvas = new Canvas(this.width, this.height, {
       className: "selection",
     });
     this.ctx = this.canvas.ctx;
     this.app.container.appendChild(this.canvas.el);
+  }
+
+  // 监听事件
+  bindEvent() {
     this.app.on("change", () => {
       this.state = this.app.state;
       this.multiSelectElement.updateElements(this.app.render.elementList);
