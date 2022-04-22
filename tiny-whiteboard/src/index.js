@@ -187,6 +187,9 @@ export default class TinyWhiteboard extends EventEmitter {
     this.initCanvas();
     this.event.bindEvent();
     this.render.render();
+    this.selection.init();
+    this.grid.init();
+    this.grid.renderGrid();
   }
 
   // 更新状态数据
