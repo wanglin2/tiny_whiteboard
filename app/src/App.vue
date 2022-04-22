@@ -344,7 +344,6 @@ import {
   reactive,
 } from "vue";
 import TinyWhiteboard from "tiny-whiteboard";
-import { downloadFile } from "tiny-whiteboard/src/utils";
 import ColorPicker from "./components/ColorPicker.vue";
 import {
   Delete,
@@ -547,14 +546,20 @@ const reRenderExportImage = () => {
 
 // 下载导出的图片
 const downloadExportImage = () => {
-  downloadFile(exportImageUrl.value, exportFileName.value + ".png");
+  TinyWhiteboard.utils.downloadFile(
+    exportImageUrl.value,
+    exportFileName.value + ".png"
+  );
 };
 
 // 下载导出的json
 const downloadExportJson = () => {
   let str = JSON.stringify(exportJsonData.value, null, 4);
   let blob = new Blob([str]);
-  downloadFile(URL.createObjectURL(blob), exportFileName.value + ".json");
+  TinyWhiteboard.utils.downloadFile(
+    URL.createObjectURL(blob),
+    exportFileName.value + ".json"
+  );
 };
 
 // 更新背景颜色

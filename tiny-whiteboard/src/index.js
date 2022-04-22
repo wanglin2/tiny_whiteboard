@@ -5,6 +5,9 @@ import {
   throttle,
   getMultiElementRectInfo,
 } from "./utils";
+import * as utils from "./utils";
+import * as checkHit from "./utils/checkHit";
+import * as draw from "./utils/draw";
 import Coordinate from "./Coordinate";
 import Event from "./Event";
 import Render from "./Render";
@@ -18,9 +21,10 @@ import Selection from "./Selection";
 import Grid from "./Grid";
 import Mode from "./Mode";
 import { DRAG_ELEMENT_PARTS } from "./constants";
+import elements from "./elements";
 
 // 主类
-export default class TinyWhiteboard extends EventEmitter {
+class TinyWhiteboard extends EventEmitter {
   constructor(opts = {}) {
     super();
     // 参数
@@ -647,3 +651,9 @@ export default class TinyWhiteboard extends EventEmitter {
     this.emit("change", data);
   }
 }
+TinyWhiteboard.utils = utils;
+TinyWhiteboard.checkHit = checkHit;
+TinyWhiteboard.draw = draw;
+TinyWhiteboard.elements = elements;
+
+export default TinyWhiteboard;

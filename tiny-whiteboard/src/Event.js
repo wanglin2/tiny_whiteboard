@@ -69,7 +69,7 @@ export default class Event extends EventEmitter {
   // 转换事件对象e
   // 1.将相当于浏览器窗口左上角的坐标转换成相对容器左上角
   // 2.如果画布进行了缩放，那么鼠标坐标要反向进行缩放
-  // 3.y坐标加上垂直的滚动距离scrollY
+  // 3.x、y坐标加上了画布水平和垂直的滚动距离scrollX和scrollY
   // 4.如果开启了网格，那么坐标要吸附到网格上
   transformEvent(e) {
     let { coordinate } = this.app;
@@ -90,7 +90,7 @@ export default class Event extends EventEmitter {
       unGridClientX,
       unGridClientY,
       clientX: gp.x,
-      clientY: gp.y, // 向下滚动scroll值为正，而canvas坐标系向下为正，所以要造成元素向上滚动的效果显示的时候元素的y坐标需要减去scroll值，但是元素真实的y值并未改变，所以对于鼠标坐标来说需要加上scroll值，这样才能匹配元素真实的y坐标
+      clientY: gp.y, // 向下滚动scroll值为正，而canvas坐标系向下为正，所以要造成元素向上滚动的效果显示的时候元素的y坐标需要减去scroll值，但是元素真实的y值并未改变，所以对于鼠标坐标来说需要加上scroll值，这样才能匹配元素真实的y坐标，水平方向也是一样的。
     };
     return newEvent;
   }
