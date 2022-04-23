@@ -243,8 +243,8 @@ export default class Render {
 
     // 复制粘贴当前元素
     copyCurrentElements() {
-        this.app.elements.copyCurrentElement();
-        this.app.elements.pasteCurrentElement();
+        this.copyCurrentElement();
+        this.pasteCurrentElement();
     }
 
     // 设置背景颜色
