@@ -212,29 +212,29 @@ class TinyWhiteboard extends EventEmitter {
   updateCurrentType(drawType) {
     this.drawType = drawType;
     // 图形绘制类型
-    if (drawType === "image") {
-      this.imageEdit.selectImage();
+    if (this.drawType === "image") {
       this.resetCurrentType();
+      this.imageEdit.selectImage();
     }
     // 设置鼠标指针样式
     // 开启橡皮擦模式
-    if (drawType === "eraser") {
+    if (this.drawType === "eraser") {
       this.cursor.setEraser();
-      this.clearActiveElements();
-    } else if (drawType !== "selection") {
+      this.deleteActiveElement();
+    } else if (this.drawType !== "selection") {
       this.cursor.setCrosshair();
     } else {
       this.cursor.reset();
     }
-    this.emit("currentTypeChange", drawType);
+    this.emit("currentTypeChange", this.drawType);
   }
 
   // 清除当前激活元素
-  clearActiveElements() {
-    if (!this.render.hasActiveElements()) {
+  deleteActiveElement() {
+    if (!this.render.hasActiveElement()) {
       return;
     }
-    this.render.clearActiveElements().render();
+    this.render.deleteActiveElement().render();
   }
 
   // 删除元素
@@ -253,7 +253,7 @@ class TinyWhiteboard extends EventEmitter {
     if (data.type === "image") {
       data.imageObj = await this.createImageObj(data.url);
     }
-    this.render.clearActiveElements();
+    this.render.deleteActiveElement();
     this.render.createElement(
       data,
       (element) => {
@@ -366,6 +366,10 @@ class TinyWhiteboard extends EventEmitter {
 
   // 滚动至中心，即回到所有元素的中心位置
   scrollToCenter() {
+    if (!this.render.hasElements()) {
+      this.scrollTo(0, 0);
+      return;
+    }
     let { minx, maxx, miny, maxy } = getMultiElementRectInfo(
       this.render.elementList
     );
@@ -393,7 +397,7 @@ class TinyWhiteboard extends EventEmitter {
       // 是否击中了某个元素
       let hitElement = this.render.checkIsHitElement(e);
       // 当前存在激活元素
-      if (this.render.hasActiveElements()) {
+      if (this.render.hasActiveElement()) {
         let isResizing = this.render.checkIsResize(
           event.mousedownPos.unGridClientX,
           event.mousedownPos.unGridClientY,
@@ -401,7 +405,7 @@ class TinyWhiteboard extends EventEmitter {
         );
         // 不在调整元素中
         if (!isResizing) {
-          this.render.setActiveElements(hitElement).render();
+          this.render.setActiveElement(hitElement).render();
         }
       } else {
         // 当前没有激活元素
@@ -415,7 +419,7 @@ class TinyWhiteboard extends EventEmitter {
           // 不在调整元素中
           if (!isResizing) {
             this.selection.reset();
-            this.render.setActiveElements(hitElement).render();
+            this.render.setActiveElement(hitElement).render();
           }
         } else if (hitElement) {
           // 当前有击中元素
@@ -423,9 +427,9 @@ class TinyWhiteboard extends EventEmitter {
             // 橡皮擦模式
             this.deleteElement(hitElement);
           } else {
-            this.render.setActiveElements(hitElement).render();
+            this.render.setActiveElement(hitElement).render();
           }
-        } else {
+        } else if (this.drawType === 'selection') {
           // 多选创建选区操作
           this.selection.onMousedown(e, event);
         }
@@ -504,7 +508,7 @@ class TinyWhiteboard extends EventEmitter {
           e.originEvent.clientY
         );
       } else if (this.drawType === "selection") {
-        if (this.render.hasActiveElements()) {
+        if (this.render.hasActiveElement()) {
           // 当前存在激活元素
           // 检测是否划过激活元素的各个收缩手柄
           let handData = "";
@@ -594,7 +598,7 @@ class TinyWhiteboard extends EventEmitter {
       if (this.drawType === "freedraw") {
         // 自由绘画模式可以连续绘制
         this.render.completeCreateElement();
-        this.render.setActiveElements();
+        this.render.setActiveElement();
       } else {
         // 创建新元素完成
         this.completeCreateNewElement();

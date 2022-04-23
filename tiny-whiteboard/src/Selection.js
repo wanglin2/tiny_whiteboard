@@ -176,7 +176,6 @@ export default class Selection {
         }
       });
       if (_minx >= minx && _maxx <= maxx && _miny >= miny && _maxy <= maxy) {
-        // console.log("选中", element.type);
         selectedElementList.push(element);
       }
     });

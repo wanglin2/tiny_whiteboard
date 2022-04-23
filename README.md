@@ -311,9 +311,6 @@ let app = new TinyWhiteboard({
 | image     | 图片绘制模式                                                 |
 | eraser    | 橡皮擦模式                                                   |
 
-#### `clearActiveElements()`
-
-清除当前激活元素。
 
 #### `deleteElement(element)`
 
@@ -382,7 +379,7 @@ let app = new TinyWhiteboard({
 | currentTypeChange   | 绘制模式变化时触发               | drawType（当前绘制模式）                             |
 | change              | 画布状态数据变化或元素变化时触发 | data（状态和元素数据）                               |
 | shuttle             | 前进后退时触发                   | index（当前指针）、length（当前历史记录数量）        |
-| activeElementChange | 激活元素变化事件                 | activeElements（当前激活的元素）                     |
+| activeElementChange | 激活元素变化事件                 | activeElement（当前激活的元素）                     |
 | multiSelectChange   | 多选元素选择完成时触发           | selectedElementList（当前被多选选中的元素）          |
 
 #### `emit(eventName, ...args)`
@@ -403,11 +400,15 @@ let app = new TinyWhiteboard({
 
 | 属性名称          | 类型    | 描述               |
 | ----------------- | ------- | ------------------ |
-| activeElements    | Array   | 当前激活的元素     |
+| activeElement    | Array   | 当前激活的元素     |
 | isCreatingElement | Boolean | 当前正在创建新元素 |
 | isResizing        | Boolean | 当前正在调整元素   |
 
 ### 实例方法
+
+#### `hasElements()`
+
+当前画布上是否有元素。
 
 #### `addElement(element)`
 
@@ -421,25 +422,17 @@ let app = new TinyWhiteboard({
 
 删除全部元素。
 
-#### `hasActiveElements()`
+#### `hasActiveElement()`
 
 是否存在激活元素。
 
-#### `addActiveElement(element)`
-
-添加激活元素。
-
-#### `setActiveElements(elements)`
+#### `setActiveElement(element)`
 
 替换激活元素。
 
-#### `deleteActiveElement(element)`
+#### `deleteActiveElement()`
 
-删除指定激活元素。
-
-#### `clearActiveElements()`
-
-清除当前激活元素。
+删除当前激活元素。
 
 #### `createElement(opts = {}, callback = () => {}, ctx = null, notActive)`
 
