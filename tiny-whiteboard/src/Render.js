@@ -1,15 +1,18 @@
 import {
-    createCanvas,
-    getTowPointDistance,
-    throttle,
     getMultiElementRectInfo,
     createImageObj
 } from "./utils";
+import { DRAG_ELEMENT_PARTS } from "./constants";
 
 // 渲染类
 export default class Render {
     constructor(app) {
         this.app = app;
+        // 将被复制的激活的元素
+        this.beingCopyActiveElement = null;
+        // 将被复制的选中的元素
+        this.beingCopySelectedElments = [];
+        this.registerShortcutKeys();
     }
 
     // 清除画布
@@ -37,6 +40,54 @@ export default class Render {
         });
         this.app.ctx.restore();
         return this;
+    }
+
+    // 注册快捷键
+    registerShortcutKeys() {
+        // 删除当前激活元素
+        this.app.keyCommand.addShortcut("Del|Backspace", () => {
+            this.deleteCurrentElements();
+        });
+        // 复制元素
+        this.app.keyCommand.addShortcut("Control+c", () => {
+            this.copyCurrentElement();
+        });
+        // 粘贴元素
+        this.app.keyCommand.addShortcut("Control+v", () => {
+            this.pasteCurrentElement(true);
+        });
+    }
+
+    // 复制当前激活或选中的元素
+    copyCurrentElement() {
+        // 当前存在激活元素
+        if (this.app.elements.activeElement) {
+            this.beingCopySelectedElments = [];
+            this.beingCopyElement = this.app.elements.activeElement;
+        } else if (this.app.selection.hasSelectionElements()) {
+            // 当前存在选中元素
+            this.beingCopyElement = null;
+            this.beingCopySelectedElments = this.app.selection.getSelectionElements();
+        }
+    }
+
+    // 粘贴被复制的元素
+    pasteCurrentElement(useCurrentEventPos = false) {
+        let pos = null;
+        // 使用当前鼠标所在的位置
+        if (useCurrentEventPos) {
+            let x = this.app.event.lastMousePos.x;
+            let y = this.app.event.lastMousePos.y;
+            pos = {
+                x,
+                y
+            }
+        }
+        if (this.beingCopyElement) {
+            this.copyElement(this.beingCopyElement, false, pos);
+        } else if (this.beingCopySelectedElments.length > 0) {
+            this.app.selection.copySelectionElements(pos);
+        }
     }
 
     // 删除元素

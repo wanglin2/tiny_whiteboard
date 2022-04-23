@@ -3,7 +3,6 @@ import {
   createCanvas,
   getTowPointDistance,
   throttle,
-  getMultiElementRectInfo,
   createImageObj
 } from "./utils";
 import * as utils from "./utils";
@@ -23,7 +22,6 @@ import Grid from "./Grid";
 import Mode from "./Mode";
 import KeyCommand from "./KeyCommand";
 import Render from './Render';
-import { DRAG_ELEMENT_PARTS } from "./constants";
 import elements from "./elements";
 
 // 主类
@@ -184,7 +182,7 @@ class TinyWhiteboard extends EventEmitter {
       }
     }
     this.helpUpdate();
-    this.elements.deleteAllElements().setElements(elements)
+    this.elements.deleteAllElements().createElementsFromData(elements);
     this.render.render();
     if (!noEmitChange) {
       this.emitChange();
@@ -256,9 +254,7 @@ class TinyWhiteboard extends EventEmitter {
       state: {
         ...this.state,
       },
-      elements: this.elements.elementList.map((element) => {
-        return element.serialize();
-      }),
+      elements: this.elements.serialize(),
     };
   }
 
