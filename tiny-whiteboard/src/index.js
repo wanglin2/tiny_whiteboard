@@ -126,8 +126,12 @@ class TinyWhiteboard extends EventEmitter {
       this[method] = this.history[method].bind(this.history);
     });
     // elements类
-    ["setActiveElementStyle", "cancelActiveElement"].forEach((method) => {
+    [].forEach((method) => {
       this[method] = this.elements[method].bind(this.elements);
+    });
+    // 渲染类
+    ["deleteElement", "setActiveElementStyle", "cancelActiveElement", "deleteActiveElement", "deleteCurrentElements", "empty", "zoomIn", "zoomOut", "setZoom", "scrollTo", "scrollToCenter", "copyCurrentElements", "setBackgroundColor", "copyElement"].forEach((method) => {
+      this[method] = this.render[method].bind(this.render);
     });
     // 导入导出类
     ["exportImage", "exportJson"].forEach((method) => {
@@ -246,121 +250,6 @@ class TinyWhiteboard extends EventEmitter {
     this.emit("currentTypeChange", this.drawType);
   }
 
-  // 删除当前激活元素
-  deleteActiveElement() {
-    if (!this.elements.hasActiveElement()) {
-      return;
-    }
-    this.deleteElement(this.elements.activeElement);
-  }
-
-  // 删除元素
-  deleteElement(element) {
-    this.elements.deleteElement(element);
-    this.render.render();
-    this.emitChange();
-  }
-
-  // 删除当前激活或选中的元素
-  deleteCurrentElements() {
-    // 当前激活元素
-    this.deleteActiveElement();
-    // 当前选中元素
-    this.selection.deleteSelectedElements();
-  }
-
-  // 复制粘贴元素
-  async copyElement(element, notActive = false, pos) {
-    if (!element) {
-      return;
-    }
-    let data = element.serialize();
-    // 图片元素需要先加载图片
-    if (data.type === "image") {
-      data.imageObj = await createImageObj(data.url);
-    }
-    this.cancelActiveElement();
-    this.elements.createElement(
-      data,
-      (element) => {
-        element.startResize(DRAG_ELEMENT_PARTS.BODY);
-        if (pos) {
-          // 指定了坐标
-          element.resize(
-            null,
-            null,
-            null,
-            pos.x - element.x,
-            pos.y - element.y
-          );
-        } else {
-          element.resize(null, null, null, 20, 20);
-        }
-        element.isCreating = false;
-        if (notActive) {
-          element.isActive = false;
-        }
-        this.elements.isCreatingElement = false;
-      },
-      this,
-      notActive
-    );
-    this.render.render();
-    this.emitChange();
-  }
-
-  // 复制粘贴当前元素
-  copyCurrentElements() {
-    this.elements.copyCurrentElement();
-    this.elements.pasteCurrentElement();
-  }
-
-  // 清空元素
-  empty() {
-    this.elements.deleteAllElements();
-    this.render.render();
-    this.history.clear();
-    this.emitChange();
-  }
-
-  // 放大
-  zoomIn(num = 0.1) {
-    this.updateState({
-      scale: this.state.scale + num,
-    });
-    this.render.render();
-    this.emit("zoomChange", this.state.scale);
-  }
-
-  // 缩小
-  zoomOut(num = 0.1) {
-    this.updateState({
-      scale: this.state.scale - num,
-    });
-    this.render.render();
-    this.emit("zoomChange", this.state.scale);
-  }
-
-  // 设置指定缩放值
-  setZoom(zoom) {
-    if (zoom < 0 || zoom > 1) {
-      return;
-    }
-    this.updateState({
-      scale: zoom,
-    });
-    this.render.render();
-    this.emit("zoomChange", this.state.scale);
-  }
-
-  // 设置背景颜色
-  setBackgroundColor(color) {
-    this.updateState({
-      backgroundColor: color,
-    });
-    this.background.set();
-  }
-
   // 获取数据，包括状态数据及元素数据
   getData() {
     return {
@@ -371,33 +260,6 @@ class TinyWhiteboard extends EventEmitter {
         return element.serialize();
       }),
     };
-  }
-
-  // 滚动至指定位置
-  scrollTo(scrollX, scrollY) {
-    this.updateState({
-      scrollX,
-      scrollY,
-    });
-    this.render.render();
-    this.emit("scrollChange", this.state.scrollX, this.state.scrollY);
-  }
-
-  // 滚动至中心，即回到所有元素的中心位置
-  scrollToCenter() {
-    if (!this.elements.hasElements()) {
-      this.scrollTo(0, 0);
-      return;
-    }
-    let { minx, maxx, miny, maxy } = getMultiElementRectInfo(
-      this.elements.elementList
-    );
-    let width = maxx - minx;
-    let height = maxy - miny;
-    this.scrollTo(
-      minx - (this.width - width) / 2,
-      miny - (this.height - height) / 2
-    );
   }
 
   // 图片选择事件
@@ -497,6 +359,7 @@ class TinyWhiteboard extends EventEmitter {
             event.mouseOffset.x,
             event.mouseOffset.y
           );
+          this.render.render();
         }
       } else if (["rectangle", "diamond", "triangle"].includes(this.drawType)) {
         // 类矩形元素绘制模式
@@ -507,17 +370,21 @@ class TinyWhiteboard extends EventEmitter {
           offsetX,
           offsetY
         );
+        this.render.render();
       } else if (this.drawType === "circle") {
         // 绘制圆形模式
         this.elements.creatingCircle(mx, my, e);
+        this.render.render();
       } else if (this.drawType === "freedraw") {
         // 自由画笔模式
         this.elements.creatingFreedraw(e, event);
       } else if (this.drawType === "arrow") {
         this.elements.creatingArrow(mx, my, e);
+        this.render.render();
       } else if (this.drawType === "line") {
         if (getTowPointDistance(mx, my, e.clientX, e.clientY) > 3) {
           this.elements.creatingLine(mx, my, e, true);
+          this.render.render();
         }
       }
     } else {
@@ -562,6 +429,7 @@ class TinyWhiteboard extends EventEmitter {
       } else if (this.drawType === "line") {
         // 线段绘制中
         this.elements.creatingLine(null, null, e, false, true);
+        this.render.render();
       }
     }
   }
@@ -616,6 +484,7 @@ class TinyWhiteboard extends EventEmitter {
       this.elements.completeCreateLine(e, () => {
         this.completeCreateNewElement();
       });
+      this.render.render();
     } else if (this.elements.isCreatingElement) {
       // 正在创建元素中
       if (this.drawType === "freedraw") {
@@ -652,6 +521,8 @@ class TinyWhiteboard extends EventEmitter {
         // 编辑文字
         if (hitElement.type === "text") {
           this.elements.editingText(hitElement);
+          this.render.render();
+          this.textEdit.showTextEdit();
         }
       } else {
         // 双击空白处新增文字
@@ -665,6 +536,7 @@ class TinyWhiteboard extends EventEmitter {
   // 文本框失焦事件
   onTextInputBlur() {
     this.elements.completeEditingText();
+    this.render.render();
     this.emitChange();
   }
 
