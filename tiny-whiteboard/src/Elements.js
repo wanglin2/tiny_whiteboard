@@ -37,7 +37,7 @@ export default class Elements {
   registerShortcutKeys() {
     // 删除当前激活元素
     this.app.keyCommand.addShortcut("Del|Backspace", () => {
-      this.app.deleteCurrentElements();
+      this.app.render.deleteCurrentElements();
     });
     // 复制元素
     this.app.keyCommand.addShortcut("Control+c", () => {
@@ -261,7 +261,6 @@ export default class Elements {
       height: offsetY,
     });
     this.activeElement.updateSize(offsetX, offsetY);
-    this.app.render.render();
   }
 
   // 正在创建圆形元素
@@ -273,7 +272,6 @@ export default class Elements {
     });
     let radius = getTowPointDistance(e.clientX, e.clientY, x, y);
     this.activeElement.updateSize(radius, radius);
-    this.app.render.render();
   }
 
   // 正在创建自由画笔元素
@@ -330,8 +328,6 @@ export default class Elements {
     }
     element.noRender = true;
     this.setActiveElement(element);
-    this.app.render.render();
-    this.app.textEdit.showTextEdit();
   }
 
   // 完成文本元素的编辑
@@ -347,7 +343,6 @@ export default class Elements {
       return;
     }
     element.noRender = false;
-    this.app.render.render();
   }
 
   // 完成箭头元素的创建
@@ -368,7 +363,6 @@ export default class Elements {
       }
     );
     this.activeElement.updateFictitiousPoint(e.clientX, e.clientY);
-    this.app.render.render();
   }
 
   // 正在创建线段/折线元素
@@ -389,7 +383,6 @@ export default class Elements {
     let element = this.activeElement;
     if (element) {
       element.updateFictitiousPoint(e.clientX, e.clientY);
-      this.app.render.render();
     }
   }
 
@@ -411,7 +404,6 @@ export default class Elements {
       element = this.activeElement;
       element.addPoint(x, y);
       element.updateFictitiousPoint(x, y);
-      this.app.render.render();
     }
   }
 
@@ -438,10 +430,6 @@ export default class Elements {
     Object.keys(style).forEach((key) => {
       this.activeElement.style[key] = style[key];
     });
-    this.app.render.render();
-    if (!this.isCreatingElement) {
-      this.app.emitChange();
-    }
     return this;
   }
 
@@ -481,7 +469,6 @@ export default class Elements {
       return;
     }
     this.resizingElement.resize(...args);
-    this.app.render.render();
   }
 
   // 结束元素调整操作
