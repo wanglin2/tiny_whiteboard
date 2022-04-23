@@ -40,7 +40,7 @@ export default class TextEdit extends EventEmitter {
 
   // 根据当前文字元素的样式更新文本输入框的样式
   updateTextInputStyle() {
-    let activeElement = this.app.render.activeElement;
+    let activeElement = this.app.elements.activeElement;
     if (!activeElement) {
       return;
     }
@@ -69,7 +69,7 @@ export default class TextEdit extends EventEmitter {
 
   // 文本输入事件
   onTextInput() {
-    let activeElement = this.app.render.activeElement;
+    let activeElement = this.app.elements.activeElement;
     if (!activeElement) {
       return;
     }

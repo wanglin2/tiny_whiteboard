@@ -39,7 +39,7 @@ export default class Export {
   } = {}) {
     // 计算所有元素的外包围框
     let { minx, maxx, miny, maxy } = getMultiElementRectInfo(
-      this.app.render.elementList
+      this.app.elements.elementList
     );
     let width = maxx - minx + paddingX * 2;
     let height = maxy - miny + paddingY * 2;
@@ -115,7 +115,7 @@ export default class Export {
   // 绘制所有元素
   render(ctx) {
     ctx.save();
-    this.app.render.elementList.forEach((element) => {
+    this.app.elements.elementList.forEach((element) => {
       if (element.noRender) {
         return;
       }
