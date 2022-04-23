@@ -41,21 +41,6 @@ export default class Selection {
     this.handleResize = throttle(this.handleResize, this, 16);
     this.init();
     this.bindEvent();
-    this.registerShortcutKeys();
-  }
-
-  // 注册快捷键
-  registerShortcutKeys() {
-    // 删除当前选中元素
-    this.app.keyCommand.addShortcut("Del|Backspace", () => {
-      this.multiSelectElement.selectedElementList.forEach((element) => {
-        this.app.render.deleteElement(element);
-      });
-      this.app.render.render();
-      this.app.emitChange();
-      this.app.emit("multiSelectChange", []);
-      this.multiSelectElement.setSelectedElementList([]);
-    });
   }
 
   // 初始化
@@ -113,12 +98,12 @@ export default class Selection {
     this.creatingSelection = false;
     this.rectangle.updateRect(0, 0, 0, 0);
     this.canvas.clearCanvas();
-    this.hasSelection = this.multiSelectElement.selectedElementList.length > 0;
+    this.hasSelection = this.hasSelectionElements();
     this.multiSelectElement.updateRect();
     this.renderSelection();
     this.app.emit(
       "multiSelectChange",
-      this.multiSelectElement.selectedElementList
+      this.getSelectionElements()
     );
   }
 
@@ -228,15 +213,46 @@ export default class Selection {
 
   // 为多选元素设置样式
   setSelectedElementStyle(style = {}) {
-    if (this.multiSelectElement.selectedElementList.length <= 0) {
+    if (!this.hasSelectionElements()) {
       return;
     }
     Object.keys(style).forEach((key) => {
-      this.multiSelectElement.selectedElementList.forEach((element) => {
+      this.getSelectionElements().forEach((element) => {
         element.style[key] = style[key];
       });
     });
     this.app.render.render();
     this.app.emitChange();
+  }
+
+  // 删除当前选中的元素
+  deleteSelectedElements() {
+    this.getSelectionElements().forEach((element) => {
+      this.app.render.deleteElement(element);
+    });
+    this.app.emit("multiSelectChange", []);
+    this.app.render.render();
+    this.app.emitChange();
+  }
+
+  // 当前是否存在被选中元素
+  hasSelectionElements() {
+    return this.getSelectionElements().length > 0;
+  }
+
+  // 获取当前被选中的元素
+  getSelectionElements() {
+    return this.multiSelectElement.selectedElementList;
+  }
+
+  // 复制当前选中的元素
+  async copySelectionElements(pos) {
+    let task = this.getSelectionElements().map((element) => {
+      return this.app.render.copyElement(element, true);
+    });
+    let elements = await Promise.all(task);
+    this.multiSelectElement.setSelectedElementList(elements);
+    this.multiSelectElement.updateRect();
+    this.renderSelection();
   }
 }

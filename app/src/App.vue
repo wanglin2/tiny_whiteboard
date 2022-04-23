@@ -373,10 +373,8 @@ const box = ref(null);
 let app = null;
 // 当前激活的元素
 const activeElement = ref(null);
-let originActiveElement = null;
 // 当前多选的元素
 const selectedElements = ref([]);
-let originSelectedElements = [];
 const hasSelectedElements = computed(() => {
   return selectedElements.value.length > 0;
 });
@@ -436,29 +434,17 @@ const updateStyle = (key, value) => {
 // 类型变化
 const onCurrentTypeChange = () => {
   // 清除激活项
-  app.deleteActiveElement();
+  app.cancelActiveElement();
 };
 
 // 删除元素
 const deleteElement = () => {
-  if (hasSelectedElements.value) {
-    originSelectedElements.forEach((element) => {
-      app.deleteElement(element);
-    });
-  } else {
-    app.deleteElement(originActiveElement);
-  }
+  app.deleteCurrentElements();
 };
 
 // 复制元素
 const copyElement = () => {
-  if (hasSelectedElements.value) {
-    originSelectedElements.forEach((element) => {
-      app.copyElement(element, true);
-    });
-  } else {
-    app.copyElement(originActiveElement);
-  }
+  app.copyCurrentElements()
 };
 
 // 放大
@@ -618,7 +604,6 @@ onMounted(() => {
   // 监听元素激活事件
   app.on("activeElementChange", (element) => {
     activeElement.value = element;
-    originActiveElement = element;
     if (element) {
       let { style } = element;
       lineWidth.value = style.lineWidth;
@@ -629,7 +614,6 @@ onMounted(() => {
   // 元素多选变化
   app.on("multiSelectChange", (elements) => {
     selectedElements.value = elements;
-    originSelectedElements = elements;
   });
   // 缩放变化
   app.on("zoomChange", (scale) => {
