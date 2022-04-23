@@ -7,8 +7,8 @@ import Arrow from "./elements/Arrow";
 import Image from "./elements/Image";
 import Line from "./elements/Line";
 import Text from "./elements/Text";
-import { getTowPointDistance, throttle } from "./utils";
-import { computedLineWidthBySpeed } from "./utils";
+import { getTowPointDistance, throttle, computedLineWidthBySpeed, createImageObj } from "./utils";
+import { DRAG_ELEMENT_PARTS } from "./constants";
 
 // 渲染类
 export default class Render {
@@ -24,8 +24,10 @@ export default class Render {
     this.isResizing = false;
     // 当前正在调整的元素
     this.resizingElement = null;
-    // 将被复制的元素
-    this.beingCopyElement = [];
+    // 将被复制的激活的元素
+    this.beingCopyActiveElement = null;
+    // 将被复制的选中的元素
+    this.beingCopySelectedElments = [];
     // 稍微缓解一下卡顿
     this.handleResize = throttle(this.handleResize, this, 16);
     this.registerShortcutKeys();
@@ -35,21 +37,47 @@ export default class Render {
   registerShortcutKeys() {
     // 删除当前激活元素
     this.app.keyCommand.addShortcut("Del|Backspace", () => {
-      this.deleteElement(this.activeElement);
-      this.render();
-      this.app.emitChange();
+      this.app.deleteCurrentElements();
     });
     // 复制元素
     this.app.keyCommand.addShortcut("Control+c", () => {
-      this.beingCopyElement = this.activeElement;
+      this.copyCurrentElement();
     });
     // 粘贴元素
     this.app.keyCommand.addShortcut("Control+v", () => {
-      this.app.copyElement(this.beingCopyElement, false, {
-        x: this.app.event.lastMousePos.x,
-        y: this.app.event.lastMousePos.y,
-      });
+      this.pasteCurrentElement(true);
     });
+  }
+
+  // 复制当前激活或选中的元素
+  copyCurrentElement() {
+    // 当前操作激活元素
+    if (this.activeElement) {
+      this.beingCopySelectedElments = [];
+      this.beingCopyElement = this.activeElement;
+    } else if (this.app.selection.hasSelectionElements()) {
+      // 当前操作选中元素
+      this.beingCopyElement = null;
+      this.beingCopySelectedElments = this.app.selection.getSelectionElements();
+    }
+  }
+
+  // 粘贴被复制的元素
+  pasteCurrentElement(useCurrentEventPos = false) {
+    let pos = null;
+    if (useCurrentEventPos) {
+      let x = this.app.event.lastMousePos.x;
+      let y = this.app.event.lastMousePos.y;
+      pos = {
+        x,
+        y
+      }
+    }
+    if (this.beingCopyElement) {
+      this.app.copyElement(this.beingCopyElement, false, pos);
+    } else if (this.beingCopySelectedElments.length > 0) {
+      this.app.selection.copySelectionElements(pos);
+    }
   }
 
   // 当前画布上是否有元素
@@ -71,7 +99,7 @@ export default class Render {
     if (index !== -1) {
       this.elementList.splice(index, 1);
       if (element.isActive) {
-        this.deleteActiveElement(element);
+        this.cancelActiveElement(element);
       }
     }
     return this;
@@ -105,7 +133,7 @@ export default class Render {
 
   // 设置激活元素
   setActiveElement(element) {
-    this.deleteActiveElement();
+    this.cancelActiveElement();
     this.activeElement = element;
     if (element) {
       element.isActive = true;
@@ -114,8 +142,8 @@ export default class Render {
     return this;
   }
 
-  // 删除当前激活元素
-  deleteActiveElement() {
+  // 取消当前激活元素
+  cancelActiveElement() {
     if (!this.hasActiveElement()) {
       return this;
     }
@@ -181,6 +209,46 @@ export default class Render {
     this.isCreatingElement = true;
     callback.call(ctx, element);
     return this;
+  }
+
+  // 复制元素
+  copyElement(element, notActive = false, pos) {
+    return new Promise(async (resolve) => {
+      if (!element) {
+        return resolve();
+      }
+      let data = element.serialize();
+      // 图片元素需要先加载图片
+      if (data.type === "image") {
+        data.imageObj = await createImageObj(data.url);
+      }
+      this.createElement(
+        data,
+        (element) => {
+          element.startResize(DRAG_ELEMENT_PARTS.BODY);
+          if (pos) {
+            // 指定了坐标
+            element.resize(
+              null,
+              null,
+              null,
+              pos.x - element.x,
+              pos.y - element.y
+            );
+          } else {
+            element.resize(null, null, null, 20, 20);
+          }
+          element.isCreating = false;
+          if (notActive) {
+            element.isActive = false;
+          }
+          this.isCreatingElement = false;
+          resolve(element);
+        },
+        this,
+        notActive
+      );
+    });
   }
 
   // 创建类矩形元素

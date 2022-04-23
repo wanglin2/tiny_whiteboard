@@ -390,3 +390,17 @@ export const getMultiElementRectInfo = (elementList = []) => {
     maxy,
   };
 }
+
+// 创建图片对象
+export const createImageObj = (url) => {
+  return new Promise((resolve) => {
+    let img = new Image();
+    img.onload = () => {
+      resolve(img);
+    };
+    img.onerror = () => {
+      resolve(null);
+    };
+    img.src = url;
+  });
+}

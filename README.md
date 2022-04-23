@@ -28,9 +28,9 @@
 
 - [x] 支持只读模式，只读模式支持随意拖拽
 
-- [ ] 小地图
+- [x] 支持快捷键
 
-- [ ] 支持快捷键
+- [ ] 小地图
 
 - [ ] 优化：非激活元素绘制到另一个canvas上
 
@@ -430,9 +430,9 @@ let app = new TinyWhiteboard({
 
 替换激活元素。
 
-#### `deleteActiveElement()`
+#### `cancelActiveElement()`
 
-删除当前激活元素。
+取消当前激活元素。
 
 #### `createElement(opts = {}, callback = () => {}, ctx = null, notActive)`
 

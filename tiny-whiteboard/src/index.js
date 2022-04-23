@@ -4,6 +4,7 @@ import {
   getTowPointDistance,
   throttle,
   getMultiElementRectInfo,
+  createImageObj
 } from "./utils";
 import * as utils from "./utils";
 import * as checkHit from "./utils/checkHit";
@@ -119,7 +120,7 @@ class TinyWhiteboard extends EventEmitter {
       this[method] = this.history[method].bind(this.history);
     });
     // render类
-    ["setActiveElementStyle"].forEach((method) => {
+    ["setActiveElementStyle", "cancelActiveElement"].forEach((method) => {
       this[method] = this.render[method].bind(this.render);
     });
     // 导入导出类
@@ -165,7 +166,7 @@ class TinyWhiteboard extends EventEmitter {
     this.state = state;
     for (let i = 0; i < elements.length; i++) {
       if (elements[i].type === "image") {
-        elements[i].imageObj = await this.createImageObj(elements[i].url);
+        elements[i].imageObj = await createImageObj(elements[i].url);
       }
     }
     this.helpUpdate();
@@ -213,14 +214,13 @@ class TinyWhiteboard extends EventEmitter {
     this.drawType = drawType;
     // 图形绘制类型
     if (this.drawType === "image") {
-      this.resetCurrentType();
       this.imageEdit.selectImage();
     }
     // 设置鼠标指针样式
     // 开启橡皮擦模式
     if (this.drawType === "eraser") {
       this.cursor.setEraser();
-      this.deleteActiveElement();
+      this.cancelActiveElement();
     } else if (this.drawType !== "selection") {
       this.cursor.setCrosshair();
     } else {
@@ -229,12 +229,12 @@ class TinyWhiteboard extends EventEmitter {
     this.emit("currentTypeChange", this.drawType);
   }
 
-  // 清除当前激活元素
+  // 删除当前激活元素
   deleteActiveElement() {
     if (!this.render.hasActiveElement()) {
       return;
     }
-    this.render.deleteActiveElement().render();
+    this.deleteElement(this.render.activeElement);
   }
 
   // 删除元素
@@ -243,7 +243,15 @@ class TinyWhiteboard extends EventEmitter {
     this.emitChange();
   }
 
-  // 复制元素
+  // 删除当前激活或选中的元素
+  deleteCurrentElements() {
+    // 当前激活元素
+    this.deleteActiveElement();
+    // 当前选中元素
+    this.selection.deleteSelectedElements();
+  }
+
+  // 复制粘贴元素
   async copyElement(element, notActive = false, pos) {
     if (!element) {
       return;
@@ -251,9 +259,9 @@ class TinyWhiteboard extends EventEmitter {
     let data = element.serialize();
     // 图片元素需要先加载图片
     if (data.type === "image") {
-      data.imageObj = await this.createImageObj(data.url);
+      data.imageObj = await createImageObj(data.url);
     }
-    this.render.deleteActiveElement();
+    this.cancelActiveElement();
     this.render.createElement(
       data,
       (element) => {
@@ -283,25 +291,17 @@ class TinyWhiteboard extends EventEmitter {
     this.emitChange();
   }
 
+  // 复制粘贴当前元素
+  copyCurrentElements() {
+    this.render.copyCurrentElement();
+    this.render.pasteCurrentElement();
+  }
+
   // 清空元素
   empty() {
     this.render.deleteAllElements().render();
     this.history.clear();
     this.emitChange();
-  }
-
-  // 创建图片对象
-  createImageObj(url) {
-    return new Promise((resolve) => {
-      let img = new Image();
-      img.onload = () => {
-        resolve(img);
-      };
-      img.onerror = () => {
-        resolve(null);
-      };
-      img.src = url;
-    });
   }
 
   // 放大
