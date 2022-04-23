@@ -31,7 +31,7 @@ export default class Selection {
       {
         type: "multiSelectElement",
         renderElements: () => {
-          this.app.elements.render();
+          this.app.render.render();
         },
       },
       this
@@ -165,7 +165,7 @@ export default class Selection {
       }
     });
     this.multiSelectElement.setSelectedElementList(selectedElementList);
-    this.app.elements.render();
+    this.app.render.render();
   }
 
   // 检测指定位置是否在元素调整手柄上
@@ -200,7 +200,7 @@ export default class Selection {
       return;
     }
     this.multiSelectElement.resize(...args);
-    this.app.elements.render();
+    this.app.render.render();
     this.multiSelectElement.updateRect();
     this.renderSelection();
   }
@@ -221,7 +221,7 @@ export default class Selection {
         element.style[key] = style[key];
       });
     });
-    this.app.elements.render();
+    this.app.render.render();
     this.app.emitChange();
   }
 
@@ -231,7 +231,7 @@ export default class Selection {
       this.app.elements.deleteElement(element);
     });
     this.app.emit("multiSelectChange", []);
-    this.app.elements.render();
+    this.app.render.render();
     this.app.emitChange();
   }
 

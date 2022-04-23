@@ -10,8 +10,8 @@ import Text from "./elements/Text";
 import { getTowPointDistance, throttle, computedLineWidthBySpeed, createImageObj } from "./utils";
 import { DRAG_ELEMENT_PARTS } from "./constants";
 
-// 渲染类
-export default class Render {
+// 元素管理类
+export default class Elements {
   constructor(app) {
     this.app = app;
     // 所有元素
@@ -261,7 +261,7 @@ export default class Render {
       height: offsetY,
     });
     this.activeElement.updateSize(offsetX, offsetY);
-    this.render();
+    this.app.render.render();
   }
 
   // 正在创建圆形元素
@@ -273,7 +273,7 @@ export default class Render {
     });
     let radius = getTowPointDistance(e.clientX, e.clientY, x, y);
     this.activeElement.updateSize(radius, radius);
-    this.render();
+    this.app.render.render();
   }
 
   // 正在创建自由画笔元素
@@ -330,7 +330,7 @@ export default class Render {
     }
     element.noRender = true;
     this.setActiveElement(element);
-    this.render();
+    this.app.render.render();
     this.app.textEdit.showTextEdit();
   }
 
@@ -347,7 +347,7 @@ export default class Render {
       return;
     }
     element.noRender = false;
-    this.render();
+    this.app.render.render();
   }
 
   // 完成箭头元素的创建
@@ -368,7 +368,7 @@ export default class Render {
       }
     );
     this.activeElement.updateFictitiousPoint(e.clientX, e.clientY);
-    this.render();
+    this.app.render.render();
   }
 
   // 正在创建线段/折线元素
@@ -389,7 +389,7 @@ export default class Render {
     let element = this.activeElement;
     if (element) {
       element.updateFictitiousPoint(e.clientX, e.clientY);
-      this.render();
+      this.app.render.render();
     }
   }
 
@@ -411,7 +411,7 @@ export default class Render {
       element = this.activeElement;
       element.addPoint(x, y);
       element.updateFictitiousPoint(x, y);
-      this.render();
+      this.app.render.render();
     }
   }
 
@@ -438,35 +438,10 @@ export default class Render {
     Object.keys(style).forEach((key) => {
       this.activeElement.style[key] = style[key];
     });
-    this.render();
+    this.app.render.render();
     if (!this.isCreatingElement) {
       this.app.emitChange();
     }
-    return this;
-  }
-
-  // 清除画布
-  clearCanvas() {
-    let { width, height } = this.app;
-    this.app.ctx.clearRect(-width / 2, -height / 2, width, height);
-    return this;
-  }
-
-  // 绘制所有元素
-  render() {
-    let { state } = this.app;
-    this.clearCanvas();
-    this.app.ctx.save();
-    // 整体缩放
-    this.app.ctx.scale(state.scale, state.scale);
-    this.elementList.forEach((element) => {
-      // 不需要渲染
-      if (element.noRender) {
-        return;
-      }
-      element.render();
-    });
-    this.app.ctx.restore();
     return this;
   }
 
@@ -506,7 +481,7 @@ export default class Render {
       return;
     }
     this.resizingElement.resize(...args);
-    this.render();
+    this.app.render.render();
   }
 
   // 结束元素调整操作
