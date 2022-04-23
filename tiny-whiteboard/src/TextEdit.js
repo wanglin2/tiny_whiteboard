@@ -40,14 +40,14 @@ export default class TextEdit extends EventEmitter {
 
   // 根据当前文字元素的样式更新文本输入框的样式
   updateTextInputStyle() {
-    let activeElement = this.app.render.activeElements[0];
+    let activeElement = this.app.render.activeElement;
     if (!activeElement) {
       return;
     }
     let { x, y, width, height, style, text, rotate } = activeElement;
     let { coordinate, state } = this.app;
     this.editable.value = text;
-    x = coordinate.subScrollY(x);
+    x = coordinate.subScrollX(x);
     y = coordinate.subScrollY(y);
     // 屏幕坐标转画布坐标
     let sp = coordinate.scale(x, y);
@@ -69,7 +69,7 @@ export default class TextEdit extends EventEmitter {
 
   // 文本输入事件
   onTextInput() {
-    let activeElement = this.app.render.activeElements[0];
+    let activeElement = this.app.render.activeElement;
     if (!activeElement) {
       return;
     }

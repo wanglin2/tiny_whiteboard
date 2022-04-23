@@ -1,9 +1,13 @@
+import { throttle } from "./utils";
+
 // 模式
 export default class Mode {
   constructor(app) {
     this.app = app;
     this.startScrollX = 0;
     this.startScrollY = 0;
+    // 稍微缓解一下卡顿
+    this.onMove = throttle(this.onMove, this, 16);
   }
 
   // 设置为编辑模式

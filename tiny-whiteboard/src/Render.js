@@ -17,7 +17,7 @@ export default class Render {
     // 所有元素
     this.elementList = [];
     // 当前激活元素
-    this.activeElements = [];
+    this.activeElement = null;
     // 当前正在创建新元素
     this.isCreatingElement = false;
     // 当前正在调整元素
@@ -25,7 +25,7 @@ export default class Render {
     // 当前正在调整的元素
     this.resizingElement = null;
     // 将被复制的元素
-    this.canBeCopyElements = [];
+    this.beingCopyElement = [];
     // 稍微缓解一下卡顿
     this.handleResize = throttle(this.handleResize, this, 16);
     this.registerShortcutKeys();
@@ -35,25 +35,26 @@ export default class Render {
   registerShortcutKeys() {
     // 删除当前激活元素
     this.app.keyCommand.addShortcut("Del|Backspace", () => {
-      this.activeElements.forEach((element) => {
-        this.deleteElement(element);
-      });
+      this.deleteElement(this.activeElement);
       this.render();
       this.app.emitChange();
     });
     // 复制元素
     this.app.keyCommand.addShortcut("Control+c", () => {
-      this.canBeCopyElements = [...this.activeElements];
+      this.beingCopyElement = this.activeElement;
     });
     // 粘贴元素
     this.app.keyCommand.addShortcut("Control+v", () => {
-      this.canBeCopyElements.forEach((element) => {
-        this.app.copyElement(element, false, {
-          x: this.app.event.lastMousePos.x,
-          y: this.app.event.lastMousePos.y,
-        });
+      this.app.copyElement(this.beingCopyElement, false, {
+        x: this.app.event.lastMousePos.x,
+        y: this.app.event.lastMousePos.y,
       });
     });
+  }
+
+  // 当前画布上是否有元素
+  hasElements() {
+    return this.elementList.length > 0;
   }
 
   // 添加元素
@@ -78,7 +79,7 @@ export default class Render {
 
   // 删除全部元素
   deleteAllElements() {
-    this.activeElements = [];
+    this.activeElement = null;
     this.elementList = [];
     this.isCreatingElement = false;
     this.isResizing = false;
@@ -98,56 +99,29 @@ export default class Render {
   }
 
   // 是否存在激活元素
-  hasActiveElements() {
-    return this.activeElements.length > 0;
-  }
-
-  // 添加激活元素
-  addActiveElement(element) {
-    element.isActive = true;
-    if (!this.activeElements.includes(element)) {
-      this.activeElements.push(element);
-    }
-    this.app.emit("activeElementChange", this.activeElements);
-    return this;
+  hasActiveElement() {
+    return !!this.activeElement;
   }
 
   // 设置激活元素
-  setActiveElements(elements) {
-    if (!elements) {
-      elements = [];
-    }
-    if (!Array.isArray(elements)) {
-      elements = [elements];
-    }
-    this.clearActiveElements();
-    elements.forEach((element) => {
+  setActiveElement(element) {
+    this.deleteActiveElement();
+    this.activeElement = element;
+    if (element) {
       element.isActive = true;
-    });
-    this.activeElements = elements;
-    this.app.emit("activeElementChange", this.activeElements);
-    return this;
-  }
-
-  // 删除指定激活元素
-  deleteActiveElement(element) {
-    let index = this.activeElements.findIndex((item) => {
-      return item === element;
-    });
-    if (index !== -1) {
-      this.activeElements.splice(index, 1);
     }
-    this.app.emit("activeElementChange", this.activeElements);
+    this.app.emit("activeElementChange", this.activeElement);
     return this;
   }
 
-  // 清除当前激活元素
-  clearActiveElements() {
-    this.activeElements.forEach((element) => {
-      element.isActive = false;
-    });
-    this.activeElements = [];
-    this.app.emit("activeElementChange", this.activeElements);
+  // 删除当前激活元素
+  deleteActiveElement() {
+    if (!this.hasActiveElement()) {
+      return this;
+    }
+    this.activeElement.isActive = false;
+    this.activeElement = null;
+    this.app.emit("activeElementChange", this.activeElement);
     return this;
   }
 
@@ -193,7 +167,7 @@ export default class Render {
 
   // 创建元素
   createElement(opts = {}, callback = () => {}, ctx = null, notActive) {
-    if (this.hasActiveElements() || this.isCreatingElement) {
+    if (this.hasActiveElement() || this.isCreatingElement) {
       return this;
     }
     let element = this.pureCreateElement(opts);
@@ -202,7 +176,7 @@ export default class Render {
     }
     this.addElement(element);
     if (!notActive) {
-      this.addActiveElement(element);
+      this.setActiveElement(element);
     }
     this.isCreatingElement = true;
     callback.call(ctx, element);
@@ -218,8 +192,7 @@ export default class Render {
       width: offsetX,
       height: offsetY,
     });
-    let element = this.activeElements[0];
-    element.updateSize(offsetX, offsetY);
+    this.activeElement.updateSize(offsetX, offsetY);
     this.render();
   }
 
@@ -231,8 +204,7 @@ export default class Render {
       y: y,
     });
     let radius = getTowPointDistance(e.clientX, e.clientY, x, y);
-    let element = this.activeElements[0];
-    element.updateSize(radius, radius);
+    this.activeElement.updateSize(radius, radius);
     this.render();
   }
 
@@ -241,7 +213,7 @@ export default class Render {
     this.createElement({
       type: "freedraw",
     });
-    let element = this.activeElements[0];
+    let element = this.activeElement;
     // 计算画笔粗细
     let lineWidth = computedLineWidthBySpeed(
       event.mouseSpeed,
@@ -289,21 +261,21 @@ export default class Render {
       return;
     }
     element.noRender = true;
-    this.setActiveElements(element);
+    this.setActiveElement(element);
     this.render();
     this.app.textEdit.showTextEdit();
   }
 
   // 完成文本元素的编辑
   completeEditingText() {
-    let element = this.activeElements[0];
+    let element = this.activeElement;
     if (!element || element.type !== "text") {
       return;
     }
     if (!element.text.trim()) {
       // 没有输入则删除该文字元素
       this.deleteElement(element);
-      this.setActiveElements(null);
+      this.setActiveElement(null);
       return;
     }
     element.noRender = false;
@@ -312,8 +284,7 @@ export default class Render {
 
   // 完成箭头元素的创建
   completeCreateArrow(e) {
-    let element = this.activeElements[0];
-    element.addPoint(e.clientX, e.clientY);
+    this.activeElement.addPoint(e.clientX, e.clientY);
   }
 
   // 正在创建箭头元素
@@ -328,8 +299,7 @@ export default class Render {
         element.addPoint(x, y);
       }
     );
-    let element = this.activeElements[0];
-    element.updateFictitiousPoint(e.clientX, e.clientY);
+    this.activeElement.updateFictitiousPoint(e.clientX, e.clientY);
     this.render();
   }
 
@@ -348,7 +318,7 @@ export default class Render {
         }
       );
     }
-    let element = this.activeElements[0];
+    let element = this.activeElement;
     if (element) {
       element.updateFictitiousPoint(e.clientX, e.clientY);
       this.render();
@@ -357,7 +327,7 @@ export default class Render {
 
   // 完成线段/折线元素的创建
   completeCreateLine(e, completeCallback = () => {}) {
-    let element = this.activeElements[0];
+    let element = this.activeElement;
     let x = e.clientX;
     let y = e.clientY;
     if (element && element.isSingle) {
@@ -370,7 +340,7 @@ export default class Render {
         type: "line",
         isSingle: false,
       });
-      element = this.activeElements[0];
+      element = this.activeElement;
       element.addPoint(x, y);
       element.updateFictitiousPoint(x, y);
       this.render();
@@ -380,25 +350,25 @@ export default class Render {
   // 创建元素完成
   completeCreateElement() {
     this.isCreatingElement = false;
-    this.activeElements.forEach((element) => {
-      if (["freedraw", "arrow", "line"].includes(element.type)) {
-        element.updateMultiPointBoundingRect();
-      }
-      element.isCreating = false;
-    });
+    let element = this.activeElement;
+    if (!element) {
+      return this;
+    }
+    if (["freedraw", "arrow", "line"].includes(element.type)) {
+      element.updateMultiPointBoundingRect();
+    }
+    element.isCreating = false;
     this.app.emitChange();
     return this;
   }
 
   // 为激活元素设置样式
   setActiveElementStyle(style = {}) {
-    if (!this.hasActiveElements()) {
+    if (!this.hasActiveElement()) {
       return this;
     }
     Object.keys(style).forEach((key) => {
-      this.activeElements.forEach((element) => {
-        element.style[key] = style[key];
-      });
+      this.activeElement.style[key] = style[key];
     });
     this.render();
     if (!this.isCreatingElement) {
@@ -434,23 +404,21 @@ export default class Render {
 
   // 检测指定位置是否在元素调整手柄上
   checkInResizeHand(x, y) {
-    for (let i = 0; i < this.activeElements.length; i++) {
-      // 按住了拖拽元素的某个部分
-      let element = this.activeElements[i];
-      let hand = element.dragElement.checkPointInDragElementWhere(x, y);
-      if (hand) {
-        return {
-          element,
-          hand,
-        };
-      }
+    // 按住了拖拽元素的某个部分
+    let element = this.activeElement;
+    let hand = element.dragElement.checkPointInDragElementWhere(x, y);
+    if (hand) {
+      return {
+        element,
+        hand,
+      };
     }
     return null;
   }
 
   // 检查是否需要进行元素调整操作
   checkIsResize(x, y, e) {
-    if (!this.hasActiveElements()) {
+    if (!this.hasActiveElement()) {
       return false;
     }
     let res = this.checkInResizeHand(x, y);

@@ -422,7 +422,7 @@ watch(currentType, () => {
 
 // 更新样式
 const updateStyle = (key, value) => {
-  if (hasSelectedElements) {
+  if (hasSelectedElements.value) {
     app.setSelectedElementStyle({
       [key]: value,
     });
@@ -436,7 +436,7 @@ const updateStyle = (key, value) => {
 // 类型变化
 const onCurrentTypeChange = () => {
   // 清除激活项
-  app.clearActiveElements();
+  app.deleteActiveElement();
 };
 
 // 删除元素
@@ -617,7 +617,6 @@ onMounted(() => {
   });
   // 监听元素激活事件
   app.on("activeElementChange", (element) => {
-    element = element.length > 0 ? element[0] : null;
     activeElement.value = element;
     originActiveElement = element;
     if (element) {

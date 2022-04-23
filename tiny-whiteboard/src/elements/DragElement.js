@@ -519,6 +519,10 @@ export default class DragElement extends BaseElement {
       this.element.rotate
     );
     let fixNewRect = this.stretchCalc(rp.x, rp.y, calcSize, calcPos).newRect;
+    // 不知道为什么刚拖动时会有宽高计算为0的情况
+    if (fixNewRect.width === 0 && fixNewRect.height === 0) {
+      return;
+    }
     // 更新尺寸位置信息
     this.element.updateRect(
       fixNewRect.x,
