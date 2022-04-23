@@ -31,7 +31,7 @@ export default class Selection {
       {
         type: "multiSelectElement",
         renderElements: () => {
-          this.app.render.render();
+          this.app.elements.render();
         },
       },
       this
@@ -62,7 +62,7 @@ export default class Selection {
   bindEvent() {
     this.app.on("change", () => {
       this.state = this.app.state;
-      this.multiSelectElement.updateElements(this.app.render.elementList);
+      this.multiSelectElement.updateElements(this.app.elements.elementList);
       this.renderSelection();
     });
     this.app.on("scrollChange", () => {
@@ -140,7 +140,7 @@ export default class Selection {
     let maxx = Math.max(event.mousedownPos.x, e.clientX);
     let maxy = Math.max(event.mousedownPos.y, e.clientY);
     let selectedElementList = [];
-    this.app.render.elementList.forEach((element) => {
+    this.app.elements.elementList.forEach((element) => {
       let rect = getElementCorners(element);
       let _minx = Infinity;
       let _maxx = -Infinity;
@@ -165,7 +165,7 @@ export default class Selection {
       }
     });
     this.multiSelectElement.setSelectedElementList(selectedElementList);
-    this.app.render.render();
+    this.app.elements.render();
   }
 
   // 检测指定位置是否在元素调整手柄上
@@ -200,7 +200,7 @@ export default class Selection {
       return;
     }
     this.multiSelectElement.resize(...args);
-    this.app.render.render();
+    this.app.elements.render();
     this.multiSelectElement.updateRect();
     this.renderSelection();
   }
@@ -221,17 +221,17 @@ export default class Selection {
         element.style[key] = style[key];
       });
     });
-    this.app.render.render();
+    this.app.elements.render();
     this.app.emitChange();
   }
 
   // 删除当前选中的元素
   deleteSelectedElements() {
     this.getSelectionElements().forEach((element) => {
-      this.app.render.deleteElement(element);
+      this.app.elements.deleteElement(element);
     });
     this.app.emit("multiSelectChange", []);
-    this.app.render.render();
+    this.app.elements.render();
     this.app.emitChange();
   }
 
@@ -248,7 +248,7 @@ export default class Selection {
   // 复制当前选中的元素
   async copySelectionElements(pos) {
     let task = this.getSelectionElements().map((element) => {
-      return this.app.render.copyElement(element, true);
+      return this.app.elements.copyElement(element, true);
     });
     let elements = await Promise.all(task);
     this.multiSelectElement.setSelectedElementList(elements);

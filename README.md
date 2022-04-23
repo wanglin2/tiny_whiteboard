@@ -392,9 +392,9 @@ let app = new TinyWhiteboard({
 
 
 
-## 2.render渲染实例
+## 2.elements元素管理实例
 
-可通过`app.render`获取到该实例。
+可通过`app.elements`获取到该实例。
 
 ### 实例属性
 

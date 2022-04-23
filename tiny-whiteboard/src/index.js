@@ -11,7 +11,7 @@ import * as checkHit from "./utils/checkHit";
 import * as draw from "./utils/draw";
 import Coordinate from "./Coordinate";
 import Event from "./Event";
-import Render from "./Render";
+import Elements from "./Elements";
 import ImageEdit from "./ImageEdit";
 import Cursor from "./Cursor";
 import TextEdit from "./TextEdit";
@@ -46,8 +46,11 @@ class TinyWhiteboard extends EventEmitter {
     ) {
       throw new Error("container元素需要设置定位！");
     }
-    // 宽高
-    this.getContainerRectInfo();
+    // 容器宽高位置信息
+    this.width = 0;
+    this.height = 0;
+    this.left = 0;
+    this.top = 0;
     // 主要的渲染canvas元素
     this.canvas = null;
     // canvas绘制上下文
@@ -102,8 +105,8 @@ class TinyWhiteboard extends EventEmitter {
     this.grid = new Grid(this);
     // 模式类
     this.mode = new Mode(this);
-    // 实例化渲染类
-    this.render = new Render(this);
+    // 实例化元素类
+    this.elements = new Elements(this);
 
     // 代理
     this.proxy();
@@ -119,9 +122,9 @@ class TinyWhiteboard extends EventEmitter {
     ["undo", "redo"].forEach((method) => {
       this[method] = this.history[method].bind(this.history);
     });
-    // render类
+    // elements类
     ["setActiveElementStyle", "cancelActiveElement"].forEach((method) => {
-      this[method] = this.render[method].bind(this.render);
+      this[method] = this.elements[method].bind(this.elements);
     });
     // 导入导出类
     ["exportImage", "exportJson"].forEach((method) => {
@@ -152,10 +155,13 @@ class TinyWhiteboard extends EventEmitter {
 
   // 必要的重新渲染
   helpUpdate() {
+    // 设置背景
     this.background.set();
+    // 设置网格
     if (this.state.showGrid) {
       this.grid.showGrid();
     }
+    // 设置模式
     if (this.state.readonly) {
       this.setReadonlyMode();
     }
@@ -164,13 +170,14 @@ class TinyWhiteboard extends EventEmitter {
   // 设置数据，包括状态数据及元素数据
   async setData({ state = {}, elements = [] }, noEmitChange) {
     this.state = state;
+    // 图片需要预加载
     for (let i = 0; i < elements.length; i++) {
       if (elements[i].type === "image") {
         elements[i].imageObj = await createImageObj(elements[i].url);
       }
     }
     this.helpUpdate();
-    this.render.deleteAllElements().setElements(elements).render();
+    this.elements.deleteAllElements().setElements(elements).render();
     if (!noEmitChange) {
       this.emitChange();
     }
@@ -178,6 +185,11 @@ class TinyWhiteboard extends EventEmitter {
 
   // 初始化画布
   initCanvas() {
+    this.getContainerRectInfo();
+    // 删除旧的canvas元素
+    if (this.canvas) {
+      this.container.removeChild(this.canvas);
+    }
     // 创建canvas元素
     let { canvas, ctx } = createCanvas(this.width, this.height, {
       className: "main",
@@ -189,18 +201,19 @@ class TinyWhiteboard extends EventEmitter {
 
   // 容器尺寸调整
   resize() {
-    this.getContainerRectInfo();
-    this.event.unbindEvent();
-    this.container.removeChild(this.canvas);
+    // 初始化canvas元素
     this.initCanvas();
-    this.event.bindEvent();
-    this.render.render();
+    // 在新的画布上绘制元素
+    this.elements.render();
+    // 多选画布重新初始化
     this.selection.init();
+    // 网格画布重新初始化
     this.grid.init();
+    // 重新判断是否渲染网格
     this.grid.renderGrid();
   }
 
-  // 更新状态数据
+  // 更新状态数据，只是更新状态数据，不会触发重新渲染，如有需要重新渲染或其他操作需要自行调用相关方法
   updateState(data = {}) {
     this.state = {
       ...this.state,
@@ -231,15 +244,15 @@ class TinyWhiteboard extends EventEmitter {
 
   // 删除当前激活元素
   deleteActiveElement() {
-    if (!this.render.hasActiveElement()) {
+    if (!this.elements.hasActiveElement()) {
       return;
     }
-    this.deleteElement(this.render.activeElement);
+    this.deleteElement(this.elements.activeElement);
   }
 
   // 删除元素
   deleteElement(element) {
-    this.render.deleteElement(element).render();
+    this.elements.deleteElement(element).render();
     this.emitChange();
   }
 
@@ -262,7 +275,7 @@ class TinyWhiteboard extends EventEmitter {
       data.imageObj = await createImageObj(data.url);
     }
     this.cancelActiveElement();
-    this.render.createElement(
+    this.elements.createElement(
       data,
       (element) => {
         element.startResize(DRAG_ELEMENT_PARTS.BODY);
@@ -282,24 +295,24 @@ class TinyWhiteboard extends EventEmitter {
         if (notActive) {
           element.isActive = false;
         }
-        this.render.isCreatingElement = false;
+        this.elements.isCreatingElement = false;
       },
       this,
       notActive
     );
-    this.render.render();
+    this.elements.render();
     this.emitChange();
   }
 
   // 复制粘贴当前元素
   copyCurrentElements() {
-    this.render.copyCurrentElement();
-    this.render.pasteCurrentElement();
+    this.elements.copyCurrentElement();
+    this.elements.pasteCurrentElement();
   }
 
   // 清空元素
   empty() {
-    this.render.deleteAllElements().render();
+    this.elements.deleteAllElements().render();
     this.history.clear();
     this.emitChange();
   }
@@ -309,7 +322,7 @@ class TinyWhiteboard extends EventEmitter {
     this.updateState({
       scale: this.state.scale + num,
     });
-    this.render.render();
+    this.elements.render();
     this.emit("zoomChange", this.state.scale);
   }
 
@@ -318,7 +331,7 @@ class TinyWhiteboard extends EventEmitter {
     this.updateState({
       scale: this.state.scale - num,
     });
-    this.render.render();
+    this.elements.render();
     this.emit("zoomChange", this.state.scale);
   }
 
@@ -330,7 +343,7 @@ class TinyWhiteboard extends EventEmitter {
     this.updateState({
       scale: zoom,
     });
-    this.render.render();
+    this.elements.render();
     this.emit("zoomChange", this.state.scale);
   }
 
@@ -348,7 +361,7 @@ class TinyWhiteboard extends EventEmitter {
       state: {
         ...this.state,
       },
-      elements: this.render.elementList.map((element) => {
+      elements: this.elements.elementList.map((element) => {
         return element.serialize();
       }),
     };
@@ -360,18 +373,18 @@ class TinyWhiteboard extends EventEmitter {
       scrollX,
       scrollY,
     });
-    this.render.render();
+    this.elements.render();
     this.emit("scrollChange", this.state.scrollX, this.state.scrollY);
   }
 
   // 滚动至中心，即回到所有元素的中心位置
   scrollToCenter() {
-    if (!this.render.hasElements()) {
+    if (!this.elements.hasElements()) {
       this.scrollTo(0, 0);
       return;
     }
     let { minx, maxx, miny, maxy } = getMultiElementRectInfo(
-      this.render.elementList
+      this.elements.elementList
     );
     let width = maxx - minx;
     let height = maxy - miny;
@@ -393,19 +406,19 @@ class TinyWhiteboard extends EventEmitter {
       this.mode.onStart();
       return;
     }
-    if (!this.render.isCreatingElement && !this.textEdit.isEditing) {
+    if (!this.elements.isCreatingElement && !this.textEdit.isEditing) {
       // 是否击中了某个元素
-      let hitElement = this.render.checkIsHitElement(e);
+      let hitElement = this.elements.checkIsHitElement(e);
       // 当前存在激活元素
-      if (this.render.hasActiveElement()) {
-        let isResizing = this.render.checkIsResize(
+      if (this.elements.hasActiveElement()) {
+        let isResizing = this.elements.checkIsResize(
           event.mousedownPos.unGridClientX,
           event.mousedownPos.unGridClientY,
           e
         );
         // 不在调整元素中
         if (!isResizing) {
-          this.render.setActiveElement(hitElement).render();
+          this.elements.setActiveElement(hitElement).render();
         }
       } else {
         // 当前没有激活元素
@@ -419,7 +432,7 @@ class TinyWhiteboard extends EventEmitter {
           // 不在调整元素中
           if (!isResizing) {
             this.selection.reset();
-            this.render.setActiveElement(hitElement).render();
+            this.elements.setActiveElement(hitElement).render();
           }
         } else if (hitElement) {
           // 当前有击中元素
@@ -427,7 +440,7 @@ class TinyWhiteboard extends EventEmitter {
             // 橡皮擦模式
             this.deleteElement(hitElement);
           } else {
-            this.render.setActiveElement(hitElement).render();
+            this.elements.setActiveElement(hitElement).render();
           }
         } else if (this.drawType === 'selection') {
           // 多选创建选区操作
@@ -468,7 +481,7 @@ class TinyWhiteboard extends EventEmitter {
           this.selection.onMousemove(e, event);
         } else {
           // 检测是否是正常的激活元素的调整操作
-          this.render.handleResize(
+          this.elements.handleResize(
             e,
             mx,
             my,
@@ -478,7 +491,7 @@ class TinyWhiteboard extends EventEmitter {
         }
       } else if (["rectangle", "diamond", "triangle"].includes(this.drawType)) {
         // 类矩形元素绘制模式
-        this.render.creatingRectangleLikeElement(
+        this.elements.creatingRectangleLikeElement(
           this.drawType,
           mx,
           my,
@@ -487,15 +500,15 @@ class TinyWhiteboard extends EventEmitter {
         );
       } else if (this.drawType === "circle") {
         // 绘制圆形模式
-        this.render.creatingCircle(mx, my, e);
+        this.elements.creatingCircle(mx, my, e);
       } else if (this.drawType === "freedraw") {
         // 自由画笔模式
-        this.render.creatingFreedraw(e, event);
+        this.elements.creatingFreedraw(e, event);
       } else if (this.drawType === "arrow") {
-        this.render.creatingArrow(mx, my, e);
+        this.elements.creatingArrow(mx, my, e);
       } else if (this.drawType === "line") {
         if (getTowPointDistance(mx, my, e.clientX, e.clientY) > 3) {
-          this.render.creatingLine(mx, my, e, true);
+          this.elements.creatingLine(mx, my, e, true);
         }
       }
     } else {
@@ -508,12 +521,12 @@ class TinyWhiteboard extends EventEmitter {
           e.originEvent.clientY
         );
       } else if (this.drawType === "selection") {
-        if (this.render.hasActiveElement()) {
+        if (this.elements.hasActiveElement()) {
           // 当前存在激活元素
           // 检测是否划过激活元素的各个收缩手柄
           let handData = "";
           if (
-            (handData = this.render.checkInResizeHand(
+            (handData = this.elements.checkInResizeHand(
               e.unGridClientX,
               e.unGridClientY
             ))
@@ -539,14 +552,14 @@ class TinyWhiteboard extends EventEmitter {
         }
       } else if (this.drawType === "line") {
         // 线段绘制中
-        this.render.creatingLine(null, null, e, false, true);
+        this.elements.creatingLine(null, null, e, false, true);
       }
     }
   }
 
   // 检测是否滑过元素
   checkIsOnElement(e) {
-    let hitElement = this.render.checkIsHitElement(e);
+    let hitElement = this.elements.checkIsHitElement(e);
     if (hitElement) {
       this.cursor.setMove();
     } else {
@@ -565,7 +578,7 @@ class TinyWhiteboard extends EventEmitter {
   // 创建新元素完成
   completeCreateNewElement() {
     this.resetCurrentType();
-    this.render.completeCreateElement().render();
+    this.elements.completeCreateElement().render();
   }
 
   // 鼠标松开事件
@@ -581,31 +594,31 @@ class TinyWhiteboard extends EventEmitter {
       }
     } else if (this.imageEdit.isReady) {
       // 图片放置模式
-      this.render.creatingImage(e, this.imageEdit.imageData);
+      this.elements.creatingImage(e, this.imageEdit.imageData);
       this.completeCreateNewElement();
       this.cursor.reset();
       this.imageEdit.reset();
     } else if (this.drawType === "arrow") {
       // 箭头绘制模式
-      this.render.completeCreateArrow(e);
+      this.elements.completeCreateArrow(e);
       this.completeCreateNewElement();
     } else if (this.drawType === "line") {
-      this.render.completeCreateLine(e, () => {
+      this.elements.completeCreateLine(e, () => {
         this.completeCreateNewElement();
       });
-    } else if (this.render.isCreatingElement) {
+    } else if (this.elements.isCreatingElement) {
       // 正在创建元素中
       if (this.drawType === "freedraw") {
         // 自由绘画模式可以连续绘制
-        this.render.completeCreateElement();
-        this.render.setActiveElement();
+        this.elements.completeCreateElement();
+        this.elements.setActiveElement();
       } else {
         // 创建新元素完成
         this.completeCreateNewElement();
       }
-    } else if (this.render.isResizing) {
+    } else if (this.elements.isResizing) {
       // 调整元素操作结束
-      this.render.endResize();
+      this.elements.endResize();
       this.emitChange();
     } else if (this.selection.creatingSelection) {
       // 多选选区操作结束
@@ -624,11 +637,11 @@ class TinyWhiteboard extends EventEmitter {
       this.completeCreateNewElement();
     } else {
       // 是否击中了某个元素
-      let hitElement = this.render.checkIsHitElement(e);
+      let hitElement = this.elements.checkIsHitElement(e);
       if (hitElement) {
         // 编辑文字
         if (hitElement.type === "text") {
-          this.render.editingText(hitElement);
+          this.elements.editingText(hitElement);
         }
       } else {
         // 双击空白处新增文字
@@ -641,13 +654,13 @@ class TinyWhiteboard extends EventEmitter {
 
   // 文本框失焦事件
   onTextInputBlur() {
-    this.render.completeEditingText();
+    this.elements.completeEditingText();
     this.emitChange();
   }
 
   // 创建文本元素
   createTextElement(e) {
-    this.render.createElement({
+    this.elements.createElement({
       type: "text",
       x: e.clientX,
       y: e.clientY,
