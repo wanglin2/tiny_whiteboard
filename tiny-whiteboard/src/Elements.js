@@ -188,7 +188,7 @@ export default class Elements {
           // 指定了具体坐标则使用具体坐标
           if (pos) {
             ox = pos.x - element.x,
-            ox = pos.y - element.y
+            oy = pos.y - element.y
           }
           element.resize(null, null, null, ox, oy);
           element.isCreating = false;

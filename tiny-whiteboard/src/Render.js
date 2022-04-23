@@ -99,40 +99,8 @@ export default class Render {
 
     // 复制粘贴元素
     async copyElement(element, notActive = false, pos) {
-        if (!element) {
-            return;
-        }
-        let data = element.serialize();
-        // 图片元素需要先加载图片
-        if (data.type === "image") {
-            data.imageObj = await createImageObj(data.url);
-        }
-        this.cancelActiveElement();
-        this.app.elements.createElement(
-            data,
-            (element) => {
-                element.startResize(DRAG_ELEMENT_PARTS.BODY);
-                if (pos) {
-                    // 指定了坐标
-                    element.resize(
-                        null,
-                        null,
-                        null,
-                        pos.x - element.x,
-                        pos.y - element.y
-                    );
-                } else {
-                    element.resize(null, null, null, 20, 20);
-                }
-                element.isCreating = false;
-                if (notActive) {
-                    element.isActive = false;
-                }
-                this.app.elements.isCreatingElement = false;
-            },
-            this,
-            notActive
-        );
+        this.app.elements.cancelActiveElement();
+        await this.app.elements.copyElement(element, notActive = false, pos);
         this.render();
         this.app.emitChange();
     }
