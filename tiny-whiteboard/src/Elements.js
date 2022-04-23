@@ -24,60 +24,16 @@ export default class Elements {
     this.isResizing = false;
     // 当前正在调整的元素
     this.resizingElement = null;
-    // 将被复制的激活的元素
-    this.beingCopyActiveElement = null;
-    // 将被复制的选中的元素
-    this.beingCopySelectedElments = [];
     // 稍微缓解一下卡顿
     this.handleResize = throttle(this.handleResize, this, 16);
-    this.registerShortcutKeys();
   }
 
-  // 注册快捷键
-  registerShortcutKeys() {
-    // 删除当前激活元素
-    this.app.keyCommand.addShortcut("Del|Backspace", () => {
-      this.app.render.deleteCurrentElements();
+  // 序列化当前画布上的所有元素
+  serialize(stringify = false) {
+    let data = this.elementList.map((element) => {
+      return element.serialize();
     });
-    // 复制元素
-    this.app.keyCommand.addShortcut("Control+c", () => {
-      this.copyCurrentElement();
-    });
-    // 粘贴元素
-    this.app.keyCommand.addShortcut("Control+v", () => {
-      this.pasteCurrentElement(true);
-    });
-  }
-
-  // 复制当前激活或选中的元素
-  copyCurrentElement() {
-    // 当前操作激活元素
-    if (this.activeElement) {
-      this.beingCopySelectedElments = [];
-      this.beingCopyElement = this.activeElement;
-    } else if (this.app.selection.hasSelectionElements()) {
-      // 当前操作选中元素
-      this.beingCopyElement = null;
-      this.beingCopySelectedElments = this.app.selection.getSelectionElements();
-    }
-  }
-
-  // 粘贴被复制的元素
-  pasteCurrentElement(useCurrentEventPos = false) {
-    let pos = null;
-    if (useCurrentEventPos) {
-      let x = this.app.event.lastMousePos.x;
-      let y = this.app.event.lastMousePos.y;
-      pos = {
-        x,
-        y
-      }
-    }
-    if (this.beingCopyElement) {
-      this.app.copyElement(this.beingCopyElement, false, pos);
-    } else if (this.beingCopySelectedElments.length > 0) {
-      this.app.selection.copySelectionElements(pos);
-    }
+    return stringify ? JSON.stringify(data) : data;
   }
 
   // 当前画布上是否有元素
@@ -116,7 +72,7 @@ export default class Elements {
   }
 
   // 根据元素数据创建元素
-  setElements(data) {
+  createElementsFromData(data) {
     data.forEach((item) => {
       let element = this.pureCreateElement(item);
       element.isActive = false;
@@ -226,18 +182,15 @@ export default class Elements {
         data,
         (element) => {
           element.startResize(DRAG_ELEMENT_PARTS.BODY);
+          // 默认偏移原图形20像素
+          let ox = 20;
+          let oy = 20;
+          // 指定了具体坐标则使用具体坐标
           if (pos) {
-            // 指定了坐标
-            element.resize(
-              null,
-              null,
-              null,
-              pos.x - element.x,
-              pos.y - element.y
-            );
-          } else {
-            element.resize(null, null, null, 20, 20);
+            ox = pos.x - element.x,
+            ox = pos.y - element.y
           }
+          element.resize(null, null, null, ox, oy);
           element.isCreating = false;
           if (notActive) {
             element.isActive = false;
@@ -251,7 +204,7 @@ export default class Elements {
     });
   }
 
-  // 创建类矩形元素
+  // 正在创建类矩形元素
   creatingRectangleLikeElement(type, x, y, offsetX, offsetY) {
     this.createElement({
       type,
@@ -288,23 +241,25 @@ export default class Elements {
     element.lastLineWidth = lineWidth;
     element.addPoint(e.clientX, e.clientY, lineWidth);
     // 绘制自由线不重绘，采用增量绘制，否则会卡顿
-    let tfp = this.app.coordinate.transformToCanvasCoordinate(
-      this.app.coordinate.subScrollX(event.lastMousePos.x),
-      this.app.coordinate.subScrollY(event.lastMousePos.y)
+    let { coordinate, ctx, state } = this.app;
+    // 事件对象的坐标默认是加上了画布偏移量的，临时绘制的时候不需要，所以需要减去
+    let tfp = coordinate.transformToCanvasCoordinate(
+      coordinate.subScrollX(event.lastMousePos.x),
+      coordinate.subScrollY(event.lastMousePos.y)
     );
-    let ttp = this.app.coordinate.transformToCanvasCoordinate(
-      this.app.coordinate.subScrollX(e.clientX),
-      this.app.coordinate.subScrollY(e.clientY)
+    let ttp = coordinate.transformToCanvasCoordinate(
+      coordinate.subScrollX(e.clientX),
+      coordinate.subScrollY(e.clientY)
     );
-    this.app.ctx.save();
-    // 整体缩放
-    this.app.ctx.scale(this.app.state.scale, this.app.state.scale);
+    ctx.save();
+    ctx.scale(state.scale, state.scale);
     element.singleRender(tfp.x, tfp.y, ttp.x, ttp.y, lineWidth);
-    this.app.ctx.restore();
+    ctx.restore();
   }
 
   // 正在创建图片元素
   creatingImage(e, { width, height, imageObj, url, ratio }) {
+    // 吸附到网格，如果网格开启的话
     let gp = this.app.coordinate.gridAdsorbent(
       e.unGridClientX - width / 2,
       e.unGridClientY - height / 2
@@ -392,11 +347,11 @@ export default class Elements {
     let x = e.clientX;
     let y = e.clientY;
     if (element && element.isSingle) {
-      // 单根线段模式
+      // 单根线段模式，鼠标松开则代表绘制完成
       element.addPoint(x, y);
       completeCallback();
     } else {
-      // 绘制折线模式
+      // 绘制折线模式，鼠标松开代表固定一个端点
       this.createElement({
         type: "line",
         isSingle: false,
@@ -414,6 +369,7 @@ export default class Elements {
     if (!element) {
       return this;
     }
+    // 由多个端点构成的元素需要根据端点计算外包围框
     if (["freedraw", "arrow", "line"].includes(element.type)) {
       element.updateMultiPointBoundingRect();
     }
