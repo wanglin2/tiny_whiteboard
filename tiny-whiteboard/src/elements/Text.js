@@ -17,8 +17,6 @@ export default class Text extends BaseElement {
 		this.style.fontSize = opts.style?.fontSize || 18;
 		this.style.lineHeightRatio = opts.style?.lineHeightRatio || 1.5;
 		this.style.fontFamily = opts.style?.fontFamily || "微软雅黑, Microsoft YaHei";
-		this.y -=
-			(this.style.fontSize * this.style.lineHeightRatio - this.style.fontSize) / 2 + 8;
 	}
 
 	// 序列化

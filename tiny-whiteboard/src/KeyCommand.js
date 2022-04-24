@@ -65,7 +65,11 @@ export default class KeyCommand {
 
   // 获取快捷键对应的键值数组
   getKeyCodeArr(key) {
-    let keyArr = key.split(/\s*\+\s*/);
+    // 对xxx++情况特殊处理
+    key = key.replace(/\+\+/, '+add');
+    let keyArr = key.split(/\s*\+\s*/).map((item) => {
+      return item ==='add' ? '+' : item;
+    });
     let arr = [];
     keyArr.forEach((item) => {
       arr.push(keyMap[item]);

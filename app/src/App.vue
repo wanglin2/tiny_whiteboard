@@ -266,6 +266,17 @@
           @change="setBackgroundColor"
         ></ColorPicker>
       </div>
+      <!-- 帮助 -->
+      <div class="blockBox">
+        <el-tooltip effect="light" content="帮助" placement="top">
+          <el-button
+            :icon="QuestionFilled"
+            circle
+            style="margin-right: 10px"
+            @click="helpDialogVisible = !helpDialogVisible"
+          />
+        </el-tooltip>
+      </div>
     </div>
     <!-- 导出图片弹窗 -->
     <el-dialog
@@ -330,6 +341,20 @@
         </div>
       </div>
     </el-dialog>
+    <!-- 帮助弹窗 -->
+    <el-dialog
+      v-model="helpDialogVisible"
+      title="帮助"
+      :width="500"
+    >
+      <h2>tips</h2>
+      <p>移动画布：按住空格键进行拖动</p>
+      <h2>快捷键</h2>
+      <el-table :data="shortcutKeyList">
+        <el-table-column property="name" label="操作" />
+        <el-table-column property="value" label="快捷键" />
+      </el-table>
+    </el-dialog>
   </div>
 </template>
 
@@ -361,6 +386,7 @@ import {
   Grid,
   View,
   Edit,
+  QuestionFilled
 } from "@element-plus/icons-vue";
 
 // 当前操作类型
@@ -412,6 +438,54 @@ const scroll = reactive({
 const showGrid = ref(false);
 // 模式切换
 const readonly = ref(false);
+// 帮助弹窗
+const helpDialogVisible = ref(false);
+const shortcutKeyList = reactive([
+  {
+    name: '全部选中',
+    value: 'Control + a'
+  },
+  {
+    name: '删除',
+    value: 'Del 或 Backspace'
+  },
+  {
+    name: '复制',
+    value: 'Control + c'
+  },
+  {
+    name: '粘贴',
+    value: 'Control + v'
+  },
+  {
+    name: '放大',
+    value: 'Control + +'
+  },
+  {
+    name: '缩小',
+    value: 'Control + -'
+  },
+  {
+    name: '重置缩放',
+    value: 'Control + 0'
+  },
+  {
+    name: '缩放以适应所有元素',
+    value: 'Shift + 1'
+  },
+  {
+    name: '撤销',
+    value: 'Control + z'
+  },
+  {
+    name: '重做',
+    value: 'Control + y'
+  },
+  {
+    name: '显示隐藏网格',
+    value: 'Control + \''
+  },
+])
 
 // 通知app更当前类型
 watch(currentType, () => {
@@ -626,6 +700,7 @@ onMounted(() => {
   });
   // 监听数据变化
   app.on("change", (data) => {
+    showGrid.value = data.state.showGrid;
     localStorage.setItem("TINY_WHITEBOARD_DATA", JSON.stringify(data));
   });
   // 监听滚动变化

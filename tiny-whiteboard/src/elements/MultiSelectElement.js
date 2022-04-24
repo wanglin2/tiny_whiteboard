@@ -10,8 +10,6 @@ import {
 export default class MultiSelectElement extends BaseElement {
   constructor(opts = {}, app) {
     super(opts, app);
-    // 画布元素渲染方法
-    this.renderElements = opts.renderElements;
     // 拖拽元素实例
     this.dragElement = new DragElement(this, this.app);
     // 被选中的元素集合
@@ -106,7 +104,6 @@ export default class MultiSelectElement extends BaseElement {
   render() {
     // 显示拖拽框
     if (this.selectedElementList.length > 0) {
-      this.renderElements();
       if (this.width <= 0 || this.height <= 0) {
         return;
       }
