@@ -1,13 +1,34 @@
 import { throttle } from "./utils";
+import { keyMap } from './utils/keyMap'
 
 // 模式
 export default class Mode {
   constructor(app) {
     this.app = app;
+    // 保存拖动即将开始时的滚动偏移量
     this.startScrollX = 0;
     this.startScrollY = 0;
+    // 画布拖拽模式
+    this.isDragMode = false;
     // 稍微缓解一下卡顿
     this.onMove = throttle(this.onMove, this, 16);
+    this.bindEvent();
+  }
+
+  // 绑定事件
+  bindEvent() {
+    this.app.event.on('keydown', (e) => {
+      if (e.keyCode === keyMap.Space) {
+        this.isDragMode = true;
+        this.app.cursor.set("grab");
+      }
+    });
+    this.app.event.on('keyup', (e) => {
+      if (this.isDragMode) {
+        this.isDragMode = false;
+        this.app.cursor.set("default");
+      }
+    });
   }
 
   // 设置为编辑模式

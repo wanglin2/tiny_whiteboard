@@ -12,7 +12,7 @@ export default class KeyCommand {
 
   // 绑定事件
   bindEvent() {
-    window.addEventListener("keydown", (e) => {
+    this.app.event.on('keydown', (e) => {
       Object.keys(this.shortcutMap).forEach((key) => {
         if (this.checkKey(e, key)) {
           e.stopPropagation();

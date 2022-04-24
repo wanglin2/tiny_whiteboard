@@ -73,8 +73,6 @@ class TinyWhiteboard extends EventEmitter {
 
     // 初始化画布
     this.initCanvas();
-    // 快捷键类
-    this.keyCommand = new KeyCommand(this);
     // 坐标转换类
     this.coordinate = new Coordinate(this);
     // 事件类
@@ -84,6 +82,8 @@ class TinyWhiteboard extends EventEmitter {
     this.event.on("mouseup", this.onMouseup, this);
     this.event.on("dblclick", this.onDblclick, this);
     this.event.on("mousewheel", this.onMousewheel, this);
+    // 快捷键类
+    this.keyCommand = new KeyCommand(this);
     // 图片选择类
     this.imageEdit = new ImageEdit(this);
     this.imageEdit.on("imageSelectChange", this.onImageSelectChange, this);
@@ -265,7 +265,7 @@ class TinyWhiteboard extends EventEmitter {
 
   // 鼠标按下事件
   onMousedown(e, event) {
-    if (this.state.readonly) {
+    if (this.state.readonly || this.mode.isDragMode) {
       // 只读模式下即将进行整体拖动
       this.mode.onStart();
       return;
@@ -319,7 +319,7 @@ class TinyWhiteboard extends EventEmitter {
 
   // 鼠标移动事件
   onMousemove(e, event) {
-    if (this.state.readonly) {
+    if (this.state.readonly || this.mode.isDragMode) {
       if (event.isMousedown) {
         // 只读模式下进行整体拖动
         this.mode.onMove(e, event);
@@ -457,7 +457,7 @@ class TinyWhiteboard extends EventEmitter {
 
   // 鼠标松开事件
   onMouseup(e) {
-    if (this.state.readonly) {
+    if (this.state.readonly || this.mode.isDragMode) {
       return;
     }
     if (this.drawType === "text") {
