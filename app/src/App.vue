@@ -494,15 +494,9 @@ watch(currentType, () => {
 
 // 更新样式
 const updateStyle = (key, value) => {
-  if (hasSelectedElements.value) {
-    app.setSelectedElementStyle({
-      [key]: value,
-    });
-  } else {
-    app.setActiveElementStyle({
-      [key]: value,
-    });
-  }
+  app.setCurrentElementsStyle({
+    [key]: value,
+  });
 };
 
 // 类型变化
@@ -518,7 +512,7 @@ const deleteElement = () => {
 
 // 复制元素
 const copyElement = () => {
-  app.copyCurrentElements()
+  app.copyPasteCurrentElements()
 };
 
 // 放大

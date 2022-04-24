@@ -1,5 +1,7 @@
 [TOC]
 
+![界面截图1](./assets/1.jpg)
+
 # 一个在线小白板
 
 - [x] 支持绘制矩形、菱形、三角形、圆形、线段、箭头、自由画笔、文字、图片
@@ -29,8 +31,6 @@
 - [x] 支持只读模式，只读模式支持随意拖拽
 
 - [x] 支持快捷键
-
-- [ ] 小地图
 
 - [ ] 优化：非激活元素绘制到另一个canvas上
 
@@ -128,6 +128,12 @@ let app = new TinyWhiteboard({
 // 具体可以参考/app项目的示例。
 ```
 
+# 限制
+
+1.因实现方式原因，元素多了可能会存在性能和卡顿问题，请三思而后用。
+
+2.因元素点击检测实现方式原因，目前不支持贝塞尔曲线或椭圆之类的图形。
+
 # 坐标转换相关
 
 项目内涉及到坐标转换相关的比较复杂和凌乱，如果没有搞清楚很容易迷失。大体上有以下这些：
@@ -222,6 +228,48 @@ let app = new TinyWhiteboard({
 | lineHeightRatio | Number | 1.5                       | 行高，文本元素特有样式                              |
 | fontFamily      | String | 微软雅黑, Microsoft YaHei | 字体，文本元素特有样式                              |
 
+#### `setSelectedElementStyle(style)`
+
+为当前多选元素设置样式。
+
+- `style`：样式对象，可参考表格1-2。
+
+#### `setCurrentElementsStyle(style)`
+
+为当前激活或选中的元素设置样式。
+
+- `style`：样式对象，可参考表格1-2。
+
+#### `cancelActiveElement()`
+
+移除当前激活元素，即取消当前激活元素的激活状态。
+
+#### `deleteActiveElement()`
+
+从画布中删除当前的激活元素。
+
+#### `deleteCurrentElements()`
+
+从画布中删除当前激活或选中的元素。
+
+#### `copyCurrentElement()`
+
+复制当前激活或选中的元素。只是复制操作，如果需要粘贴需要调用下面的`pasteCurrentElement()`方法。
+
+#### `cutCurrentElement()`
+
+剪切当前激活或选中的元素。只是剪切操作，如果需要粘贴需要调用下面的`pasteCurrentElement()`方法。
+
+#### `pasteCurrentElement(useCurrentEventPos = false)`
+
+粘贴被复制或剪切的元素。
+
+- `useCurrentEventPos`：是否使用鼠标当前的位置，默认为`false`，偏移原图形`20px`，传`true`则粘贴到鼠标当前所在的位置。
+
+#### `copyPasteCurrentElements()`
+
+复制粘贴当前元素。
+
 #### `exportImage(opt)`
 
 导出为图片
@@ -241,12 +289,6 @@ let app = new TinyWhiteboard({
 #### `exportJson()`
 
 导出为`json`数据。
-
-#### `setSelectedElementStyle(style)`
-
-为当前多选元素设置样式。
-
-- `style`：样式对象，可参考表格1-2。
 
 #### `showGrid()`
 
@@ -287,7 +329,7 @@ let app = new TinyWhiteboard({
 
 #### `updateState(data)`
 
-更新画布状态数据。
+更新画布状态数据，只是更新状态数据，不会触发重新渲染，如有需要重新渲染或其他操作需要自行调用相关方法。
 
 - `data`： 画布状态，`Object`，详情可参考表格1-1。
 
@@ -314,11 +356,11 @@ let app = new TinyWhiteboard({
 
 #### `deleteElement(element)`
 
-删除某个元素。
+从画布删除某个元素。
 
 #### `copyElement(element, notActive = false, pos)`
 
-复制某个元素。
+复制指定的元素。
 
 - `notActive`：只复制而不激活，`Boolean`，默认为`false`。
 
@@ -346,6 +388,10 @@ let app = new TinyWhiteboard({
 
 - `zoom`：`Number`，`0-1`。
 
+#### `fit()`
+
+缩放移动合适的值以适应所有元素。
+
 #### `setBackgroundColor(color)`
 
 设置背景颜色。
@@ -354,7 +400,7 @@ let app = new TinyWhiteboard({
 
 获取数据，包括状态数据及元素数据，可进行持久化。
 
-####  `scrollTo(*scrollX*, *scrollY*)`
+####  `scrollTo(scrollX, scrollY)`
 
 滚动至指定位置。
 
@@ -367,6 +413,10 @@ let app = new TinyWhiteboard({
 #### `resetCurrentType()`
 
 复位当前画布绘制模式到选择模式。
+
+#### `selectAll()`
+
+选中所有元素。
 
 #### `on(eventName, callback, context)`
 
@@ -400,9 +450,11 @@ let app = new TinyWhiteboard({
 
 | 属性名称          | 类型    | 描述               |
 | ----------------- | ------- | ------------------ |
-| activeElement    | Array   | 当前激活的元素     |
-| isCreatingElement | Boolean | 当前正在创建新元素 |
-| isResizing        | Boolean | 当前正在调整元素   |
+| elementList | Array | 当前画布中的所有元素列表 |
+| activeElement    | Object | 当前激活的元素     |
+| isCreatingElement | Boolean | 当前是否正在创建新元素 |
+| isResizing        | Boolean | 当前是否正在调整元素 |
+| resizingElement | Object | 当前正在调整的元素 |
 
 ### 实例方法
 
@@ -412,15 +464,15 @@ let app = new TinyWhiteboard({
 
 #### `addElement(element)`
 
-添加元素。
+添加元素。不会触发渲染，需要手动调用`app.render.render()`方法重新渲染。
 
 #### `deleteElement(element)`
 
-删除元素。
+删除元素。不会触发渲染，需要手动调用`app.render.render()`方法重新渲染。
 
 #### `deleteAllElements()`
 
-删除全部元素。
+删除全部元素。不会触发渲染，需要手动调用`app.render.render()`方法重新渲染。
 
 #### `hasActiveElement()`
 
@@ -428,15 +480,15 @@ let app = new TinyWhiteboard({
 
 #### `setActiveElement(element)`
 
-替换激活元素。
+替换激活的元素。不会触发渲染，需要手动调用`app.render.render()`方法重新渲染。
 
 #### `cancelActiveElement()`
 
-取消当前激活元素。
+取消当前激活元素。不会触发渲染，需要手动调用`app.render.render()`方法重新渲染。
 
 #### `createElement(opts = {}, callback = () => {}, ctx = null, notActive)`
 
-创建元素。
+创建元素。不会触发渲染，需要手动调用`app.render.render()`方法重新渲染。
 
 - `opts`：创建元素的选项；
 
@@ -446,17 +498,27 @@ let app = new TinyWhiteboard({
 
 - `notActive`：是否不要激活该新创建的元素，默认为`false`；
 
-#### `clearCanvas()`
+#### `serialize(stringify)`
 
-清除画布。
+序列化当前画布上的所有元素，可用来持久化数据。
 
-#### `render()`
+- `stringify`：默认为`false`，返回`json`对象类型，传`true`则返回字符串类型。
 
-渲染所有元素。
+#### `createElementsFromData(elements = [])`
+
+根据元素数据创建元素，即根据持久化的数据反向创建元素到画布上。不会触发渲染，需要手动调用`app.render.render()`方法重新渲染。
 
 
 
-## 3.coordinate坐标转换实例
+## 3.render渲染类
+
+可通过`app.render`获取到该实例。
+
+该实例的所有方法都已代理到`app`实例上，可以直接通过`app.xxx`调用。
+
+
+
+## 4.coordinate坐标转换实例
 
 可通过`app.coordinate`获取到该实例。
 
@@ -512,7 +574,7 @@ let app = new TinyWhiteboard({
 
 
 
-## 4.event事件实例
+## 5.event事件实例
 
 可通过`app.event`获取该实例。
 
@@ -529,6 +591,8 @@ let app = new TinyWhiteboard({
 | mouseup    | 鼠标松开事件 | e、事件实例对象event                      |
 | dblclick   | 双击事件     | e、事件实例对象event                      |
 | mousewheel | 鼠标滚动事件 | dir（滚动方向，down代表向下，up代表向上） |
+| keydown    | 按键按下事件 | e（原始事件对象）、事件实例对象event      |
+| keyup      | 按键松开事件 | e（原始事件对象）、事件实例对象event      |
 
 - `e`：事件对象，非原始事件对象，为处理后的事件对象，格式如下：
 
@@ -601,7 +665,9 @@ let app = new TinyWhiteboard({
 
 解绑事件。
 
-## 5.cursor鼠标样式实例
+
+
+## 6.cursor鼠标样式实例
 
 可通过`app.cursor`获取该实例。
 
@@ -633,7 +699,7 @@ let app = new TinyWhiteboard({
 
 
 
-## 6.history历史记录管理实例
+## 7.history历史记录管理实例
 
 可通过`app.history`获取该实例。
 
@@ -647,7 +713,7 @@ let app = new TinyWhiteboard({
 
 前进。
 
-#### `add(*data*)`
+#### `add(data)`
 
 添加一个历史记录数据，`data`一般是通过`app.getData()`获取到的数据。
 
@@ -657,7 +723,7 @@ let app = new TinyWhiteboard({
 
 
 
-## 7.export导入导出实例
+## 8.export导入导出实例
 
 可通过`app.export`获取该实例。
 
@@ -673,7 +739,7 @@ let app = new TinyWhiteboard({
 
 
 
-## 8.background背景设置实例
+## 9.background背景设置实例
 
 可通过`app.background`获取该实例。
 
@@ -695,13 +761,41 @@ let app = new TinyWhiteboard({
 
 
 
-## 9.selection多选实例
+## 10.selection多选实例
 
 可通过`app.selection`获取该实例。
 
+### 实例方法
+
+#### `selectElements(elements = [])`
+
+选中指定元素。
+
+#### `copySelectionElements(pos)`
+
+复制粘贴当前选中的元素。
+
+- `pos`：是否指定粘贴的坐标，否则会偏移原位置`20`像素，`Object`，格式为`{x, y}`。
+
+#### `getSelectionElements()`
+
+获取当前被选中的元素。
+
+#### `hasSelectionElements()`
+
+当前是否存在被选中元素。
+
+#### `deleteSelectedElements()`
+
+从画布删除当前选中的元素。
+
+#### `setSelectedElementStyle(style)`
+
+为当前选中的元素设置样式。
 
 
-## 10.mode模式实例
+
+## 11.mode模式实例
 
 可通过`app.mode`获取该实例。
 
@@ -717,19 +811,47 @@ let app = new TinyWhiteboard({
 
 
 
-## 11.imageEdit图片选择实例
+## 12.imageEdit图片选择实例
 
 可通过`app.imageEdit`获取该实例。
 
 
 
-## 12.textEdit文字编辑实例
+## 13.textEdit文字编辑实例
 
 可通过`app.textEdit`获取该实例。
 
 
 
-## 13.工具方法
+## 14.keyCommand快捷键实例
+
+可通过`app.keyCommand`获取该实例。
+
+### 实例属性
+
+| 属性名称 | 类型   | 描述                        |
+| -------- | ------ | --------------------------- |
+| keyMap   | Object | 按键的名称到`keyCode`映射。 |
+
+### 实例方法
+
+#### `addShortcut(key, fn, ctx)`
+
+添加快捷键命令。
+
+- `key`：快捷键，允许三种组合方式：单个按键（如`Enter`）、或（`Tab | Insert`）、与（`Shift + a`），具体的按键名称可以`app.keyCommand.keyMap`查看。
+
+- `fn`：快捷键对应的执行函数。
+
+- `ctx`：函数的上下文。
+
+#### `removeShortcut(key, fn)`
+
+移除快捷键命令。
+
+
+
+## 15.工具方法
 
 可以通过如下方式获取到内置的工具方法：
 
@@ -848,9 +970,13 @@ TinyWhiteboard.utils.xxx
 
 获取多个元素的最外层包围框信息。返回`{minx,maxx,miny,maxy};`
 
+#### `createImageObj(url)`
+
+创建图片对象，即`new Image()`的图片对象，返回`promise`。
 
 
-# 14.图形绘制工具方法
+
+## 16.图形绘制工具方法
 
 可以通过如下方式获取到内置的图形绘制工具方法：
 
@@ -918,7 +1044,7 @@ TinyWhiteboard.draw.xxx
 
 
 
-# 15.图形点击检测工具方法
+## 17.图形点击检测工具方法
 
 可以通过如下方式获取到内置的图形点击检测工具方法：
 
@@ -996,5 +1122,33 @@ TinyWhiteboard.checkHit.xxx
 }
 ```
 
-# 16.内置元素类
+
+
+## 18.内置元素类
+
+可以通过以下方式获取到某个元素类：
+
+```js
+import TinyWhiteboard from "tiny-whiteboard";
+
+TinyWhiteboard.elements.xxx
+```
+
+目前存在以下元素类：
+
+| 类名                  | 简介                                                         |
+| --------------------- | ------------------------------------------------------------ |
+| BaseElement           | 基础元素类，不用来实例化                                     |
+| Arrow                 | 箭头元素类，继承自`BaseElement`                              |
+| Circle                | 正圆元素类，继承自`BaseElement`                              |
+| Diamond               | 菱形元素类，继承自`BaseElement`                              |
+| Image                 | 图片元素类，继承自`BaseElement`                              |
+| Rectangle             | 矩形元素类，继承自`BaseElement`                              |
+| Text                  | 文本元素类，继承自`BaseElement`                              |
+| Triangle              | 三角形元素类，继承自`BaseElement`                            |
+| BaseMultiPointElement | 由多个坐标组成的元素的基础类，继承自`BaseElement`，不用来实例化 |
+| Freedraw              | 自由画笔元素类，继承自`BaseMultiPointElement`                |
+| Line                  | 线段/折线元素类，继承自`BaseMultiPointElement`               |
+| DragElement           | 拖拽元素类，继承自`BaseElement`，每个元素都会实例化一个该类，用来当元素激活时显示拖拽框及进行元素调整操作 |
+| MultiSelectElement    | 用于多选情况下的虚拟元素类，继承自`BaseElement`              |
 

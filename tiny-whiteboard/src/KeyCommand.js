@@ -4,6 +4,7 @@ import { keyMap } from "./utils/keyMap";
 export default class KeyCommand {
   constructor(app) {
     this.app = app;
+    this.keyMap = keyMap;
     this.shortcutMap = {
       //Enter: [fn]
     };
@@ -12,16 +13,24 @@ export default class KeyCommand {
 
   // 绑定事件
   bindEvent() {
-    this.app.event.on('keydown', (e) => {
-      Object.keys(this.shortcutMap).forEach((key) => {
-        if (this.checkKey(e, key)) {
-          e.stopPropagation();
-          e.preventDefault();
-          this.shortcutMap[key].forEach((f) => {
-            f.fn.call(f.ctx);
-          });
-        }
-      });
+    this.app.event.on('keydown', this.onKeydown, this);
+  }
+
+  // 解绑事件
+  unBindEvent() {
+    this.app.event.off('keydown', this.onKeydown);
+  }
+
+  // 按键事件
+  onKeydown(e) {
+    Object.keys(this.shortcutMap).forEach((key) => {
+      if (this.checkKey(e, key)) {
+        e.stopPropagation();
+        e.preventDefault();
+        this.shortcutMap[key].forEach((f) => {
+          f.fn.call(f.ctx);
+        });
+      }
     });
   }
 
