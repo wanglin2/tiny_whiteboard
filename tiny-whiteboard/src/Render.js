@@ -86,7 +86,7 @@ export default class Render {
         if (this.beingCopyElement) {
             this.copyElement(this.beingCopyElement, false, pos);
         } else if (this.beingCopySelectedElments.length > 0) {
-            this.app.selection.copySelectionElements(pos);
+            this.app.selection.copySelectionElements(useCurrentEventPos ? pos : null);
         }
     }
 
