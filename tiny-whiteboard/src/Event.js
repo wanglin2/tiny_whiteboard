@@ -45,6 +45,8 @@ export default class Event extends EventEmitter {
     this.onMouseup = this.onMouseup.bind(this);
     this.onDblclick = this.onDblclick.bind(this);
     this.onMousewheel = this.onMousewheel.bind(this);
+    this.onKeydown = this.onKeydown.bind(this);
+    this.onKeyup = this.onKeyup.bind(this);
     this.bindEvent();
   }
 
@@ -55,6 +57,8 @@ export default class Event extends EventEmitter {
     this.app.container.addEventListener("mouseup", this.onMouseup);
     this.app.container.addEventListener("dblclick", this.onDblclick);
     this.app.container.addEventListener("mousewheel", this.onMousewheel);
+    window.addEventListener("keydown", this.onKeydown);
+    window.addEventListener("keyup", this.onKeyup);
   }
 
   // 解绑事件
@@ -64,6 +68,8 @@ export default class Event extends EventEmitter {
     this.app.container.removeEventListener("mouseup", this.onMouseup);
     this.app.container.removeEventListener("dblclick", this.onDblclick);
     this.app.container.removeEventListener("mousewheel", this.onMousewheel);
+    window.removeEventListener("keydown", this.onKeydown);
+    window.removeEventListener("keyup", this.onKeyup);
   }
 
   // 转换事件对象e
@@ -159,5 +165,15 @@ export default class Event extends EventEmitter {
   onMousewheel(e) {
     e = this.transformEvent(e);
     this.emit("mousewheel", e.originEvent.wheelDelta < 0 ? "down" : "up");
+  }
+
+  // 按键按下事件
+  onKeydown(e) {
+    this.emit("keydown", e, this);
+  }
+
+  // 按键松开事件
+  onKeyup(e) {
+    this.emit("keyup", e, this);
   }
 }

@@ -10,7 +10,7 @@ const map = {
 
   Esc: 27,
 
-  Spacebar: 32,
+  Space: 32,
 
   PageUp: 33,
   PageDown: 34,
