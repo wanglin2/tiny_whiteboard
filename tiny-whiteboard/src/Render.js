@@ -1,8 +1,6 @@
 import {
-    getMultiElementRectInfo,
-    createImageObj
+    getMultiElementRectInfo
 } from "./utils";
-import { DRAG_ELEMENT_PARTS } from "./constants";
 
 // 渲染类
 export default class Render {
@@ -11,7 +9,7 @@ export default class Render {
         // 将被复制的激活的元素
         this.beingCopyActiveElement = null;
         // 将被复制的选中的元素
-        this.beingCopySelectedElments = [];
+        this.beingCopySelectedElements = [];
         this.registerShortcutKeys();
     }
 
@@ -52,9 +50,49 @@ export default class Render {
         this.app.keyCommand.addShortcut("Control+c", () => {
             this.copyCurrentElement();
         });
+        // 剪切元素
+        this.app.keyCommand.addShortcut("Control+x", () => {
+            this.cutCurrentElement();
+        });
+        // 撤销
+        this.app.keyCommand.addShortcut("Control+z", () => {
+            this.app.history.undo();
+        });
+        // 重做
+        this.app.keyCommand.addShortcut("Control+y", () => {
+            this.app.history.redo();
+        });
         // 粘贴元素
         this.app.keyCommand.addShortcut("Control+v", () => {
             this.pasteCurrentElement(true);
+        });
+        // 放大
+        this.app.keyCommand.addShortcut("Control++", () => {
+            this.zoomIn();
+        });
+        // 缩小
+        this.app.keyCommand.addShortcut("Control+-", () => {
+            this.zoomOut();
+        });
+        // 缩放以适应所有元素
+        this.app.keyCommand.addShortcut("Shift+1", () => {
+            this.fit();
+        });
+        // 全部选中
+        this.app.keyCommand.addShortcut("Control+a", () => {
+            this.selectAll();
+        });
+        // 重置缩放
+        this.app.keyCommand.addShortcut("Control+0", () => {
+            this.setZoom(1);
+        });
+        // 显示隐藏网格
+        this.app.keyCommand.addShortcut("Control+'", () => {
+            if (this.app.state.showGrid) {
+                this.app.grid.hideGrid();
+            } else {
+                this.app.grid.showGrid();
+            }
         });
     }
 
@@ -62,12 +100,27 @@ export default class Render {
     copyCurrentElement() {
         // 当前存在激活元素
         if (this.app.elements.activeElement) {
-            this.beingCopySelectedElments = [];
+            this.beingCopySelectedElements = [];
             this.beingCopyElement = this.app.elements.activeElement;
         } else if (this.app.selection.hasSelectionElements()) {
             // 当前存在选中元素
             this.beingCopyElement = null;
-            this.beingCopySelectedElments = this.app.selection.getSelectionElements();
+            this.beingCopySelectedElements = this.app.selection.getSelectionElements();
+        }
+    }
+
+    // 剪切当前激活或选中的元素
+    cutCurrentElement() {
+        // 当前存在激活元素
+        if (this.app.elements.activeElement) {
+            this.copyCurrentElement();
+            this.deleteCurrentElements();
+        } else if (this.app.selection.hasSelectionElements()) {
+            // 当前存在选中元素
+            this.copyCurrentElement();
+            this.deleteCurrentElements();
+            this.app.selection.setMultiSelectElements(this.beingCopySelectedElements);
+            this.app.selection.emitChange();
         }
     }
 
@@ -85,7 +138,7 @@ export default class Render {
         }
         if (this.beingCopyElement) {
             this.copyElement(this.beingCopyElement, false, pos);
-        } else if (this.beingCopySelectedElments.length > 0) {
+        } else if (this.beingCopySelectedElements.length > 0) {
             this.app.selection.copySelectionElements(useCurrentEventPos ? pos : null);
         }
     }
@@ -164,7 +217,7 @@ export default class Render {
     // 缩小
     zoomOut(num = 0.1) {
         this.app.updateState({
-            scale: this.app.state.scale - num,
+            scale: this.app.state.scale - num > 0 ? this.app.state.scale - num : 0,
         });
         this.render();
         this.app.emit("zoomChange", this.app.state.scale);
@@ -180,6 +233,22 @@ export default class Render {
         });
         this.render();
         this.app.emit("zoomChange", this.app.state.scale);
+    }
+
+    // 缩放以适应所有元素
+    fit() {
+        if (!this.app.elements.hasElements()) {
+            return;
+        }
+        this.scrollToCenter();
+        // 计算所有元素的外包围框
+        let { minx, maxx, miny, maxy } = getMultiElementRectInfo(
+            this.app.elements.elementList
+        );
+        let width = maxx - minx;
+        let height = maxy - miny;
+        let maxScale = Math.min(this.app.width / width, this.app.height / height);
+        this.setZoom(maxScale);
     }
 
     // 滚动至指定位置
@@ -221,5 +290,10 @@ export default class Render {
             backgroundColor: color,
         });
         this.app.background.set();
+    }
+
+    // 选中所有元素
+    selectAll() {
+        this.app.selection.selectElements(this.app.elements.elementList);
     }
 }

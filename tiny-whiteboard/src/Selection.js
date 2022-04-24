@@ -36,9 +36,6 @@ export default class Selection {
     this.multiSelectElement = new MultiSelectElement(
       {
         type: "multiSelectElement",
-        renderElements: () => {
-          this.app.render.render();
-        },
       },
       this
     );
@@ -107,19 +104,15 @@ export default class Selection {
     this.hasSelection = this.hasSelectionElements();
     this.multiSelectElement.updateRect();
     this.renderSelection();
-    this.app.emit(
-      "multiSelectChange",
-      this.getSelectionElements()
-    );
+    this.emitChange();
   }
 
   // 复位
   reset() {
-    this.multiSelectElement.setSelectedElementList([]);
-    this.multiSelectElement.updateRect();
+    this.setMultiSelectElements([]);
     this.hasSelection = false;
     this.renderSelection();
-    this.app.emit("multiSelectChange", []);
+    this.emitChange();
   }
 
   // 渲染
@@ -170,7 +163,7 @@ export default class Selection {
         selectedElementList.push(element);
       }
     });
-    this.multiSelectElement.setSelectedElementList(selectedElementList);
+    this.setMultiSelectElements(selectedElementList, true);
     this.app.render.render();
   }
 
@@ -236,8 +229,7 @@ export default class Selection {
     this.getSelectionElements().forEach((element) => {
       this.app.elements.deleteElement(element);
     });
-    this.app.emit("multiSelectChange", []);
-    this.app.render.render();
+    this.selectElements([]);
     this.app.emitChange();
   }
 
@@ -257,8 +249,7 @@ export default class Selection {
       return this.app.elements.copyElement(element, true);
     });
     let elements = await Promise.all(task);
-    this.multiSelectElement.setSelectedElementList(elements);
-    this.multiSelectElement.updateRect();
+    this.setMultiSelectElements(elements);
     // 粘贴到指定位置
     if (pos) {
       this.multiSelectElement.startResize(DRAG_ELEMENT_PARTS.BODY);
@@ -268,7 +259,30 @@ export default class Selection {
       this.multiSelectElement.endResize();
       this.multiSelectElement.updateRect();
     }
+    this.app.render.render();
     this.renderSelection();
     this.app.emitChange();
+  }
+
+  // 选中指定元素
+  selectElements(elements = []) {
+    this.hasSelection = elements.length > 0;
+    this.setMultiSelectElements(elements);
+    this.app.render.render();
+    this.renderSelection();
+    this.emitChange();
+  }
+
+  // 设置选中的元素
+  setMultiSelectElements(elements = [], notUpdateRect) {
+    this.multiSelectElement.setSelectedElementList(elements);
+    if (!notUpdateRect) {
+      this.multiSelectElement.updateRect();
+    }
+  }
+
+  // 触发多选元素变化事件
+  emitChange() {
+    this.app.emit("multiSelectChange", this.getSelectionElements());
   }
 }
