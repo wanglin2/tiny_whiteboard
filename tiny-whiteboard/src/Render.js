@@ -124,7 +124,7 @@ export default class Render {
         }
     }
 
-    // 粘贴被复制的元素
+    // 粘贴被复制或剪切的元素
     pasteCurrentElement(useCurrentEventPos = false) {
         let pos = null;
         // 使用当前鼠标所在的位置
@@ -153,7 +153,7 @@ export default class Render {
     // 复制粘贴元素
     async copyElement(element, notActive = false, pos) {
         this.app.elements.cancelActiveElement();
-        await this.app.elements.copyElement(element, notActive = false, pos);
+        await this.app.elements.copyElement(element, notActive, pos);
         this.render();
         this.app.emitChange();
     }
@@ -185,6 +185,12 @@ export default class Render {
             this.app.emitChange();
         }
         return this;
+    }
+
+    // 为当前激活或选中的元素设置样式
+    setCurrentElementsStyle(style = {}) {
+        this.setActiveElementStyle(style);
+        this.app.selection.setSelectedElementStyle(style);
     }
 
     // 取消当前激活元素
@@ -279,7 +285,7 @@ export default class Render {
     }
 
     // 复制粘贴当前元素
-    copyCurrentElements() {
+    copyPasteCurrentElements() {
         this.copyCurrentElement();
         this.pasteCurrentElement();
     }

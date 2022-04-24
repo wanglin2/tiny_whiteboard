@@ -4,7 +4,7 @@ import DragElement from "./DragElement";
 import { transformPointOnElement, deepCopy, getBoundingRect } from "../utils";
 import { checkIsAtFreedrawLineEdge } from "../utils/checkHit";
 
-// 只有画笔元素类
+// 自由画笔元素类
 export default class Freedraw extends BaseMultiPointElement {
   constructor(...args) {
     super(...args);

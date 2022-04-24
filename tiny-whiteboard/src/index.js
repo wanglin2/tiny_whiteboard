@@ -128,7 +128,7 @@ class TinyWhiteboard extends EventEmitter {
       this[method] = this.elements[method].bind(this.elements);
     });
     // 渲染类
-    ["deleteElement", "setActiveElementStyle", "cancelActiveElement", "deleteActiveElement", "deleteCurrentElements", "empty", "zoomIn", "zoomOut", "setZoom", "scrollTo", "scrollToCenter", "copyCurrentElements", "setBackgroundColor", "copyElement"].forEach((method) => {
+    ["deleteElement", "setActiveElementStyle", "setCurrentElementsStyle", "cancelActiveElement", "deleteActiveElement", "deleteCurrentElements", "empty", "zoomIn", "zoomOut", "setZoom", "scrollTo", "scrollToCenter", "copyPasteCurrentElements", "setBackgroundColor", "copyElement", "copyCurrentElement", "cutCurrentElement", "pasteCurrentElement"].forEach((method) => {
       this[method] = this.render[method].bind(this.render);
     });
     // 导入导出类
@@ -518,6 +518,7 @@ class TinyWhiteboard extends EventEmitter {
         if (hitElement.type === "text") {
           this.elements.editingText(hitElement);
           this.render.render();
+          this.keyCommand.unBindEvent();
           this.textEdit.showTextEdit();
         }
       } else {
@@ -531,6 +532,7 @@ class TinyWhiteboard extends EventEmitter {
 
   // 文本框失焦事件
   onTextInputBlur() {
+    this.keyCommand.bindEvent();
     this.elements.completeEditingText();
     this.render.render();
     this.emitChange();
@@ -543,6 +545,7 @@ class TinyWhiteboard extends EventEmitter {
       x: e.clientX,
       y: e.clientY,
     });
+    this.keyCommand.unBindEvent();
     this.textEdit.showTextEdit();
   }
 
