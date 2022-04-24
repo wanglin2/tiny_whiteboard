@@ -187,8 +187,8 @@ export default class Elements {
           let oy = 20;
           // 指定了具体坐标则使用具体坐标
           if (pos) {
-            ox = pos.x - element.x,
-            oy = pos.y - element.y
+            ox = pos.x - element.x - element.width / 2;
+            oy = pos.y - element.y - element.height / 2;
           }
           element.resize(null, null, null, ox, oy);
           element.isCreating = false;

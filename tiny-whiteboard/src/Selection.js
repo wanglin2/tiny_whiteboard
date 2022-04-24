@@ -3,6 +3,7 @@ import Rectangle from "./elements/Rectangle";
 import Canvas from "./Canvas";
 import Coordinate from "./Coordinate";
 import MultiSelectElement from "./elements/MultiSelectElement";
+import { DRAG_ELEMENT_PARTS } from "./constants";
 
 // 多选类
 export default class Selection {
@@ -10,23 +11,28 @@ export default class Selection {
     this.app = app;
     this.canvas = null;
     this.ctx = null;
+    // 当前是否正在创建选区中
     this.creatingSelection = false;
+    // 当前是否存在多选元素
     this.hasSelection = false;
+    // 当前是否正在调整被选中的元素
     this.isResizing = false;
     this.state = this.app.state;
     this.width = this.app.width;
     this.height = this.app.height;
     this.coordinate = new Coordinate(this);
+    // 选区矩形
     this.rectangle = new Rectangle(
       {
         type: "rectangle",
         style: {
-          strokeStyle: "#0984e3",
+          strokeStyle: "rgba(9,132,227,0.3)",
           fillStyle: "rgba(9,132,227,0.3)",
         },
       },
       this
     );
+    // 被选中的元素的虚拟元素，用于显示拖拽框
     this.multiSelectElement = new MultiSelectElement(
       {
         type: "multiSelectElement",
@@ -97,7 +103,7 @@ export default class Selection {
   onMouseup() {
     this.creatingSelection = false;
     this.rectangle.updateRect(0, 0, 0, 0);
-    this.canvas.clearCanvas();
+    // 判断是否有元素被选中
     this.hasSelection = this.hasSelectionElements();
     this.multiSelectElement.updateRect();
     this.renderSelection();
@@ -253,6 +259,16 @@ export default class Selection {
     let elements = await Promise.all(task);
     this.multiSelectElement.setSelectedElementList(elements);
     this.multiSelectElement.updateRect();
+    // 粘贴到指定位置
+    if (pos) {
+      this.multiSelectElement.startResize(DRAG_ELEMENT_PARTS.BODY);
+      let ox = pos.x - this.multiSelectElement.x - this.multiSelectElement.width / 2;
+      let oy = pos.y - this.multiSelectElement.y - this.multiSelectElement.height / 2;
+      this.multiSelectElement.resize(null, null, null, ox, oy);
+      this.multiSelectElement.endResize();
+      this.multiSelectElement.updateRect();
+    }
     this.renderSelection();
+    this.app.emitChange();
   }
 }
