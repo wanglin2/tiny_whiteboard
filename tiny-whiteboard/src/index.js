@@ -3,7 +3,7 @@ import {
   createCanvas,
   getTowPointDistance,
   throttle,
-  createImageObj
+  createImageObj,
 } from "./utils";
 import * as utils from "./utils";
 import * as checkHit from "./utils/checkHit";
@@ -21,7 +21,7 @@ import Selection from "./Selection";
 import Grid from "./Grid";
 import Mode from "./Mode";
 import KeyCommand from "./KeyCommand";
-import Render from './Render';
+import Render from "./Render";
 import elements from "./elements";
 
 // 主类
@@ -128,7 +128,26 @@ class TinyWhiteboard extends EventEmitter {
       this[method] = this.elements[method].bind(this.elements);
     });
     // 渲染类
-    ["deleteElement", "setActiveElementStyle", "setCurrentElementsStyle", "cancelActiveElement", "deleteActiveElement", "deleteCurrentElements", "empty", "zoomIn", "zoomOut", "setZoom", "scrollTo", "scrollToCenter", "copyPasteCurrentElements", "setBackgroundColor", "copyElement", "copyCurrentElement", "cutCurrentElement", "pasteCurrentElement"].forEach((method) => {
+    [
+      "deleteElement",
+      "setActiveElementStyle",
+      "setCurrentElementsStyle",
+      "cancelActiveElement",
+      "deleteActiveElement",
+      "deleteCurrentElements",
+      "empty",
+      "zoomIn",
+      "zoomOut",
+      "setZoom",
+      "scrollTo",
+      "scrollToCenter",
+      "copyPasteCurrentElements",
+      "setBackgroundColor",
+      "copyElement",
+      "copyCurrentElement",
+      "cutCurrentElement",
+      "pasteCurrentElement",
+    ].forEach((method) => {
       this[method] = this.render[method].bind(this.render);
     });
     // 导入导出类
@@ -273,46 +292,49 @@ class TinyWhiteboard extends EventEmitter {
     if (!this.elements.isCreatingElement && !this.textEdit.isEditing) {
       // 是否击中了某个元素
       let hitElement = this.elements.checkIsHitElement(e);
-      // 当前存在激活元素
-      if (this.elements.hasActiveElement()) {
-        let isResizing = this.elements.checkIsResize(
-          event.mousedownPos.unGridClientX,
-          event.mousedownPos.unGridClientY,
-          e
-        );
-        // 不在调整元素中
-        if (!isResizing) {
-          this.elements.setActiveElement(hitElement);
-          this.render.render();
-        }
-      } else {
-        // 当前没有激活元素
-        if (this.selection.hasSelection) {
-          // 当前存在多选元素
-          let isResizing = this.selection.checkIsResize(
+      if (this.drawType === "selection") {
+        // 当前是选择模式
+        // 当前存在激活元素
+        if (this.elements.hasActiveElement()) {
+          // 判断按下的位置是否是拖拽部位
+          let isResizing = this.elements.checkIsResize(
             event.mousedownPos.unGridClientX,
             event.mousedownPos.unGridClientY,
             e
           );
-          // 不在调整元素中
+          // 不在拖拽部位则将当前的激活元素替换成hitElement
           if (!isResizing) {
-            this.selection.reset();
             this.elements.setActiveElement(hitElement);
             this.render.render();
           }
-        } else if (hitElement) {
-          // 当前有击中元素
-          if (this.drawType === "eraser") {
-            // 橡皮擦模式
-            this.deleteElement(hitElement);
+        } else {
+          // 当前没有激活元素
+          if (this.selection.hasSelection) {
+            // 当前存在多选元素，则判断按下的位置是否是多选元素的拖拽部位
+            let isResizing = this.selection.checkIsResize(
+              event.mousedownPos.unGridClientX,
+              event.mousedownPos.unGridClientY,
+              e
+            );
+            // 不在拖拽部位则复位多选，并将当前的激活元素替换成hitElement
+            if (!isResizing) {
+              this.selection.reset();
+              this.elements.setActiveElement(hitElement);
+              this.render.render();
+            }
+          } else if (hitElement) {
+            // 激活击中的元素
+            this.elements.setActiveElement(hitElement);
+            this.render.render();
           } else {
-            this.elements.setActiveElement(hitElement);
-            this.render.render();
+            // 上述条件都不符合则进行多选创建选区操作
+            this.selection.onMousedown(e, event);
           }
-        } else if (this.drawType === 'selection') {
-          // 多选创建选区操作
-          this.selection.onMousedown(e, event);
         }
+      } else if (this.drawType === "eraser") {
+        // 当前有击中元素
+        // 橡皮擦模式则删除该元素
+        this.deleteElement(hitElement);
       }
     }
   }
