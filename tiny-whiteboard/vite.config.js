@@ -14,7 +14,6 @@ export default defineConfig({
 });
 
 /*
-"files": ["dist"],
 "main": "./dist/tiny-whiteboard.umd.js",
 "module": "./dist/tiny-whiteboard.es.js",
 "exports": {

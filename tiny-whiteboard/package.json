@@ -1,6 +1,6 @@
 {
     "name": "tiny-whiteboard",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "description": "一个简单的在线白板",
     "authors": [{
             "name": "街角小林",
@@ -19,7 +19,6 @@
     "scripts": {
         "build": "vite build"
     },
-    "files": ["dist"],
     "main": "./src/index.js",
     "dependencies": {
         "eventemitter3": "^4.0.7"
