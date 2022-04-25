@@ -114,7 +114,8 @@ export default class Elements {
     // 判断是否选中元素
     let x = e.unGridClientX;
     let y = e.unGridClientY;
-    for (let i = 0; i < this.elementList.length; i++) {
+    // 从后往前遍历元素，默认认为新创建的元素在上一层
+    for (let i = this.elementList.length - 1; i >= 0; i--) {
       let element = this.elementList[i];
       if (element.isHit(x, y)) {
         return element;
