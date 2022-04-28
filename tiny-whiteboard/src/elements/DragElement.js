@@ -164,7 +164,7 @@ export default class DragElement extends BaseElement {
     // 坐标反向旋转元素的角度
     let rp = transformPointOnElement(x, y, this.element);
     // 在内部
-    if (checkPointIsInRectangle(rp.x, rp.y, this.element)) {
+    if (checkPointIsInRectangle(rp.x, rp.y, this)) {
       part = DRAG_ELEMENT_PARTS.BODY;
     } else if (
       getTowPointDistance(

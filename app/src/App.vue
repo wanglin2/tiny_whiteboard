@@ -342,18 +342,25 @@
       </div>
     </el-dialog>
     <!-- 帮助弹窗 -->
-    <el-dialog
-      v-model="helpDialogVisible"
-      title="帮助"
-      :width="500"
-    >
-      <h2>tips</h2>
-      <p>移动画布：按住空格键进行拖动</p>
-      <h2>快捷键</h2>
-      <el-table :data="shortcutKeyList">
-        <el-table-column property="name" label="操作" />
-        <el-table-column property="value" label="快捷键" />
-      </el-table>
+    <el-dialog v-model="helpDialogVisible" title="帮助" :width="500">
+      <div class="helpDialogContent">
+        <h2>获取源码</h2>
+        <p>
+          github：<a
+            style="color: #409eff"
+            href="https://github.com/wanglin2/tiny_whiteboard"
+            target="_blank"
+            >https://github.com/wanglin2/tiny_whiteboard</a
+          >
+        </p>
+        <h2>tips</h2>
+        <p>移动画布：按住空格键进行拖动</p>
+        <h2>快捷键</h2>
+        <el-table :data="shortcutKeyList">
+          <el-table-column property="name" label="操作" />
+          <el-table-column property="value" label="快捷键" />
+        </el-table>
+      </div>
     </el-dialog>
   </div>
 </template>
@@ -386,7 +393,7 @@ import {
   Grid,
   View,
   Edit,
-  QuestionFilled
+  QuestionFilled,
 } from "@element-plus/icons-vue";
 
 // 当前操作类型
@@ -442,50 +449,50 @@ const readonly = ref(false);
 const helpDialogVisible = ref(false);
 const shortcutKeyList = reactive([
   {
-    name: '全部选中',
-    value: 'Control + a'
+    name: "全部选中",
+    value: "Control + a",
   },
   {
-    name: '删除',
-    value: 'Del 或 Backspace'
+    name: "删除",
+    value: "Del 或 Backspace",
   },
   {
-    name: '复制',
-    value: 'Control + c'
+    name: "复制",
+    value: "Control + c",
   },
   {
-    name: '粘贴',
-    value: 'Control + v'
+    name: "粘贴",
+    value: "Control + v",
   },
   {
-    name: '放大',
-    value: 'Control + +'
+    name: "放大",
+    value: "Control + +",
   },
   {
-    name: '缩小',
-    value: 'Control + -'
+    name: "缩小",
+    value: "Control + -",
   },
   {
-    name: '重置缩放',
-    value: 'Control + 0'
+    name: "重置缩放",
+    value: "Control + 0",
   },
   {
-    name: '缩放以适应所有元素',
-    value: 'Shift + 1'
+    name: "缩放以适应所有元素",
+    value: "Shift + 1",
   },
   {
-    name: '撤销',
-    value: 'Control + z'
+    name: "撤销",
+    value: "Control + z",
   },
   {
-    name: '重做',
-    value: 'Control + y'
+    name: "重做",
+    value: "Control + y",
   },
   {
-    name: '显示隐藏网格',
-    value: 'Control + \''
+    name: "显示隐藏网格",
+    value: "Control + '",
   },
-])
+]);
 
 // 通知app更当前类型
 watch(currentType, () => {
@@ -512,7 +519,7 @@ const deleteElement = () => {
 
 // 复制元素
 const copyElement = () => {
-  app.copyPasteCurrentElements()
+  app.copyPasteCurrentElements();
 };
 
 // 放大
@@ -898,5 +905,10 @@ ol {
     height: 50px;
     justify-content: center;
   }
+}
+
+.helpDialogContent {
+  height: 500px;
+  overflow: auto;
 }
 </style>

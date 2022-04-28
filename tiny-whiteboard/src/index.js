@@ -326,6 +326,7 @@ class TinyWhiteboard extends EventEmitter {
             // 激活击中的元素
             this.elements.setActiveElement(hitElement);
             this.render.render();
+            this.onMousedown(e, event);
           } else {
             // 上述条件都不符合则进行多选创建选区操作
             this.selection.onMousedown(e, event);
