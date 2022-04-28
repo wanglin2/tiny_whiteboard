@@ -1257,7 +1257,7 @@ class DragElement extends BaseElement {
   checkPointInDragElementWhere(x, y) {
     let part = "";
     let rp = transformPointOnElement(x, y, this.element);
-    if (checkPointIsInRectangle(rp.x, rp.y, this.element)) {
+    if (checkPointIsInRectangle(rp.x, rp.y, this)) {
       part = DRAG_ELEMENT_PARTS.BODY;
     } else if (getTowPointDistance(rp.x, rp.y, this.x + this.width / 2, this.y - this.size * 2) <= this.size) {
       part = DRAG_ELEMENT_PARTS.ROTATE;
@@ -3911,6 +3911,7 @@ class TinyWhiteboard extends EventEmitter {
           } else if (hitElement) {
             this.elements.setActiveElement(hitElement);
             this.render.render();
+            this.onMousedown(e, event);
           } else {
             this.selection.onMousedown(e, event);
           }
