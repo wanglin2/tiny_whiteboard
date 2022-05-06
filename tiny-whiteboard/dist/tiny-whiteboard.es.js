@@ -2661,7 +2661,7 @@ class Selection {
     this.multiSelectElement = new MultiSelectElement({
       type: "multiSelectElement"
     }, this);
-    this.checkInNodes = throttle(this.checkInNodes, 500, this);
+    this.checkInNodes = throttle(this.checkInNodes, this, 500);
     this.handleResize = throttle(this.handleResize, this, 16);
     this.init();
     this.bindEvent();
