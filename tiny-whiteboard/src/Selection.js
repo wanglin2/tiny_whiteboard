@@ -255,7 +255,9 @@ export default class Selection {
       this.multiSelectElement.startResize(DRAG_ELEMENT_PARTS.BODY);
       let ox = pos.x - this.multiSelectElement.x - this.multiSelectElement.width / 2;
       let oy = pos.y - this.multiSelectElement.y - this.multiSelectElement.height / 2;
-      this.multiSelectElement.resize(null, null, null, ox, oy);
+      // 如果开启了网格，那么要坐标要吸附到网格
+      let gridAdsorbentPos = this.app.coordinate.gridAdsorbent(ox, oy)
+      this.multiSelectElement.resize(null, null, null, gridAdsorbentPos.x, gridAdsorbentPos.y);
       this.multiSelectElement.endResize();
       this.multiSelectElement.updateRect();
     }
