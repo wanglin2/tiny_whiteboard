@@ -191,7 +191,9 @@ export default class Elements {
             ox = pos.x - element.x - element.width / 2;
             oy = pos.y - element.y - element.height / 2;
           }
-          element.resize(null, null, null, ox, oy);
+          // 如果开启了网格，那么要坐标要吸附到网格
+          let gridAdsorbentPos = this.app.coordinate.gridAdsorbent(ox, oy)
+          element.resize(null, null, null, gridAdsorbentPos.x, gridAdsorbentPos.y);
           element.isCreating = false;
           if (notActive) {
             element.isActive = false;
