@@ -4,7 +4,7 @@
 export const createCanvas = (
   width,
   height,
-  opt = { noStyle: false, noTranslate: false, className: '' }
+  opt = { noStyle: false, noTranslate: false, className: "" }
 ) => {
   let canvas = document.createElement("canvas");
   if (!opt.noStyle) {
@@ -175,7 +175,7 @@ export const checkPointIsInRectangle = (x, y, rx, ry, rw, rh) => {
 };
 
 // 获取多个点的外包围框
-export const getBoundingRect = (pointArr = []) => {
+export const getBoundingRect = (pointArr = [], returnCorners = false) => {
   let minX = Infinity;
   let maxX = -Infinity;
   let minY = Infinity;
@@ -195,11 +195,36 @@ export const getBoundingRect = (pointArr = []) => {
       maxY = y;
     }
   });
+  let x = minX;
+  let y = minY;
+  let width = maxX - minX;
+  let height = maxY - minY;
+  // 以四个角坐标方式返回
+  if (returnCorners) {
+    return [
+      {
+        x,
+        y,
+      },
+      {
+        x: x + width,
+        y,
+      },
+      {
+        x: x + width,
+        y: y + height,
+      },
+      {
+        x,
+        y: y + height,
+      },
+    ];
+  }
   return {
-    x: minX,
-    y: minY,
-    width: maxX - minX,
-    height: maxY - minY,
+    x,
+    y,
+    width,
+    height,
   };
 };
 
@@ -342,7 +367,7 @@ export const downloadFile = (file, fileName) => {
 // 获取元素的四个角的坐标，应用了旋转之后的
 export const getElementCorners = (element) => {
   // 左上角
-  let topLeft = getElementRotatedCornerPoint(element, "topLeft")
+  let topLeft = getElementRotatedCornerPoint(element, "topLeft");
   // 右上角
   let topRight = getElementRotatedCornerPoint(element, "topRight");
   // 左下角
@@ -350,7 +375,7 @@ export const getElementCorners = (element) => {
   // 右下角
   let bottomRight = getElementRotatedCornerPoint(element, "bottomRight");
   return [topLeft, topRight, bottomLeft, bottomRight];
-}
+};
 
 // 获取多个元素的最外层包围框信息
 export const getMultiElementRectInfo = (elementList = []) => {
@@ -367,7 +392,7 @@ export const getMultiElementRectInfo = (elementList = []) => {
   let miny = Infinity;
   let maxy = -Infinity;
   elementList.forEach((element) => {
-    let pointList = getElementCorners(element);
+    let pointList = element.getEndpointList();
     pointList.forEach(({ x, y }) => {
       if (x < minx) {
         minx = x;
@@ -389,7 +414,7 @@ export const getMultiElementRectInfo = (elementList = []) => {
     miny,
     maxy,
   };
-}
+};
 
 // 创建图片对象
 export const createImageObj = (url) => {
@@ -403,4 +428,4 @@ export const createImageObj = (url) => {
     };
     img.src = url;
   });
-}
+};

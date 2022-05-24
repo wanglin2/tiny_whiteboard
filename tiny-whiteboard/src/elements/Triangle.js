@@ -1,7 +1,11 @@
 import BaseElement from "./BaseElement";
 import { drawTriangle } from "../utils/draw";
 import DragElement from "./DragElement";
-import { transformPointOnElement } from "../utils";
+import {
+  transformPointOnElement,
+  getElementCenterPoint,
+  getRotatedPoint,
+} from "../utils";
 import { checkIsAtTriangleEdge } from "../utils/checkHit";
 
 // 三角形元素类
@@ -27,5 +31,19 @@ export default class Triangle extends BaseElement {
   isHit(x, y) {
     let rp = transformPointOnElement(x, y, this);
     return checkIsAtTriangleEdge(this, rp);
+  }
+
+  // 获取图形应用了旋转之后的端点列表
+  getEndpointList() {
+    let { x, y, width, height, rotate } = this;
+    let points = [
+      [x + width / 2, y],
+      [x + width, y + height],
+      [x, y + height],
+    ];
+    let center = getElementCenterPoint(this);
+    return points.map((point) => {
+      return getRotatedPoint(point[0], point[1], center.x, center.y, rotate);
+    });
   }
 }

@@ -1,4 +1,4 @@
-import { degToRad, getRotatedPoint } from "../utils";
+import { degToRad, getRotatedPoint, getElementCorners } from "../utils";
 
 // 基础元素类
 export default class BaseElement {
@@ -207,5 +207,10 @@ export default class BaseElement {
   resize(...args) {
     this.dragElement.handleResizeElement(...args);
     return this;
+  }
+
+  // 获取图形应用了旋转之后的端点列表
+  getEndpointList() {
+    return getElementCorners(this);
   }
 }
