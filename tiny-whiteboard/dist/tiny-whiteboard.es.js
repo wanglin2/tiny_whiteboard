@@ -345,31 +345,55 @@ const checkPointIsInRectangle = (x, y, rx, ry, rw, rh) => {
   }
   return x >= rx && x <= rx + rw && y >= ry && y <= ry + rh;
 };
-const getBoundingRect = (pointArr = []) => {
+const getBoundingRect = (pointArr = [], returnCorners = false) => {
   let minX = Infinity;
   let maxX = -Infinity;
   let minY = Infinity;
   let maxY = -Infinity;
   pointArr.forEach((point) => {
-    let [x, y] = point;
-    if (x < minX) {
-      minX = x;
+    let [x2, y2] = point;
+    if (x2 < minX) {
+      minX = x2;
     }
-    if (x > maxX) {
-      maxX = x;
+    if (x2 > maxX) {
+      maxX = x2;
     }
-    if (y < minY) {
-      minY = y;
+    if (y2 < minY) {
+      minY = y2;
     }
-    if (y > maxY) {
-      maxY = y;
+    if (y2 > maxY) {
+      maxY = y2;
     }
   });
+  let x = minX;
+  let y = minY;
+  let width = maxX - minX;
+  let height = maxY - minY;
+  if (returnCorners) {
+    return [
+      {
+        x,
+        y
+      },
+      {
+        x: x + width,
+        y
+      },
+      {
+        x: x + width,
+        y: y + height
+      },
+      {
+        x,
+        y: y + height
+      }
+    ];
+  }
   return {
-    x: minX,
-    y: minY,
-    width: maxX - minX,
-    height: maxY - minY
+    x,
+    y,
+    width,
+    height
   };
 };
 const deepCopy = (obj) => {
@@ -494,7 +518,7 @@ const getMultiElementRectInfo = (elementList = []) => {
   let miny = Infinity;
   let maxy = -Infinity;
   elementList.forEach((element) => {
-    let pointList = getElementCorners(element);
+    let pointList = element.getEndpointList();
     pointList.forEach(({ x, y }) => {
       if (x < minx) {
         minx = x;
@@ -1173,6 +1197,9 @@ class BaseElement {
     this.dragElement.handleResizeElement(...args);
     return this;
   }
+  getEndpointList() {
+    return getElementCorners(this);
+  }
 }
 class DragElement extends BaseElement {
   constructor(element, app, opts = {}) {
@@ -1560,6 +1587,19 @@ class Diamond extends BaseElement {
     let rp = transformPointOnElement(x, y, this);
     return checkIsAtDiamondEdge(this, rp);
   }
+  getEndpointList() {
+    let { x, y, width, height, rotate } = this;
+    let points = [
+      [x + width / 2, y],
+      [x + width, y + height / 2],
+      [x + width / 2, y + height],
+      [x, y + height / 2]
+    ];
+    let center = getElementCenterPoint(this);
+    return points.map((point) => {
+      return getRotatedPoint(point[0], point[1], center.x, center.y, rotate);
+    });
+  }
 }
 class Triangle extends BaseElement {
   constructor(...args) {
@@ -1576,6 +1616,18 @@ class Triangle extends BaseElement {
   isHit(x, y) {
     let rp = transformPointOnElement(x, y, this);
     return checkIsAtTriangleEdge(this, rp);
+  }
+  getEndpointList() {
+    let { x, y, width, height, rotate } = this;
+    let points = [
+      [x + width / 2, y],
+      [x + width, y + height],
+      [x, y + height]
+    ];
+    let center = getElementCenterPoint(this);
+    return points.map((point) => {
+      return getRotatedPoint(point[0], point[1], center.x, center.y, rotate);
+    });
   }
 }
 class BaseMultiPointElement extends BaseElement {
@@ -1659,6 +1711,16 @@ class BaseMultiPointElement extends BaseElement {
       return [np.x, np.y, ...point.slice(2)];
     });
     this.updateMultiPointBoundingRect();
+  }
+  getEndpointList() {
+    return this.pointArr.map((point) => {
+      let center = getElementCenterPoint(this);
+      let np = getRotatedPoint(point[0], point[1], center.x, center.y, this.rotate);
+      return {
+        x: np.x,
+        y: np.y
+      };
+    });
   }
 }
 class Freedraw extends BaseMultiPointElement {
@@ -1946,7 +2008,8 @@ class Elements$1 {
           ox = pos.x - element2.x - element2.width / 2;
           oy = pos.y - element2.y - element2.height / 2;
         }
-        element2.resize(null, null, null, ox, oy);
+        let gridAdsorbentPos = this.app.coordinate.gridAdsorbent(ox, oy);
+        element2.resize(null, null, null, gridAdsorbentPos.x, gridAdsorbentPos.y);
         element2.isCreating = false;
         if (notActive) {
           element2.isActive = false;
@@ -2738,11 +2801,14 @@ class Selection {
     let maxy = Math.max(event.mousedownPos.y, e.clientY);
     let selectedElementList = [];
     this.app.elements.elementList.forEach((element) => {
-      let rect = getElementCorners(element);
       let _minx = Infinity;
       let _maxx = -Infinity;
       let _miny = Infinity;
       let _maxy = -Infinity;
+      let endPointList = element.getEndpointList();
+      let rect = getBoundingRect(endPointList.map((point) => {
+        return [point.x, point.y];
+      }), true);
       rect.forEach(({ x, y }) => {
         if (x < _minx) {
           _minx = x;
@@ -2829,7 +2895,8 @@ class Selection {
         this.multiSelectElement.startResize(DRAG_ELEMENT_PARTS.BODY);
         let ox = pos.x - this.multiSelectElement.x - this.multiSelectElement.width / 2;
         let oy = pos.y - this.multiSelectElement.y - this.multiSelectElement.height / 2;
-        this.multiSelectElement.resize(null, null, null, ox, oy);
+        let gridAdsorbentPos = this.app.coordinate.gridAdsorbent(ox, oy);
+        this.multiSelectElement.resize(null, null, null, gridAdsorbentPos.x, gridAdsorbentPos.y);
         this.multiSelectElement.endResize();
         this.multiSelectElement.updateRect();
       }
@@ -3523,7 +3590,8 @@ class Elements {
           ox = pos.x - element2.x - element2.width / 2;
           oy = pos.y - element2.y - element2.height / 2;
         }
-        element2.resize(null, null, null, ox, oy);
+        let gridAdsorbentPos = this.app.coordinate.gridAdsorbent(ox, oy);
+        element2.resize(null, null, null, gridAdsorbentPos.x, gridAdsorbentPos.y);
         element2.isCreating = false;
         if (notActive) {
           element2.isActive = false;
