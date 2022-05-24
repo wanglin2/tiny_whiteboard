@@ -1,4 +1,4 @@
-import { getBoundingRect, deepCopy, getRotatedPoint } from "../utils";
+import { getBoundingRect, deepCopy, getRotatedPoint, getElementCenterPoint } from "../utils";
 import BaseElement from "./BaseElement";
 
 // 基础多个点的组件的元素类
@@ -107,5 +107,17 @@ export default class BaseMultiPointElement extends BaseElement {
       return [np.x, np.y, ...point.slice(2)];
     });
     this.updateMultiPointBoundingRect();
+  }
+
+  // 获取图形应用了旋转之后的端点列表
+  getEndpointList() {
+    return this.pointArr.map((point) => {
+      let center = getElementCenterPoint(this);
+      let np = getRotatedPoint(point[0], point[1], center.x, center.y, this.rotate);
+      return {
+        x: np.x,
+        y: np.y
+      }
+    });
   }
 }

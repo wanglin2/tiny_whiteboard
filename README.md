@@ -924,11 +924,33 @@ TinyWhiteboard.utils.xxx
 
 判断一个坐标是否在一个矩形内。第三个参数可以直接传一个带有`x`、`y`、`width`、`height`属性的元素对象。
 
-### `getBoundingRect(pointArr = [])`
+### `getBoundingRect(pointArr = [], returnCorners = false)`
 
 获取多个点的外包围框。
 
+返回数据：
+
+```js
+{
+  x,
+  y,
+  width,
+  height,
+}
+```
+
 - `pointArr`：点数组，数组的每一项的格式为：`[x, y]`；
+
+- `returnCorners`：v0.1.4+。以四个角坐标的形式返回：
+
+```js
+[
+  [x0, y0],
+  [x1, y1],
+  [x2, y2],
+  [x3, y3],
+]
+```
 
 ### `deepCopy(obj)`
 
@@ -1150,3 +1172,61 @@ TinyWhiteboard.elements.xxx
 | DragElement           | 拖拽元素类，继承自`BaseElement`，每个元素都会实例化一个该类，用来当元素激活时显示拖拽框及进行元素调整操作 |
 | MultiSelectElement    | 用于多选情况下的虚拟元素类，继承自`BaseElement`              |
 
+### 基础元素实例属性
+
+| 属性名称      | 类型    | 描述                                                         |
+| ------------- | ------- | ------------------------------------------------------------ |
+| type          | String  | 元素类型                                                     |
+| isActive      | Boolean | 是否被激活                                                   |
+| isSelected    | Boolean | 是否被多选选中                                               |
+| x、y          | Number  | 元素的位置                                                   |
+| width、height | Number  | 元素的宽高                                                   |
+| rotate        | Number  | 元素的旋转角度                                               |
+| style         | Object  | 元素的样式对象                                               |
+| pointArr      | Array   | 由多个点组成的元素（Arrow、Line、Freedraw）的特有属性。组成元素的点坐标数组。 |
+
+### 基础元素实例方法
+
+#### serialize()
+
+序列化元素，返回的数据可用于进行持久化及回显。
+
+#### render()
+
+渲染元素。
+
+#### setStyle(style = {})
+
+设置元素的绘图样式。
+
+#### move(ox, oy)
+
+移动元素，在元素当前的位置上累加`ox`、`oy`。
+
+#### updatePos(x, y)
+
+更新元素的位置。
+
+#### updateSize(width, height)
+
+更新元素的宽高。
+
+#### updateRect(x, y, width, height)
+
+更新元素的位置及宽高。
+
+#### offsetRotate(or)
+
+旋转元素，在元素当前的旋转角度上累加`or`角度。
+
+#### rotateByCenter(rotate, cx, cy)
+
+根据指定中心点旋转元素的各个点。对于由多个点坐标组成的元素来说是修改其`pointArr`坐标，对于其他元素来说是修改其`x、y`坐标。
+
+#### isHit(x, y)
+
+检测该坐标是否能击中该元素。
+
+#### getEndpointList()
+
+v0.1.4+。获取图形应用了旋转之后的端点列表。可用于计算元素的外包围框数据。

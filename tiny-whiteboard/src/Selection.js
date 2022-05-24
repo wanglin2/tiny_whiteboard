@@ -1,4 +1,4 @@
-import { throttle, getElementCorners } from "./utils";
+import { throttle, getElementCorners, getBoundingRect } from "./utils";
 import Rectangle from "./elements/Rectangle";
 import Canvas from "./Canvas";
 import Coordinate from "./Coordinate";
@@ -140,11 +140,14 @@ export default class Selection {
     let maxy = Math.max(event.mousedownPos.y, e.clientY);
     let selectedElementList = [];
     this.app.elements.elementList.forEach((element) => {
-      let rect = getElementCorners(element);
       let _minx = Infinity;
       let _maxx = -Infinity;
       let _miny = Infinity;
       let _maxy = -Infinity;
+      let endPointList = element.getEndpointList();
+      let rect = getBoundingRect(endPointList.map((point) => {
+        return [point.x, point.y];
+      }), true);
       rect.forEach(({ x, y }) => {
         if (x < _minx) {
           _minx = x;

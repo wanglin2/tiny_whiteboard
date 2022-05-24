@@ -1,7 +1,11 @@
 import BaseElement from "./BaseElement";
 import { drawDiamond } from "../utils/draw";
 import DragElement from "./DragElement";
-import { transformPointOnElement } from "../utils";
+import {
+  transformPointOnElement,
+  getRotatedPoint,
+  getElementCenterPoint,
+} from "../utils";
 import { checkIsAtDiamondEdge } from "../utils/checkHit";
 
 // 菱形元素类
@@ -27,5 +31,20 @@ export default class Diamond extends BaseElement {
   isHit(x, y) {
     let rp = transformPointOnElement(x, y, this);
     return checkIsAtDiamondEdge(this, rp);
+  }
+
+  // 获取图形应用了旋转之后的端点列表
+  getEndpointList() {
+    let { x, y, width, height, rotate } = this;
+    let points = [
+      [x + width / 2, y],
+      [x + width, y + height / 2],
+      [x + width / 2, y + height],
+      [x, y + height / 2],
+    ];
+    let center = getElementCenterPoint(this);
+    return points.map((point) => {
+      return getRotatedPoint(point[0], point[1], center.x, center.y, rotate);
+    });
   }
 }
