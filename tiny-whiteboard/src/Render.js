@@ -203,6 +203,36 @@ export default class Render {
         return this;
     }
 
+    // 更新当前激活元素的位置
+    updateActiveElementPosition(x, y) {
+        if (!this.app.elements.hasActiveElement()) {
+            return this;
+        }
+        this.app.elements.activeElement.updatePos(x, y);
+        this.render();
+        return this;
+    }
+
+    // 更新当前激活元素的尺寸
+    updateActiveElementSize(width, height) {
+        if (!this.app.elements.hasActiveElement()) {
+            return this;
+        }
+        this.app.elements.activeElement.updateSize(width, height);
+        this.render();
+        return this;
+    }
+
+    // 更新当前激活元素的旋转角度
+    updateActiveElementRotate(rotate) {
+        if (!this.app.elements.hasActiveElement()) {
+            return this;
+        }
+        this.app.elements.activeElement.updateRotate(rotate);
+        this.render();
+        return this;
+    }
+
     // 清空元素
     empty() {
         this.app.elements.deleteAllElements();

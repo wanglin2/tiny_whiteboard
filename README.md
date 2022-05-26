@@ -438,7 +438,17 @@ let app = new TinyWhiteboard({
 
 解绑事件。
 
+#### `updateActiveElementPosition(x, y)`
 
+v0.1.4+。更新当前激活元素的位置。
+
+#### `updateActiveElementSize(width, height)`
+
+v0.1.4+。更新当前激活元素的尺寸。
+
+#### `updateActiveElementRotate(rotate)`
+
+v0.1.4+。更新当前激活元素的旋转角度。
 
 ## 2.elements元素管理实例
 
@@ -833,6 +843,14 @@ let app = new TinyWhiteboard({
 
 ### 实例方法
 
+#### `bindEvent()`
+
+绑定`keydown`事件。
+
+#### `unBindEvent()`
+
+解绑`keydown`事件。如果你的事件会和快捷键冲突，那么可以暂时调用该方法解绑快捷键的`keydown`事件。
+
 #### `addShortcut(key, fn, ctx)`
 
 添加快捷键命令。
@@ -1186,6 +1204,16 @@ TinyWhiteboard.elements.xxx
 | pointArr      | Array   | 由多个点组成的元素（Arrow、Line、Freedraw）的特有属性。组成元素的点坐标数组。 |
 
 ### 基础元素实例方法
+
+#### `on(eventName, callback, context)`
+
+v0.1.4+。监听元素事件。事件请见下方表格：
+
+| 事件名称            | 描述                             | 回调参数                                             |
+| ------------------- | -------------------------------- | ---------------------------------------------------- |
+| elementPositionChange   | 元素x、y坐标发生变化时触发          | x、y                                  |
+| elementSizeChange       | 元素width、height大小发生变化时触发 | width、height                         |
+| elementRotateChange     | 元素rotate旋转角度发生变化时触发    | rotate                                |
 
 #### serialize()
 

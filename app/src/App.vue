@@ -124,6 +124,23 @@
               />
             </div>
           </div>
+          <!-- 角度 -->
+          <div class="styleBlock" v-if="!hasSelectedElements">
+            <div class="styleBlockTitle">角度</div>
+            <div class="styleBlockContent">
+              <el-slider v-model="rotate" :min="0" :max="360" :step="1" @input="onRotateChange" />
+              <el-input-number
+                style="width: 80px;margin-left: 20px"
+                :controls="false"
+                v-model="rotate"
+                :min="0"
+                :max="360"
+                @focus="onInputNumberFocus"
+                @blur="onInputNumberBlur"
+                @change="onRotateChange"
+              />
+            </div>
+          </div>
           <!-- 操作 -->
           <div class="styleBlock">
             <div class="styleBlockTitle">操作</div>
@@ -417,6 +434,8 @@ const lineWidth = ref("small");
 const lineDash = ref(0);
 // 透明度
 const globalAlpha = ref(1);
+// 角度
+const rotate = ref(0);
 // 当前缩放
 const currentZoom = ref(100);
 // 缩放允许前进后退
@@ -498,6 +517,28 @@ const shortcutKeyList = reactive([
 watch(currentType, () => {
   app.updateCurrentType(currentType.value);
 });
+
+// 元素角度变化
+const onElementRotateChange = (elementRotate) => {
+  rotate.value = elementRotate;
+};
+
+// 修改元素角度
+const onRotateChange = (rotate) => {
+  app.updateActiveElementRotate(rotate)
+}
+
+// 数字输入框聚焦事件
+const onInputNumberFocus = () => {
+  // 解绑快捷键按键事件，防止冲突
+  app.keyCommand.unBindEvent();
+};
+
+// 数字输入框失焦事件
+const onInputNumberBlur = () => {
+  // 重新绑定快捷键按键事件
+  app.keyCommand.bindEvent();
+};
 
 // 更新样式
 const updateStyle = (key, value) => {
@@ -678,12 +719,17 @@ onMounted(() => {
   });
   // 监听元素激活事件
   app.on("activeElementChange", (element) => {
+    if (activeElement.value) {
+      activeElement.value.off("elementRotateChange", onElementRotateChange);
+    }
     activeElement.value = element;
     if (element) {
-      let { style } = element;
+      let { style, rotate: elementRotate } = element;
       lineWidth.value = style.lineWidth;
       lineDash.value = style.lineDash;
       globalAlpha.value = style.globalAlpha;
+      rotate.value = elementRotate;
+      element.on("elementRotateChange", onElementRotateChange);
     }
   });
   // 元素多选变化
@@ -786,6 +832,8 @@ ol {
         }
 
         .styleBlockContent {
+          display: flex;
+
           .lineWidthItem {
             display: flex;
             width: 30px;

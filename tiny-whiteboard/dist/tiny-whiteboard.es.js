@@ -1048,8 +1048,9 @@ class Event extends EventEmitter {
     this.emit("keyup", e, this);
   }
 }
-class BaseElement {
+class BaseElement extends EventEmitter {
   constructor(opts = {}, app) {
+    super();
     this.app = app;
     this.type = opts.type || "";
     this.isCreating = true;
@@ -1156,6 +1157,7 @@ class BaseElement {
     let { startX, startY } = this;
     this.x = startX + ox;
     this.y = startY + oy;
+    this.emit("elementPositionChange", this.x, this.y);
     return this;
   }
   updateRect(x, y, width, height) {
@@ -1166,16 +1168,26 @@ class BaseElement {
   updateSize(width, height) {
     this.width = width;
     this.height = height;
+    this.emit("elementSizeChange", this.width, this.height);
     return this;
   }
   updatePos(x, y) {
     this.x = x;
     this.y = y;
+    this.emit("elementPositionChange", this.x, this.y);
     return this;
   }
   offsetRotate(or) {
-    this.rotate = this.startRotate + or;
+    this.updateRotate(this.startRotate + or);
     return this;
+  }
+  updateRotate(rotate) {
+    rotate = rotate % 360;
+    if (rotate < 0) {
+      rotate = 360 + rotate;
+    }
+    this.rotate = parseInt(rotate);
+    this.emit("elementRotateChange", this.rotate);
   }
   rotateByCenter(rotate, cx, cy) {
     this.offsetRotate(rotate);
@@ -3375,6 +3387,30 @@ class Render {
     this.render();
     return this;
   }
+  updateActiveElementPosition(x, y) {
+    if (!this.app.elements.hasActiveElement()) {
+      return this;
+    }
+    this.app.elements.activeElement.updatePos(x, y);
+    this.render();
+    return this;
+  }
+  updateActiveElementSize(width, height) {
+    if (!this.app.elements.hasActiveElement()) {
+      return this;
+    }
+    this.app.elements.activeElement.updateSize(width, height);
+    this.render();
+    return this;
+  }
+  updateActiveElementRotate(rotate) {
+    if (!this.app.elements.hasActiveElement()) {
+      return this;
+    }
+    this.app.elements.activeElement.updateRotate(rotate);
+    this.render();
+    return this;
+  }
   empty() {
     this.app.elements.deleteAllElements();
     this.render();
@@ -3858,7 +3894,10 @@ class TinyWhiteboard extends EventEmitter {
       "copyElement",
       "copyCurrentElement",
       "cutCurrentElement",
-      "pasteCurrentElement"
+      "pasteCurrentElement",
+      "updateActiveElementRotate",
+      "updateActiveElementSize",
+      "updateActiveElementPosition"
     ].forEach((method) => {
       this[method] = this.render[method].bind(this.render);
     });

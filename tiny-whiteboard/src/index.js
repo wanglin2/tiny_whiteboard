@@ -147,6 +147,9 @@ class TinyWhiteboard extends EventEmitter {
       "copyCurrentElement",
       "cutCurrentElement",
       "pasteCurrentElement",
+      "updateActiveElementRotate",
+      "updateActiveElementSize",
+      "updateActiveElementPosition"
     ].forEach((method) => {
       this[method] = this.render[method].bind(this.render);
     });
