@@ -1,8 +1,10 @@
 import { degToRad, getRotatedPoint, getElementCorners } from "../utils";
+import EventEmitter from "eventemitter3";
 
 // 基础元素类
-export default class BaseElement {
+export default class BaseElement extends EventEmitter {
   constructor(opts = {}, app) {
+    super();
     this.app = app;
     // 类型
     this.type = opts.type || "";
@@ -149,6 +151,7 @@ export default class BaseElement {
     let { startX, startY } = this;
     this.x = startX + ox;
     this.y = startY + oy;
+    this.emit('elementPositionChange', this.x, this.y);
     return this;
   }
 
@@ -163,6 +166,7 @@ export default class BaseElement {
   updateSize(width, height) {
     this.width = width;
     this.height = height;
+    this.emit('elementSizeChange', this.width, this.height);
     return this;
   }
 
@@ -170,13 +174,24 @@ export default class BaseElement {
   updatePos(x, y) {
     this.x = x;
     this.y = y;
+    this.emit('elementPositionChange', this.x, this.y);
     return this;
   }
 
   // 偏移元素角度
   offsetRotate(or) {
-    this.rotate = this.startRotate + or;
+    this.updateRotate(this.startRotate + or)
     return this;
+  }
+
+  // 更新元素角度
+  updateRotate(rotate) {
+    rotate = rotate % 360;
+    if (rotate < 0) {
+      rotate = 360 + rotate;
+    }
+    this.rotate = parseInt(rotate);
+    this.emit('elementRotateChange', this.rotate);
   }
 
   // 根据指定中心点旋转元素的各个点
