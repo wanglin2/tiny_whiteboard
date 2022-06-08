@@ -958,6 +958,7 @@ class Event extends EventEmitter {
     this.onMousewheel = this.onMousewheel.bind(this);
     this.onKeydown = this.onKeydown.bind(this);
     this.onKeyup = this.onKeyup.bind(this);
+    this.onContextmenu = this.onContextmenu.bind(this);
     this.bindEvent();
   }
   bindEvent() {
@@ -966,6 +967,7 @@ class Event extends EventEmitter {
     this.app.container.addEventListener("mouseup", this.onMouseup);
     this.app.container.addEventListener("dblclick", this.onDblclick);
     this.app.container.addEventListener("mousewheel", this.onMousewheel);
+    this.app.container.addEventListener("contextmenu", this.onContextmenu);
     window.addEventListener("keydown", this.onKeydown);
     window.addEventListener("keyup", this.onKeyup);
   }
@@ -975,6 +977,7 @@ class Event extends EventEmitter {
     this.app.container.removeEventListener("mouseup", this.onMouseup);
     this.app.container.removeEventListener("dblclick", this.onDblclick);
     this.app.container.removeEventListener("mousewheel", this.onMousewheel);
+    this.app.container.removeEventListener("contextmenu", this.onContextmenu);
     window.removeEventListener("keydown", this.onKeydown);
     window.removeEventListener("keyup", this.onKeyup);
   }
@@ -1040,6 +1043,12 @@ class Event extends EventEmitter {
   onMousewheel(e) {
     e = this.transformEvent(e);
     this.emit("mousewheel", e.originEvent.wheelDelta < 0 ? "down" : "up");
+  }
+  onContextmenu(e) {
+    e.stopPropagation();
+    e.preventDefault();
+    e = this.transformEvent(e);
+    this.emit("contextmenu", e, this);
   }
   onKeydown(e) {
     this.emit("keydown", e, this);
@@ -1894,6 +1903,9 @@ class Elements$1 {
     });
     return stringify ? JSON.stringify(data) : data;
   }
+  getElementsNum() {
+    return this.elementList.length;
+  }
   hasElements() {
     return this.elementList.length > 0;
   }
@@ -1901,10 +1913,15 @@ class Elements$1 {
     this.elementList.push(element);
     return this;
   }
+  unshiftElement(element) {
+    this.elementList.unshift(element);
+    return this;
+  }
+  insertElement(element, index) {
+    this.elementList.splice(index, 0, element);
+  }
   deleteElement(element) {
-    let index = this.elementList.findIndex((item) => {
-      return item === element;
-    });
+    let index = this.getElementIndex(element);
     if (index !== -1) {
       this.elementList.splice(index, 1);
       if (element.isActive) {
@@ -1920,6 +1937,11 @@ class Elements$1 {
     this.isResizing = false;
     this.resizingElement = null;
     return this;
+  }
+  getElementIndex(element) {
+    return this.elementList.findIndex((item) => {
+      return item === element;
+    });
   }
   createElementsFromData(data) {
     data.forEach((item) => {
@@ -3364,6 +3386,40 @@ class Render {
     this.deleteActiveElement();
     this.app.selection.deleteSelectedElements();
   }
+  moveUpCurrentElement() {
+    this.moveLevelCurrentElement("up");
+  }
+  moveDownCurrentElement() {
+    this.moveLevelCurrentElement("down");
+  }
+  moveTopCurrentElement() {
+    this.moveLevelCurrentElement("top");
+  }
+  moveBottomCurrentElement() {
+    this.moveLevelCurrentElement("bottom");
+  }
+  moveLevelCurrentElement(level) {
+    let element = null;
+    if (this.app.elements.hasActiveElement()) {
+      element = this.app.elements.activeElement;
+    } else if (this.app.selection.getSelectionElements().length === 1) {
+      element = this.app.selection.getSelectionElements()[0];
+    }
+    if (!element) {
+      return;
+    }
+    let index = this.app.elements.getElementIndex(element);
+    this.app.elements.elementList.splice(index, 1);
+    if (level === "up") {
+      this.app.elements.insertElement(element, index + 1);
+    } else if (level === "down") {
+      this.app.elements.insertElement(element, index - 1);
+    } else if (level === "top") {
+      this.app.elements.addElement(element);
+    } else if (level === "bottom") {
+      this.app.elements.unshiftElement(element);
+    }
+  }
   setActiveElementStyle(style = {}) {
     if (!this.app.elements.hasActiveElement()) {
       return this;
@@ -3500,6 +3556,9 @@ class Elements {
     });
     return stringify ? JSON.stringify(data) : data;
   }
+  getElementsNum() {
+    return this.elementList.length;
+  }
   hasElements() {
     return this.elementList.length > 0;
   }
@@ -3507,10 +3566,15 @@ class Elements {
     this.elementList.push(element);
     return this;
   }
+  unshiftElement(element) {
+    this.elementList.unshift(element);
+    return this;
+  }
+  insertElement(element, index) {
+    this.elementList.splice(index, 0, element);
+  }
   deleteElement(element) {
-    let index = this.elementList.findIndex((item) => {
-      return item === element;
-    });
+    let index = this.getElementIndex(element);
     if (index !== -1) {
       this.elementList.splice(index, 1);
       if (element.isActive) {
@@ -3526,6 +3590,11 @@ class Elements {
     this.isResizing = false;
     this.resizingElement = null;
     return this;
+  }
+  getElementIndex(element) {
+    return this.elementList.findIndex((item) => {
+      return item === element;
+    });
   }
   createElementsFromData(data) {
     data.forEach((item) => {
@@ -3850,6 +3919,7 @@ class TinyWhiteboard extends EventEmitter {
     this.event.on("mouseup", this.onMouseup, this);
     this.event.on("dblclick", this.onDblclick, this);
     this.event.on("mousewheel", this.onMousewheel, this);
+    this.event.on("contextmenu", this.onContextmenu, this);
     this.keyCommand = new KeyCommand(this);
     this.imageEdit = new ImageEdit(this);
     this.imageEdit.on("imageSelectChange", this.onImageSelectChange, this);
@@ -3897,7 +3967,13 @@ class TinyWhiteboard extends EventEmitter {
       "pasteCurrentElement",
       "updateActiveElementRotate",
       "updateActiveElementSize",
-      "updateActiveElementPosition"
+      "updateActiveElementPosition",
+      "moveBottomCurrentElement",
+      "moveTopCurrentElement",
+      "moveUpCurrentElement",
+      "moveDownCurrentElement",
+      "selectAll",
+      "fit"
     ].forEach((method) => {
       this[method] = this.render[method].bind(this.render);
     });
@@ -4190,6 +4266,15 @@ class TinyWhiteboard extends EventEmitter {
     let stepNum = this.state.scrollStep / this.state.scale;
     let step = dir === "down" ? stepNum : -stepNum;
     this.scrollTo(this.state.scrollX, this.state.scrollY + step);
+  }
+  onContextmenu(e) {
+    let elements = [];
+    if (this.elements.hasActiveElement()) {
+      elements = [this.elements.activeElement];
+    } else if (this.selection.hasSelectionElements()) {
+      elements = this.selection.getSelectionElements();
+    }
+    this.emit("contextmenu", e.originEvent, elements);
   }
   emitChange() {
     let data = this.getData();
