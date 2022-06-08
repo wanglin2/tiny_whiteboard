@@ -82,6 +82,7 @@ class TinyWhiteboard extends EventEmitter {
     this.event.on("mouseup", this.onMouseup, this);
     this.event.on("dblclick", this.onDblclick, this);
     this.event.on("mousewheel", this.onMousewheel, this);
+    this.event.on("contextmenu", this.onContextmenu, this);
     // 快捷键类
     this.keyCommand = new KeyCommand(this);
     // 图片选择类
@@ -149,7 +150,13 @@ class TinyWhiteboard extends EventEmitter {
       "pasteCurrentElement",
       "updateActiveElementRotate",
       "updateActiveElementSize",
-      "updateActiveElementPosition"
+      "updateActiveElementPosition",
+      "moveBottomCurrentElement",
+      "moveTopCurrentElement",
+      "moveUpCurrentElement",
+      "moveDownCurrentElement",
+      "selectAll",
+      "fit"
     ].forEach((method) => {
       this[method] = this.render[method].bind(this.render);
     });
@@ -580,6 +587,17 @@ class TinyWhiteboard extends EventEmitter {
     let stepNum = this.state.scrollStep / this.state.scale;
     let step = dir === "down" ? stepNum : -stepNum;
     this.scrollTo(this.state.scrollX, this.state.scrollY + step);
+  }
+
+  // 右键菜单事件
+  onContextmenu(e) {
+    let elements = [];
+    if (this.elements.hasActiveElement()) {
+      elements = [this.elements.activeElement];
+    } else if (this.selection.hasSelectionElements()) {
+      elements = this.selection.getSelectionElements();
+    }
+    this.emit("contextmenu", e.originEvent, elements);
   }
 
   // 触发更新事件

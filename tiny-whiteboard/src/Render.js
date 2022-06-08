@@ -174,6 +174,50 @@ export default class Render {
         this.app.selection.deleteSelectedElements();
     }
 
+    // 将当前元素上移一层
+    moveUpCurrentElement() {
+        this.moveLevelCurrentElement("up");
+    }
+
+    // 将当前元素下移一层
+    moveDownCurrentElement() {
+        this.moveLevelCurrentElement("down");
+    }
+
+    // 将当前元素置于顶层
+    moveTopCurrentElement() {
+        this.moveLevelCurrentElement("top");
+    }
+
+    // 将当前元素置于底层
+    moveBottomCurrentElement() {
+        this.moveLevelCurrentElement("bottom");
+    }
+
+    // 移动当前元素的层级
+    moveLevelCurrentElement(level) {
+        let element = null;
+        if (this.app.elements.hasActiveElement()) {
+        element = this.app.elements.activeElement;
+        } else if (this.app.selection.getSelectionElements().length === 1) {
+        element = this.app.selection.getSelectionElements()[0];
+        }
+        if (!element) {
+        return;
+        }
+        let index = this.app.elements.getElementIndex(element);
+        this.app.elements.elementList.splice(index, 1);
+        if (level === "up") {
+        this.app.elements.insertElement(element, index + 1);
+        } else if (level === "down") {
+        this.app.elements.insertElement(element, index - 1);
+        } else if (level === "top") {
+        this.app.elements.addElement(element);
+        } else if (level === "bottom") {
+        this.app.elements.unshiftElement(element);
+        }
+    }
+
     // 为激活元素设置样式
     setActiveElementStyle(style = {}) {
         if (!this.app.elements.hasActiveElement()) {

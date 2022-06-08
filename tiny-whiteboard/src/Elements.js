@@ -7,7 +7,12 @@ import Arrow from "./elements/Arrow";
 import Image from "./elements/Image";
 import Line from "./elements/Line";
 import Text from "./elements/Text";
-import { getTowPointDistance, throttle, computedLineWidthBySpeed, createImageObj } from "./utils";
+import {
+  getTowPointDistance,
+  throttle,
+  computedLineWidthBySpeed,
+  createImageObj,
+} from "./utils";
 import { DRAG_ELEMENT_PARTS } from "./constants";
 
 // 元素管理类
@@ -36,6 +41,11 @@ export default class Elements {
     return stringify ? JSON.stringify(data) : data;
   }
 
+  // 获取当前画布上的元素数量
+  getElementsNum() {
+    return this.elementList.length;
+  }
+
   // 当前画布上是否有元素
   hasElements() {
     return this.elementList.length > 0;
@@ -47,11 +57,20 @@ export default class Elements {
     return this;
   }
 
+  // 向前添加元素
+  unshiftElement(element) {
+    this.elementList.unshift(element);
+    return this;
+  }
+
+  // 添加元素到指定位置
+  insertElement(element, index) {
+    this.elementList.splice(index, 0, element);
+  }
+
   // 删除元素
   deleteElement(element) {
-    let index = this.elementList.findIndex((item) => {
-      return item === element;
-    });
+    let index = this.getElementIndex(element);
     if (index !== -1) {
       this.elementList.splice(index, 1);
       if (element.isActive) {
@@ -69,6 +88,13 @@ export default class Elements {
     this.isResizing = false;
     this.resizingElement = null;
     return this;
+  }
+
+  // 获取元素在元素列表里的索引
+  getElementIndex(element) {
+    return this.elementList.findIndex((item) => {
+      return item === element;
+    });
   }
 
   // 根据元素数据创建元素
@@ -192,8 +218,14 @@ export default class Elements {
             oy = pos.y - element.y - element.height / 2;
           }
           // 如果开启了网格，那么要坐标要吸附到网格
-          let gridAdsorbentPos = this.app.coordinate.gridAdsorbent(ox, oy)
-          element.resize(null, null, null, gridAdsorbentPos.x, gridAdsorbentPos.y);
+          let gridAdsorbentPos = this.app.coordinate.gridAdsorbent(ox, oy);
+          element.resize(
+            null,
+            null,
+            null,
+            gridAdsorbentPos.x,
+            gridAdsorbentPos.y
+          );
           element.isCreating = false;
           if (notActive) {
             element.isActive = false;

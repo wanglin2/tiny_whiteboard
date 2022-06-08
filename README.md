@@ -30,10 +30,6 @@
 
 - [x] 支持快捷键
 
-- [ ] 优化：非激活元素绘制到另一个canvas上
-
-- [ ] 优化：超出视口的元素不进行绘制
-
 # 目录简介
 
 1.`/tiny-whiteboard`
@@ -429,6 +425,7 @@ let app = new TinyWhiteboard({
 | shuttle             | 前进后退时触发                   | index（当前指针）、length（当前历史记录数量）        |
 | activeElementChange | 激活元素变化事件                 | activeElement（当前激活的元素）                     |
 | multiSelectChange   | 多选元素选择完成时触发           | selectedElementList（当前被多选选中的元素）          |
+| contextmenu（v0.1.5+）   | 右键菜单事件           | e（事件对象）、elements（当前激活或选中的元素）          |
 
 #### `emit(eventName, ...args)`
 
@@ -437,6 +434,14 @@ let app = new TinyWhiteboard({
 #### `off(eventName, callback?)`
 
 解绑事件。
+
+#### `selectAll()`
+
+选中所有元素。
+
+#### `fit()`
+
+缩放以适应所有元素。
 
 #### `updateActiveElementPosition(x, y)`
 
@@ -449,6 +454,22 @@ v0.1.4+。更新当前激活元素的尺寸。
 #### `updateActiveElementRotate(rotate)`
 
 v0.1.4+。更新当前激活元素的旋转角度。
+
+#### `moveUpCurrentElement()`
+
+v0.1.5+。将当前元素上移一层。
+
+#### `moveDownCurrentElement()`
+
+v0.1.5+。将当前元素下移一层。
+
+#### `moveTopCurrentElement()`
+
+v0.1.5+。将当前元素置于顶层。
+
+#### `moveBottomCurrentElement()`
+
+v0.1.5+。将当前元素置于底层。
 
 ## 2.elements元素管理实例
 
@@ -470,9 +491,25 @@ v0.1.4+。更新当前激活元素的旋转角度。
 
 当前画布上是否有元素。
 
+#### `getElementsNum()`
+
+v0.1.5+。获取当前画布上的元素数量。
+
 #### `addElement(element)`
 
 添加元素。不会触发渲染，需要手动调用`app.render.render()`方法重新渲染。
+
+#### `unshiftElement(element)`
+
+v0.1.5+。向前添加元素。
+
+#### `insertElement(element, index)`
+
+v0.1.5+。添加元素到指定位置。
+
+#### `getElementIndex(element)`
+
+v0.1.5+。获取元素在元素列表里的索引。
 
 #### `deleteElement(element)`
 

@@ -379,6 +379,8 @@
         </el-table>
       </div>
     </el-dialog>
+    <!-- 右键菜单 -->
+    <Contextmenu v-if="appInstance" :app="appInstance"></Contextmenu>
   </div>
 </template>
 
@@ -412,6 +414,7 @@ import {
   Edit,
   QuestionFilled,
 } from "@element-plus/icons-vue";
+import Contextmenu from './components/Contextmenu.vue'
 
 // 当前操作类型
 const currentType = ref("selection");
@@ -421,6 +424,7 @@ const box = ref(null);
 
 // 应用实例
 let app = null;
+const appInstance = ref(null);
 // 当前激活的元素
 const activeElement = ref(null);
 // 当前多选的元素
@@ -669,7 +673,7 @@ const setBackgroundColor = (value) => {
   app.setBackgroundColor(value);
 };
 
-// 滚动至底部
+// 滚动至中心
 const scrollToCenter = () => {
   app.scrollToCenter();
 };
@@ -755,6 +759,7 @@ onMounted(() => {
     scroll.y = parseInt(y);
     scroll.x = parseInt(x);
   });
+  appInstance.value = app;
   // 窗口尺寸变化
   let resizeTimer = null;
   window.addEventListener("resize", () => {

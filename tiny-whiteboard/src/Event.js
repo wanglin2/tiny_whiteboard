@@ -47,6 +47,7 @@ export default class Event extends EventEmitter {
     this.onMousewheel = this.onMousewheel.bind(this);
     this.onKeydown = this.onKeydown.bind(this);
     this.onKeyup = this.onKeyup.bind(this);
+    this.onContextmenu = this.onContextmenu.bind(this);
     this.bindEvent();
   }
 
@@ -57,6 +58,7 @@ export default class Event extends EventEmitter {
     this.app.container.addEventListener("mouseup", this.onMouseup);
     this.app.container.addEventListener("dblclick", this.onDblclick);
     this.app.container.addEventListener("mousewheel", this.onMousewheel);
+    this.app.container.addEventListener('contextmenu', this.onContextmenu);
     window.addEventListener("keydown", this.onKeydown);
     window.addEventListener("keyup", this.onKeyup);
   }
@@ -68,6 +70,7 @@ export default class Event extends EventEmitter {
     this.app.container.removeEventListener("mouseup", this.onMouseup);
     this.app.container.removeEventListener("dblclick", this.onDblclick);
     this.app.container.removeEventListener("mousewheel", this.onMousewheel);
+    this.app.container.removeEventListener('contextmenu', this.onContextmenu);
     window.removeEventListener("keydown", this.onKeydown);
     window.removeEventListener("keyup", this.onKeyup);
   }
@@ -165,6 +168,14 @@ export default class Event extends EventEmitter {
   onMousewheel(e) {
     e = this.transformEvent(e);
     this.emit("mousewheel", e.originEvent.wheelDelta < 0 ? "down" : "up");
+  }
+
+  // 右键菜单事件
+  onContextmenu(e) {
+    e.stopPropagation()
+    e.preventDefault()
+    e = this.transformEvent(e);
+    this.emit("contextmenu", e, this);
   }
 
   // 按键按下事件
