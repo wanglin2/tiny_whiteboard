@@ -60,6 +60,7 @@ export default class ImageEdit extends EventEmitter {
   async getImageSize(url) {
     return new Promise((resolve, reject) => {
       let img = new Image();
+      img.setAttribute('crossOrigin', 'anonymous');
       img.onload = () => {
         let width = img.width;
         let height = img.height;

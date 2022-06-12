@@ -420,6 +420,7 @@ export const getMultiElementRectInfo = (elementList = []) => {
 export const createImageObj = (url) => {
   return new Promise((resolve) => {
     let img = new Image();
+    img.setAttribute('crossOrigin', 'anonymous');
     img.onload = () => {
       resolve(img);
     };
@@ -429,3 +430,9 @@ export const createImageObj = (url) => {
     img.src = url;
   });
 };
+
+// 元素的唯一key
+let nodeKeyIndex = 0;
+export const createNodeKey = () => {
+  return nodeKeyIndex++;
+}
