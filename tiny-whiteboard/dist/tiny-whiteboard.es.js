@@ -544,6 +544,7 @@ const getMultiElementRectInfo = (elementList = []) => {
 const createImageObj = (url) => {
   return new Promise((resolve) => {
     let img = new Image();
+    img.setAttribute("crossOrigin", "anonymous");
     img.onload = () => {
       resolve(img);
     };
@@ -552,6 +553,10 @@ const createImageObj = (url) => {
     };
     img.src = url;
   });
+};
+let nodeKeyIndex = 0;
+const createNodeKey = () => {
+  return nodeKeyIndex++;
 };
 var utils = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
@@ -583,7 +588,8 @@ var utils = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty(
   downloadFile,
   getElementCorners,
   getMultiElementRectInfo,
-  createImageObj
+  createImageObj,
+  createNodeKey
 }, Symbol.toStringTag, { value: "Module" }));
 const CORNERS = {
   TOP_LEFT: "topLeft",
@@ -1062,6 +1068,7 @@ class BaseElement extends EventEmitter {
     super();
     this.app = app;
     this.type = opts.type || "";
+    this.key = createNodeKey();
     this.isCreating = true;
     this.isActive = true;
     this.isSelected = false;
@@ -2279,6 +2286,7 @@ class ImageEdit extends EventEmitter {
     return __async(this, null, function* () {
       return new Promise((resolve, reject) => {
         let img = new Image();
+        img.setAttribute("crossOrigin", "anonymous");
         img.onload = () => {
           let width = img.width;
           let height = img.height;

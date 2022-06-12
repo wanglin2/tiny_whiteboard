@@ -1,4 +1,4 @@
-import { degToRad, getRotatedPoint, getElementCorners } from "../utils";
+import { degToRad, getRotatedPoint, getElementCorners, createNodeKey } from "../utils";
 import EventEmitter from "eventemitter3";
 
 // 基础元素类
@@ -8,6 +8,8 @@ export default class BaseElement extends EventEmitter {
     this.app = app;
     // 类型
     this.type = opts.type || "";
+    // key
+    this.key = createNodeKey();
     // 是否正在创建中
     this.isCreating = true;
     // 是否被激活
