@@ -284,6 +284,8 @@ let app = new TinyWhiteboard({
 
   - `opt.paddingY`：绘制的垂直内边距，`Number`，默认为`10`像素；
 
+  - `opt.onlySelected`：（v0.1.7+）。是否仅导出被选中的元素，`Boolean`，默认为`false`；
+
 #### `exportJson()`
 
 导出为`json`数据。

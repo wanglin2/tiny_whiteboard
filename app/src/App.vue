@@ -307,6 +307,13 @@
         </div>
         <div class="handleBox">
           <el-checkbox
+            v-model="exportOnlySelected"
+            label="仅导出被选中"
+            size="large"
+            @change="reRenderExportImage"
+            style="margin-right: 10px"
+          />
+          <el-checkbox
             v-model="exportRenderBackground"
             label="背景"
             size="large"
@@ -448,6 +455,7 @@ const canRedo = ref(false);
 // 图片导出弹窗
 const exportImageDialogVisible = ref(false);
 const exportImageUrl = ref("");
+const exportOnlySelected = ref(false);
 const exportRenderBackground = ref(true);
 const exportFileName = ref("未命名");
 const exportImagePaddingX = ref(10);
@@ -623,7 +631,12 @@ const importFromJson = () => {
 // 导出
 const handleExportCommand = (type) => {
   if (type === "png") {
-    exportImageUrl.value = app.exportImage();
+    exportImageUrl.value = app.exportImage({
+      renderBg: exportRenderBackground.value,
+      paddingX: exportImagePaddingX.value,
+      paddingY: exportImagePaddingY.value,
+      onlySelected: exportOnlySelected.value
+    });
     exportImageDialogVisible.value = true;
   } else if (type === "json") {
     exportJsonData.value = app.exportJson();
@@ -647,6 +660,7 @@ const reRenderExportImage = () => {
     renderBg: exportRenderBackground.value,
     paddingX: exportImagePaddingX.value,
     paddingY: exportImagePaddingY.value,
+    onlySelected: exportOnlySelected.value
   });
 };
 

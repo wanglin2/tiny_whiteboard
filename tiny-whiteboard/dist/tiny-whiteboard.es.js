@@ -2559,14 +2559,31 @@ class Export {
       document.body.appendChild(canvas);
     }
   }
+  getElementList(onlySelected = true) {
+    if (!onlySelected) {
+      return this.app.elements.elementList;
+    } else {
+      let selectedElements = [];
+      if (this.app.elements.activeElement) {
+        selectedElements.push(this.app.elements.activeElement);
+      } else if (this.app.selection.hasSelectionElements()) {
+        selectedElements = this.app.selection.getSelectionElements();
+      }
+      let res = this.app.elements.elementList.filter((element) => {
+        return selectedElements.includes(element);
+      });
+      return res;
+    }
+  }
   exportImage({
     type = "image/png",
     renderBg = true,
     useBlob = false,
     paddingX = 10,
-    paddingY = 10
+    paddingY = 10,
+    onlySelected
   } = {}) {
-    let { minx, maxx, miny, maxy } = getMultiElementRectInfo(this.app.elements.elementList);
+    let { minx, maxx, miny, maxy } = getMultiElementRectInfo(this.getElementList(onlySelected));
     let width = maxx - minx + paddingX * 2;
     let height = maxy - miny + paddingY * 2;
     let { canvas, ctx } = createCanvas(width, height, {
@@ -2579,7 +2596,7 @@ class Export {
     if (renderBg && this.app.state.backgroundColor) {
       this.app.background.canvasAddBackgroundColor(ctx, width, height, this.app.state.backgroundColor);
     }
-    this.render(ctx);
+    this.render(ctx, onlySelected);
     this.recoveryAppState();
     if (useBlob) {
       return new Promise((resolve, reject) => {
@@ -2621,16 +2638,19 @@ class Export {
     this.app.height = height;
     this.app.ctx = ctx;
   }
-  render(ctx) {
+  render(ctx, onlySelected) {
     ctx.save();
-    this.app.elements.elementList.forEach((element) => {
+    this.getElementList(onlySelected).forEach((element) => {
       if (element.noRender) {
         return;
       }
       let cacheActive = element.isActive;
+      let cacheSelected = element.isSelected;
       element.isActive = false;
+      element.isSelected = false;
       element.render();
       element.isActive = cacheActive;
+      element.isSelected = cacheSelected;
     });
     ctx.restore();
   }
