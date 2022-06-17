@@ -29,6 +29,26 @@ export default class Export {
     }
   }
 
+  // 获取要导出的元素
+  getElementList(onlySelected = true) {
+    // 导出所有元素
+    if (!onlySelected) {
+      return this.app.elements.elementList;
+    } else {
+      // 仅导出激活或选中的元素
+      let selectedElements = [];
+      if (this.app.elements.activeElement) {
+        selectedElements.push(this.app.elements.activeElement);
+      } else if (this.app.selection.hasSelectionElements()) {
+        selectedElements = this.app.selection.getSelectionElements();
+      }
+      let res = this.app.elements.elementList.filter((element) => {
+        return selectedElements.includes(element);
+      });
+      return res;
+    }
+  }
+
   // 导出为图片
   exportImage({
     type = "image/png",
@@ -36,10 +56,11 @@ export default class Export {
     useBlob = false,
     paddingX = 10,
     paddingY = 10,
+    onlySelected,
   } = {}) {
     // 计算所有元素的外包围框
     let { minx, maxx, miny, maxy } = getMultiElementRectInfo(
-      this.app.elements.elementList
+      this.getElementList(onlySelected)
     );
     let width = maxx - minx + paddingX * 2;
     let height = maxy - miny + paddingY * 2;
@@ -61,7 +82,7 @@ export default class Export {
       );
     }
     // 绘制元素到导出canvas
-    this.render(ctx);
+    this.render(ctx, onlySelected);
     this.recoveryAppState();
     // 导出
     if (useBlob) {
@@ -113,17 +134,20 @@ export default class Export {
   }
 
   // 绘制所有元素
-  render(ctx) {
+  render(ctx, onlySelected) {
     ctx.save();
-    this.app.elements.elementList.forEach((element) => {
+    this.getElementList(onlySelected).forEach((element) => {
       if (element.noRender) {
         return;
       }
       let cacheActive = element.isActive;
-      // 临时修改元素的激活状态为非激活
+      let cacheSelected = element.isSelected;
+      // 临时修改元素的激活状态为非激活、非选中
       element.isActive = false;
+      element.isSelected = false;
       element.render();
       element.isActive = cacheActive;
+      element.isSelected = cacheSelected;
     });
     ctx.restore();
   }
