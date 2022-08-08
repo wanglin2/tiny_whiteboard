@@ -1303,3 +1303,7 @@ v0.1.4+。监听元素事件。事件请见下方表格：
 #### getEndpointList()
 
 v0.1.4+。获取图形应用了旋转之后的端点列表。可用于计算元素的外包围框数据。
+
+# License
+
+[MIT](https://opensource.org/licenses/MIT)
