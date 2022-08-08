@@ -34,6 +34,8 @@
 
 [我做了一个在线白板！](https://juejin.cn/post/7091276963146530847)
 
+[我做了一个在线白板（二）](https://juejin.cn/post/7129140994011824141)
+
 # 目录简介
 
 1.`/tiny-whiteboard`
