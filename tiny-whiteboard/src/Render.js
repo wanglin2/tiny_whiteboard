@@ -34,6 +34,7 @@ export default class Render {
       }
       element.render()
     })
+    this.app.group.render()
     this.app.ctx.restore()
     return this
   }
