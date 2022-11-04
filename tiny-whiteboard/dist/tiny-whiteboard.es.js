@@ -476,7 +476,7 @@ const throttle = (fn, ctx, time = 100) => {
 };
 const computedLineWidthBySpeed = (speed, lastLineWidth, baseLineWidth = 2) => {
   let lineWidth = 0;
-  let maxLineWidth = baseLineWidth + 2;
+  let maxLineWidth = baseLineWidth;
   let maxSpeed = 10;
   let minSpeed = 0.5;
   if (speed >= maxSpeed) {
@@ -1067,6 +1067,7 @@ class BaseElement extends EventEmitter {
   constructor(opts = {}, app) {
     super();
     this.app = app;
+    this.groupId = opts.groupId || "";
     this.type = opts.type || "";
     this.key = createNodeKey();
     this.isCreating = true;
@@ -1092,6 +1093,7 @@ class BaseElement extends EventEmitter {
   }
   serialize() {
     return {
+      groupId: this.groupId,
       type: this.type,
       width: this.width,
       height: this.height,
@@ -1103,6 +1105,18 @@ class BaseElement extends EventEmitter {
   }
   render() {
     throw new Error("\u5B50\u7C7B\u9700\u8981\u5B9E\u73B0\u8BE5\u65B9\u6CD5\uFF01");
+  }
+  setGroupId(groupId) {
+    this.groupId = groupId;
+  }
+  getGroupId() {
+    return this.groupId;
+  }
+  removeGroupId() {
+    this.groupId = "";
+  }
+  hasGroup() {
+    return !!this.groupId;
   }
   renderDragElement() {
     if (this.isActive && !this.isCreating) {
@@ -1283,6 +1297,8 @@ class DragElement extends BaseElement {
     this.rotate = this.element.rotate;
   }
   render() {
+    if (this.element.hasGroup())
+      return;
     this.update();
     let { width, height } = this;
     this.warpRender(({ halfWidth, halfHeight }) => {
@@ -1957,6 +1973,7 @@ class Elements$1 {
       element.isCreating = false;
       this.addElement(element);
     });
+    this.app.group.initIdToElementList(this.elementList);
     return this;
   }
   hasActiveElement() {
@@ -2037,11 +2054,12 @@ class Elements$1 {
       if (!element) {
         return resolve();
       }
-      let data = element.serialize();
+      let data = this.app.group.handleCopyElementData(element.serialize());
       if (data.type === "image") {
         data.imageObj = yield createImageObj(data.url);
       }
       this.createElement(data, (element2) => {
+        this.app.group.handleCopyElement(element2);
         element2.startResize(DRAG_ELEMENT_PARTS.BODY);
         let ox = 20;
         let oy = 20;
@@ -2951,6 +2969,7 @@ class Selection {
       let task = this.getSelectionElements().map((element) => {
         return this.app.elements.copyElement(element, true);
       });
+      this.app.group.clearCopyMap();
       let elements = yield Promise.all(task);
       this.setMultiSelectElements(elements);
       if (pos) {
@@ -3388,6 +3407,7 @@ class Render {
     if (this.beingCopyElement) {
       this.copyElement(this.beingCopyElement, false, pos);
     } else if (this.beingCopySelectedElements.length > 0) {
+      this.app.selection.selectElements(this.beingCopySelectedElements);
       this.app.selection.copySelectionElements(useCurrentEventPos ? pos : null);
     }
   }
@@ -3400,6 +3420,7 @@ class Render {
     return __async(this, null, function* () {
       this.app.elements.cancelActiveElement();
       yield this.app.elements.copyElement(element, notActive, pos);
+      this.app.group.clearCopyMap();
       this.render();
       this.app.emitChange();
     });
@@ -3631,6 +3652,7 @@ class Elements {
       element.isCreating = false;
       this.addElement(element);
     });
+    this.app.group.initIdToElementList(this.elementList);
     return this;
   }
   hasActiveElement() {
@@ -3711,11 +3733,12 @@ class Elements {
       if (!element) {
         return resolve();
       }
-      let data = element.serialize();
+      let data = this.app.group.handleCopyElementData(element.serialize());
       if (data.type === "image") {
         data.imageObj = yield createImageObj(data.url);
       }
       this.createElement(data, (element2) => {
+        this.app.group.handleCopyElement(element2);
         element2.startResize(DRAG_ELEMENT_PARTS.BODY);
         let ox = 20;
         let oy = 20;
@@ -3907,6 +3930,116 @@ class Elements {
     this.resizingElement = null;
   }
 }
+let getRandomValues;
+const rnds8 = new Uint8Array(16);
+function rng() {
+  if (!getRandomValues) {
+    getRandomValues = typeof crypto !== "undefined" && crypto.getRandomValues && crypto.getRandomValues.bind(crypto);
+    if (!getRandomValues) {
+      throw new Error("crypto.getRandomValues() not supported. See https://github.com/uuidjs/uuid#getrandomvalues-not-supported");
+    }
+  }
+  return getRandomValues(rnds8);
+}
+const byteToHex = [];
+for (let i = 0; i < 256; ++i) {
+  byteToHex.push((i + 256).toString(16).slice(1));
+}
+function unsafeStringify(arr, offset = 0) {
+  return (byteToHex[arr[offset + 0]] + byteToHex[arr[offset + 1]] + byteToHex[arr[offset + 2]] + byteToHex[arr[offset + 3]] + "-" + byteToHex[arr[offset + 4]] + byteToHex[arr[offset + 5]] + "-" + byteToHex[arr[offset + 6]] + byteToHex[arr[offset + 7]] + "-" + byteToHex[arr[offset + 8]] + byteToHex[arr[offset + 9]] + "-" + byteToHex[arr[offset + 10]] + byteToHex[arr[offset + 11]] + byteToHex[arr[offset + 12]] + byteToHex[arr[offset + 13]] + byteToHex[arr[offset + 14]] + byteToHex[arr[offset + 15]]).toLowerCase();
+}
+const randomUUID = typeof crypto !== "undefined" && crypto.randomUUID && crypto.randomUUID.bind(crypto);
+var native = {
+  randomUUID
+};
+function v4(options, buf, offset) {
+  if (native.randomUUID && !buf && !options) {
+    return native.randomUUID();
+  }
+  options = options || {};
+  const rnds = options.random || (options.rng || rng)();
+  rnds[6] = rnds[6] & 15 | 64;
+  rnds[8] = rnds[8] & 63 | 128;
+  if (buf) {
+    offset = offset || 0;
+    for (let i = 0; i < 16; ++i) {
+      buf[offset + i] = rnds[i];
+    }
+    return buf;
+  }
+  return unsafeStringify(rnds);
+}
+class Group {
+  constructor(app) {
+    this.app = app;
+    this.groupIdToElementList = {};
+    this.newGroupIdMap = {};
+  }
+  setToMap(element) {
+    let groupId = element.getGroupId();
+    if (groupId) {
+      if (!this.groupIdToElementList[groupId]) {
+        this.groupIdToElementList[groupId] = [];
+      }
+      this.groupIdToElementList[groupId].push(element);
+    }
+  }
+  initIdToElementList(elementList) {
+    this.groupIdToElementList = {};
+    elementList.forEach((element) => {
+      this.setToMap(element);
+    });
+  }
+  handleCopyElementData(data) {
+    if (data.groupId) {
+      if (this.newGroupIdMap[data.groupId]) {
+        data.groupId = this.newGroupIdMap[data.groupId];
+      } else {
+        data.groupId = this.newGroupIdMap[data.groupId] = v4();
+      }
+    }
+    return data;
+  }
+  clearCopyMap() {
+    this.newGroupIdMap = {};
+  }
+  handleCopyElement(element) {
+    this.setToMap(element);
+  }
+  dogroup() {
+    if (!this.app.selection.hasSelection || this.app.selection.multiSelectElement.selectedElementList.length <= 1) {
+      return;
+    }
+    let groupElement = this.app.selection.multiSelectElement.selectedElementList;
+    let groupId = v4();
+    this.groupIdToElementList[groupId] = groupElement;
+    groupElement.forEach((element) => {
+      element.setGroupId(groupId);
+    });
+    this.app.render.render();
+    this.app.emitChange();
+  }
+  ungroup() {
+    if (!this.app.selection.hasSelection || this.app.selection.multiSelectElement.selectedElementList.length <= 1) {
+      return;
+    }
+    let groupElement = this.app.selection.multiSelectElement.selectedElementList;
+    let groupId = groupElement[0].getGroupId();
+    this.groupIdToElementList[groupId] = [];
+    delete this.groupIdToElementList[groupId];
+    groupElement.forEach((element) => {
+      element.removeGroupId(groupId);
+    });
+    this.app.render.render();
+    this.app.emitChange();
+  }
+  setSelection(element) {
+    let groupId = element.getGroupId();
+    if (this.groupIdToElementList[groupId]) {
+      this.app.selection.selectElements(this.groupIdToElementList[groupId]);
+    }
+  }
+}
 class TinyWhiteboard extends EventEmitter {
   constructor(opts = {}) {
     super();
@@ -3958,6 +4091,7 @@ class TinyWhiteboard extends EventEmitter {
     this.export = new Export(this);
     this.background = new Background(this);
     this.selection = new Selection(this);
+    this.group = new Group(this);
     this.grid = new Grid(this);
     this.mode = new Mode(this);
     this.elements = new Elements$1(this);
@@ -4010,6 +4144,9 @@ class TinyWhiteboard extends EventEmitter {
     });
     ["setSelectedElementStyle"].forEach((method) => {
       this[method] = this.selection[method].bind(this.selection);
+    });
+    ["dogroup", "ungroup"].forEach((method) => {
+      this[method] = this.group[method].bind(this.group);
     });
     ["showGrid", "hideGrid", "updateGrid"].forEach((method) => {
       this[method] = this.grid[method].bind(this.grid);
@@ -4120,9 +4257,14 @@ class TinyWhiteboard extends EventEmitter {
               this.render.render();
             }
           } else if (hitElement) {
-            this.elements.setActiveElement(hitElement);
-            this.render.render();
-            this.onMousedown(e, event);
+            if (hitElement.hasGroup()) {
+              this.group.setSelection(hitElement);
+              this.onMousedown(e, event);
+            } else {
+              this.elements.setActiveElement(hitElement);
+              this.render.render();
+              this.onMousedown(e, event);
+            }
           } else {
             this.selection.onMousedown(e, event);
           }
