@@ -139,6 +139,7 @@ export default class Render {
         if (this.beingCopyElement) {
             this.copyElement(this.beingCopyElement, false, pos);
         } else if (this.beingCopySelectedElements.length > 0) {
+            this.app.selection.selectElements(this.beingCopySelectedElements);
             this.app.selection.copySelectionElements(useCurrentEventPos ? pos : null);
         }
     }
@@ -154,6 +155,7 @@ export default class Render {
     async copyElement(element, notActive = false, pos) {
         this.app.elements.cancelActiveElement();
         await this.app.elements.copyElement(element, notActive, pos);
+        this.app.group.clearCopyMap();
         this.render();
         this.app.emitChange();
     }

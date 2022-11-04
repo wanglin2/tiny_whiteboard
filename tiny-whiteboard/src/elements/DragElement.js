@@ -96,6 +96,8 @@ export default class DragElement extends BaseElement {
 
   // 渲染
   render() {
+    // 如果被编组了那么不显示组元素自身的拖拽框
+    if (this.element.hasGroup()) return;
     this.update();
     let { width, height } = this;
     this.warpRender(({ halfWidth, halfHeight }) => {
