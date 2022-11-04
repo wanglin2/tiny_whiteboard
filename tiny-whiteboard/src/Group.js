@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from 'uuid'
+import MultiSelectElement from './elements/MultiSelectElement'
 
 // 编组/取消编组类
 export default class Group {
@@ -6,6 +7,26 @@ export default class Group {
     this.app = app
     this.groupIdToElementList = {}
     this.newGroupIdMap = {}
+  }
+
+  // 多选时渲染编组元素的多选框
+  render() {
+    Object.keys(this.groupIdToElementList).forEach(groupId => {
+      let group = this.groupIdToElementList[groupId]
+      let selected = group[0].isSelected
+      if (selected) {
+        let mElement = new MultiSelectElement(
+          {
+            type: 'multiSelectElement'
+          },
+          this.app
+        )
+        mElement.setSelectedElementList(group)
+        mElement.updateRect()
+        mElement.dragElement.onlyShowBody()
+        mElement.render()
+      }
+    })
   }
 
   // 存储到映射列表
