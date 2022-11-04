@@ -43,29 +43,29 @@ const map = {
   F11: 122,
   F12: 123,
 
-  "`": 192,
-  "=": 187,
-  "+": 187,
-  "-": 189,
+  '`': 192,
+  '=': 187,
+  '+': 187,
+  '-': 189,
   "'": 222,
 
-  "/": 191,
-  ".": 190,
-};
+  '/': 191,
+  '.': 190
+}
 
 // 数字
 for (let i = 0; i <= 9; i++) {
-  map[i] = i + 48;
+  map[i] = i + 48
 }
 
 // 字母
-"abcdefghijklmnopqrstuvwxyz".split("").forEach((n, index) => {
-  map[n] = index + 65;
-});
+'abcdefghijklmnopqrstuvwxyz'.split('').forEach((n, index) => {
+  map[n] = index + 65
+})
 
-export const keyMap = map;
+export const keyMap = map
 
 export const isKey = (e, key) => {
-  let code = typeof e === "object" ? e.keyCode : e;
-  return map[key] === code;
-};
+  let code = typeof e === 'object' ? e.keyCode : e
+  return map[key] === code
+}

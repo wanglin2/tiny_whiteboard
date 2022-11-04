@@ -1,63 +1,63 @@
-import { deepCopy } from "./utils";
+import { deepCopy } from './utils'
 
 // 历史记录管理
 export default class History {
   constructor(app) {
-    this.app = app;
-    this.historyStack = [];
-    this.length = 0;
-    this.index = -1;
+    this.app = app
+    this.historyStack = []
+    this.length = 0
+    this.index = -1
   }
 
   // 添加
   add(data) {
-    let prev = this.length > 0 ? this.historyStack[this.length - 1] : null;
-    let copyData = deepCopy(data);
+    let prev = this.length > 0 ? this.historyStack[this.length - 1] : null
+    let copyData = deepCopy(data)
     if (copyData === prev) {
-      return;
+      return
     }
-    this.historyStack.push(copyData);
-    this.length++;
-    this.index = this.length - 1;
-    this.emitChange();
+    this.historyStack.push(copyData)
+    this.length++
+    this.index = this.length - 1
+    this.emitChange()
   }
 
   // 后退
   undo() {
     if (this.index <= 0) {
-      return;
+      return
     }
-    this.index--;
-    this.shuttle();
+    this.index--
+    this.shuttle()
   }
 
   // 前进
   redo() {
     if (this.index >= this.length - 1) {
-      return;
+      return
     }
-    this.index++;
-    this.shuttle();
+    this.index++
+    this.shuttle()
   }
 
   // 前进后退
   async shuttle() {
-    let data = this.historyStack[this.index];
-    await this.app.setData(data, true);
-    this.emitChange();
-    this.app.emit("change", data);
+    let data = this.historyStack[this.index]
+    await this.app.setData(data, true)
+    this.emitChange()
+    this.app.emit('change', data)
   }
 
   // 清空数据
   clear() {
-    this.index = -1;
-    this.length = 0;
-    this.historyStack = [];
-    this.emitChange();
+    this.index = -1
+    this.length = 0
+    this.historyStack = []
+    this.emitChange()
   }
 
   // 触发事件
   emitChange() {
-    this.app.emit("shuttle", this.index, this.length);
+    this.app.emit('shuttle', this.index, this.length)
   }
 }
