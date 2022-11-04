@@ -23,6 +23,7 @@ import Mode from "./Mode";
 import KeyCommand from "./KeyCommand";
 import Render from "./Render";
 import elements from "./elements";
+import Group from './Group';
 
 // 主类
 class TinyWhiteboard extends EventEmitter {
@@ -101,6 +102,8 @@ class TinyWhiteboard extends EventEmitter {
     this.background = new Background(this);
     // 多选类
     this.selection = new Selection(this);
+    // 编组类
+    this.group = new Group(this);
     // 网格类
     this.grid = new Grid(this);
     // 模式类
@@ -167,6 +170,10 @@ class TinyWhiteboard extends EventEmitter {
     // 多选类
     ["setSelectedElementStyle"].forEach((method) => {
       this[method] = this.selection[method].bind(this.selection);
+    });
+    // 编组类
+    ["dogroup", "ungroup"].forEach((method) => {
+      this[method] = this.group[method].bind(this.group);
     });
     // 网格类
     ["showGrid", "hideGrid", "updateGrid"].forEach((method) => {
@@ -334,9 +341,14 @@ class TinyWhiteboard extends EventEmitter {
             }
           } else if (hitElement) {
             // 激活击中的元素
-            this.elements.setActiveElement(hitElement);
-            this.render.render();
-            this.onMousedown(e, event);
+            if (hitElement.hasGroup()) {
+              this.group.setSelection(hitElement);
+              this.onMousedown(e, event);
+            } else {
+              this.elements.setActiveElement(hitElement);
+              this.render.render();
+              this.onMousedown(e, event);
+            }
           } else {
             // 上述条件都不符合则进行多选创建选区操作
             this.selection.onMousedown(e, event);

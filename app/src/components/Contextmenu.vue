@@ -36,6 +36,7 @@
       <div class="splitLine"></div>
       <div class="item danger" @click="exec('del')">删除</div>
       <div class="item" @click="exec('copy')">复制</div>
+      <div class="item" :class="{ disabled: groupStatus === 'disabled' }" @click="exec(groupStatus)">{{ groupBtnText }}</div>
     </template>
     <template v-else>
       <div class="item" @click="exec('selectAll')">全部选中</div>
@@ -47,7 +48,7 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { computed, ref } from "vue";
 
 const props = defineProps({
   app: {
@@ -60,6 +61,14 @@ const left = ref(0);
 const top = ref(0);
 const isHasActiveElements = ref(false);
 const canMoveLevel = ref(false);
+const groupStatus = ref('disabled');
+const groupBtnText = computed(() => {
+  return ({
+    disabled: '编组',
+    dogroup: '编组',
+    ungroup: '取消编组'
+  })[groupStatus.value];
+});
 
 const show = (e, activeElements) => {
   isHasActiveElements.value = activeElements.length > 0;
@@ -67,7 +76,22 @@ const show = (e, activeElements) => {
   left.value = e.clientX + 10;
   top.value = e.clientY + 10;
   isShow.value = true;
+  handleGroup(activeElements);
 };
+
+const handleGroup = (activeElements) => {
+  let isGroup = true
+  activeElements.forEach((item) => {
+    if (!item.hasGroup()) {
+      isGroup =false;
+    }
+  })
+  if (isGroup) {
+    groupStatus.value = 'ungroup';
+  } else if (activeElements.length > 1) {
+    groupStatus.value = 'dogroup';
+  }
+}
 
 const hide = () => {
   isShow.value = false;
@@ -110,6 +134,11 @@ const exec = (command) => {
       break;
     case "resetZoom":
       props.app.setZoom(1);
+    case "dogroup":
+      props.app.dogroup();
+      break;
+    case "ungroup":
+      props.app.ungroup();
       break;
     default:
       break;

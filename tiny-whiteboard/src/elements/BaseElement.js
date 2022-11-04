@@ -6,6 +6,8 @@ export default class BaseElement extends EventEmitter {
   constructor(opts = {}, app) {
     super();
     this.app = app;
+    // 编组id
+    this.groupId = opts.groupId || '';
     // 类型
     this.type = opts.type || "";
     // key
@@ -47,6 +49,7 @@ export default class BaseElement extends EventEmitter {
   // 序列化
   serialize() {
     return {
+      groupId: this.groupId,
       type: this.type,
       width: this.width,
       height: this.height,
@@ -62,6 +65,26 @@ export default class BaseElement extends EventEmitter {
   // 渲染方法
   render() {
     throw new Error("子类需要实现该方法！");
+  }
+
+  // 设置所属编组id
+  setGroupId(groupId) {
+    this.groupId = groupId;
+  }
+
+  // 获取所属组id
+  getGroupId() {
+    return this.groupId;
+  }
+
+  // 移除所属组id
+  removeGroupId() {
+    this.groupId = '';
+  }
+
+  // 是否存在编组
+  hasGroup() {
+    return !!this.groupId;
   }
 
   // 渲染拖拽元素

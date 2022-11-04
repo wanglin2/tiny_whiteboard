@@ -334,7 +334,7 @@ export const computedLineWidthBySpeed = (
   baseLineWidth = 2
 ) => {
   let lineWidth = 0;
-  let maxLineWidth = baseLineWidth + 2;
+  let maxLineWidth = baseLineWidth;
   let maxSpeed = 10;
   let minSpeed = 0.5;
   // 速度超快，那么直接使用最小的笔画

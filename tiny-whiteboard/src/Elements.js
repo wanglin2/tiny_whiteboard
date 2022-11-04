@@ -105,6 +105,7 @@ export default class Elements {
       element.isCreating = false;
       this.addElement(element);
     });
+    this.app.group.initIdToElementList(this.elementList);
     return this;
   }
 
@@ -200,7 +201,7 @@ export default class Elements {
       if (!element) {
         return resolve();
       }
-      let data = element.serialize();
+      let data = this.app.group.handleCopyElementData(element.serialize());
       // 图片元素需要先加载图片
       if (data.type === "image") {
         data.imageObj = await createImageObj(data.url);
@@ -208,6 +209,7 @@ export default class Elements {
       this.createElement(
         data,
         (element) => {
+          this.app.group.handleCopyElement(element);
           element.startResize(DRAG_ELEMENT_PARTS.BODY);
           // 默认偏移原图形20像素
           let ox = 20;

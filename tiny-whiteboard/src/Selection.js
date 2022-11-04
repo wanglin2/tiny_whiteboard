@@ -251,6 +251,7 @@ export default class Selection {
     let task = this.getSelectionElements().map((element) => {
       return this.app.elements.copyElement(element, true);
     });
+    this.app.group.clearCopyMap();
     let elements = await Promise.all(task);
     this.setMultiSelectElements(elements);
     // 粘贴到指定位置
