@@ -93,4 +93,10 @@ export default class Group {
       this.app.selection.selectElements(this.groupIdToElementList[groupId])
     }
   }
+
+  // 获取和指定元素同一个组的所有元素
+  getGroupElements(element) {
+    let groupId = element.getGroupId()
+    return this.groupIdToElementList[groupId] || []
+  }
 }

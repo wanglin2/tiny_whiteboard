@@ -169,7 +169,15 @@ export default class Selection {
         selectedElementList.push(element)
       }
     })
-    this.setMultiSelectElements(selectedElementList, true)
+    let finalList = [...selectedElementList]
+    selectedElementList.forEach(item => {
+      if (item.hasGroup()) {
+        finalList.push(...this.app.group.getGroupElements(item))
+      }
+    })
+    finalList = new Set(finalList)
+    finalList = Array.from(finalList)
+    this.setMultiSelectElements(finalList, true)
     this.app.render.render()
   }
 
