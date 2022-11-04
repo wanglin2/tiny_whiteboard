@@ -31,66 +31,66 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch } from 'vue'
 import {
   strokeColorList,
   fillColorList,
-  backgroundColorList,
-} from "../constants";
+  backgroundColorList
+} from '../constants'
 
 const props = defineProps({
   value: {
     type: String,
-    default: "",
+    default: ''
   },
   type: {
     type: String,
-    default: "",
+    default: ''
   },
   name: {
     type: String,
-    default: "颜色",
+    default: '颜色'
   },
   placement: {
     type: String,
-    default: "bottom",
+    default: 'bottom'
   },
   showEmptySelect: {
     type: Boolean,
-    default: false,
-  },
-});
+    default: false
+  }
+})
 
-const emits = defineEmits(["change"]);
+const emits = defineEmits(['change'])
 
-const color = ref(props.value);
+const color = ref(props.value)
 watch(
   () => {
-    return props.value;
+    return props.value
   },
-  (val) => {
-    color.value = val;
+  val => {
+    color.value = val
   }
-);
+)
 const colorList = computed(() => {
-  let list = props.showEmptySelect ? [""] : [];
+  let list = props.showEmptySelect ? [''] : []
   switch (props.type) {
-    case "stroke":
-      list.push(...strokeColorList);
-      break;
-    case "fill":
-      list.push(...fillColorList);
-      break;
-    case "background":
-      list.push(...backgroundColorList);
-      break;
+    case 'stroke':
+      list.push(...strokeColorList)
+      break
+    case 'fill':
+      list.push(...fillColorList)
+      break
+    case 'background':
+      list.push(...backgroundColorList)
+      break
     default:
   }
-  return list;
-});
+  return list
+})
 watch(color, () => {
-  emits("change", color.value);
-});
+  emits('change', color.value)
+})
 </script>
 
 <style lang="less" scoped>

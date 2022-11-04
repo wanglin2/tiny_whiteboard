@@ -36,7 +36,13 @@
       <div class="splitLine"></div>
       <div class="item danger" @click="exec('del')">删除</div>
       <div class="item" @click="exec('copy')">复制</div>
-      <div class="item" :class="{ disabled: groupStatus === 'disabled' }" @click="exec(groupStatus)">{{ groupBtnText }}</div>
+      <div
+        class="item"
+        :class="{ disabled: groupStatus === 'disabled' }"
+        @click="exec(groupStatus)"
+      >
+        {{ groupBtnText }}
+      </div>
     </template>
     <template v-else>
       <div class="item" @click="exec('selectAll')">全部选中</div>
@@ -48,102 +54,102 @@
 </template>
 
 <script setup>
-import { computed, ref } from "vue";
+import { computed, ref } from 'vue'
 
 const props = defineProps({
   app: {
-    type: Object,
-  },
-});
+    type: Object
+  }
+})
 
-const isShow = ref(false);
-const left = ref(0);
-const top = ref(0);
-const isHasActiveElements = ref(false);
-const canMoveLevel = ref(false);
-const groupStatus = ref('disabled');
+const isShow = ref(false)
+const left = ref(0)
+const top = ref(0)
+const isHasActiveElements = ref(false)
+const canMoveLevel = ref(false)
+const groupStatus = ref('disabled')
 const groupBtnText = computed(() => {
-  return ({
+  return {
     disabled: '编组',
     dogroup: '编组',
     ungroup: '取消编组'
-  })[groupStatus.value];
-});
+  }[groupStatus.value]
+})
 
 const show = (e, activeElements) => {
-  isHasActiveElements.value = activeElements.length > 0;
-  canMoveLevel.value = activeElements.length === 1;
-  left.value = e.clientX + 10;
-  top.value = e.clientY + 10;
-  isShow.value = true;
-  handleGroup(activeElements);
-};
+  isHasActiveElements.value = activeElements.length > 0
+  canMoveLevel.value = activeElements.length === 1
+  left.value = e.clientX + 10
+  top.value = e.clientY + 10
+  isShow.value = true
+  handleGroup(activeElements)
+}
 
-const handleGroup = (activeElements) => {
+const handleGroup = activeElements => {
   let isGroup = true
-  activeElements.forEach((item) => {
+  activeElements.forEach(item => {
     if (!item.hasGroup()) {
-      isGroup =false;
+      isGroup = false
     }
   })
   if (isGroup) {
-    groupStatus.value = 'ungroup';
+    groupStatus.value = 'ungroup'
   } else if (activeElements.length > 1) {
-    groupStatus.value = 'dogroup';
+    groupStatus.value = 'dogroup'
   }
 }
 
 const hide = () => {
-  isShow.value = false;
-  left.value = 0;
-  top.value = 0;
-};
+  isShow.value = false
+  left.value = 0
+  top.value = 0
+}
 
-props.app.on("contextmenu", show);
+props.app.on('contextmenu', show)
 
-document.body.addEventListener("click", hide);
+document.body.addEventListener('click', hide)
 
-const exec = (command) => {
+const exec = command => {
   switch (command) {
-    case "moveUp":
-      props.app.moveUpCurrentElement();
-      break;
-    case "moveDown":
-      props.app.moveDownCurrentElement();
-      break;
-    case "moveTop":
-      props.app.moveTopCurrentElement();
-      break;
-    case "moveBottom":
-      props.app.moveBottomCurrentElement();
-      break;
-    case "del":
-      props.app.deleteCurrentElements();
-      break;
-    case "copy":
-      props.app.copyPasteCurrentElements();
-      break;
-    case "selectAll":
-      props.app.selectAll();
-      break;
-    case "backToCenter":
-      props.app.scrollToCenter();
-      break;
-    case "fit":
-      props.app.fit();
-      break;
-    case "resetZoom":
-      props.app.setZoom(1);
-    case "dogroup":
-      props.app.dogroup();
-      break;
-    case "ungroup":
-      props.app.ungroup();
-      break;
+    case 'moveUp':
+      props.app.moveUpCurrentElement()
+      break
+    case 'moveDown':
+      props.app.moveDownCurrentElement()
+      break
+    case 'moveTop':
+      props.app.moveTopCurrentElement()
+      break
+    case 'moveBottom':
+      props.app.moveBottomCurrentElement()
+      break
+    case 'del':
+      props.app.deleteCurrentElements()
+      break
+    case 'copy':
+      props.app.copyPasteCurrentElements()
+      break
+    case 'selectAll':
+      props.app.selectAll()
+      break
+    case 'backToCenter':
+      props.app.scrollToCenter()
+      break
+    case 'fit':
+      props.app.fit()
+      break
+    case 'resetZoom':
+      props.app.setZoom(1)
+    case 'dogroup':
+      props.app.dogroup()
+      break
+    case 'ungroup':
+      props.app.ungroup()
+      break
     default:
-      break;
+      break
   }
-};
+}
 
 // onMousedown(e) {
 //       if (e.which !== 3) {

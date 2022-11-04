@@ -128,9 +128,15 @@
           <div class="styleBlock" v-if="!hasSelectedElements">
             <div class="styleBlockTitle">角度</div>
             <div class="styleBlockContent">
-              <el-slider v-model="rotate" :min="0" :max="360" :step="1" @input="onRotateChange" />
+              <el-slider
+                v-model="rotate"
+                :min="0"
+                :max="360"
+                :step="1"
+                @input="onRotateChange"
+              />
               <el-input-number
-                style="width: 80px;margin-left: 20px"
+                style="width: 80px; margin-left: 20px"
                 :controls="false"
                 v-model="rotate"
                 :min="0"
@@ -392,17 +398,9 @@
 </template>
 
 <script setup>
-import {
-  onMounted,
-  ref,
-  watch,
-  toRaw,
-  nextTick,
-  computed,
-  reactive,
-} from "vue";
-import TinyWhiteboard from "tiny-whiteboard";
-import ColorPicker from "./components/ColorPicker.vue";
+import { onMounted, ref, watch, toRaw, nextTick, computed, reactive } from 'vue'
+import TinyWhiteboard from 'tiny-whiteboard'
+import ColorPicker from './components/ColorPicker.vue'
 import {
   Delete,
   CopyDocument,
@@ -419,240 +417,237 @@ import {
   Grid,
   View,
   Edit,
-  QuestionFilled,
-} from "@element-plus/icons-vue";
+  QuestionFilled
+} from '@element-plus/icons-vue'
 import Contextmenu from './components/Contextmenu.vue'
 
 // 当前操作类型
-const currentType = ref("selection");
+const currentType = ref('selection')
 
 // dom节点
-const box = ref(null);
+const box = ref(null)
 
 // 应用实例
-let app = null;
-const appInstance = ref(null);
+let app = null
+const appInstance = ref(null)
 // 当前激活的元素
-const activeElement = ref(null);
+const activeElement = ref(null)
 // 当前多选的元素
-const selectedElements = ref([]);
+const selectedElements = ref([])
 const hasSelectedElements = computed(() => {
-  return selectedElements.value.length > 0;
-});
+  return selectedElements.value.length > 0
+})
 // 描边宽度
-const lineWidth = ref("small");
+const lineWidth = ref('small')
 // 边框样式
-const lineDash = ref(0);
+const lineDash = ref(0)
 // 透明度
-const globalAlpha = ref(1);
+const globalAlpha = ref(1)
 // 角度
-const rotate = ref(0);
+const rotate = ref(0)
 // 当前缩放
-const currentZoom = ref(100);
+const currentZoom = ref(100)
 // 缩放允许前进后退
-const canUndo = ref(false);
-const canRedo = ref(false);
+const canUndo = ref(false)
+const canRedo = ref(false)
 // 图片导出弹窗
-const exportImageDialogVisible = ref(false);
-const exportImageUrl = ref("");
-const exportOnlySelected = ref(false);
-const exportRenderBackground = ref(true);
-const exportFileName = ref("未命名");
-const exportImagePaddingX = ref(10);
-const exportImagePaddingY = ref(10);
+const exportImageDialogVisible = ref(false)
+const exportImageUrl = ref('')
+const exportOnlySelected = ref(false)
+const exportRenderBackground = ref(true)
+const exportFileName = ref('未命名')
+const exportImagePaddingX = ref(10)
+const exportImagePaddingY = ref(10)
 // json导出弹窗
-const exportJsonDialogVisible = ref(false);
-const exportJsonData = ref("");
-const tree = ref(null);
-const jsonPreviewBox = ref(null);
+const exportJsonDialogVisible = ref(false)
+const exportJsonData = ref('')
+const tree = ref(null)
+const jsonPreviewBox = ref(null)
 // 背景颜色
-const backgroundColor = ref("");
+const backgroundColor = ref('')
 // 当前滚动距离
 const scroll = reactive({
   x: 0,
-  y: 0,
-});
+  y: 0
+})
 // 切换显示网格
-const showGrid = ref(false);
+const showGrid = ref(false)
 // 模式切换
-const readonly = ref(false);
+const readonly = ref(false)
 // 帮助弹窗
-const helpDialogVisible = ref(false);
+const helpDialogVisible = ref(false)
 const shortcutKeyList = reactive([
   {
-    name: "全部选中",
-    value: "Control + a",
+    name: '全部选中',
+    value: 'Control + a'
   },
   {
-    name: "删除",
-    value: "Del 或 Backspace",
+    name: '删除',
+    value: 'Del 或 Backspace'
   },
   {
-    name: "复制",
-    value: "Control + c",
+    name: '复制',
+    value: 'Control + c'
   },
   {
-    name: "粘贴",
-    value: "Control + v",
+    name: '粘贴',
+    value: 'Control + v'
   },
   {
-    name: "放大",
-    value: "Control + +",
+    name: '放大',
+    value: 'Control + +'
   },
   {
-    name: "缩小",
-    value: "Control + -",
+    name: '缩小',
+    value: 'Control + -'
   },
   {
-    name: "重置缩放",
-    value: "Control + 0",
+    name: '重置缩放',
+    value: 'Control + 0'
   },
   {
-    name: "缩放以适应所有元素",
-    value: "Shift + 1",
+    name: '缩放以适应所有元素',
+    value: 'Shift + 1'
   },
   {
-    name: "撤销",
-    value: "Control + z",
+    name: '撤销',
+    value: 'Control + z'
   },
   {
-    name: "重做",
-    value: "Control + y",
+    name: '重做',
+    value: 'Control + y'
   },
   {
-    name: "显示隐藏网格",
-    value: "Control + '",
-  },
-]);
+    name: '显示隐藏网格',
+    value: "Control + '"
+  }
+])
 
 // 通知app更当前类型
 watch(currentType, () => {
-  app.updateCurrentType(currentType.value);
-});
+  app.updateCurrentType(currentType.value)
+})
 
 // 元素角度变化
-const onElementRotateChange = (elementRotate) => {
-  rotate.value = elementRotate;
-};
+const onElementRotateChange = elementRotate => {
+  rotate.value = elementRotate
+}
 
 // 修改元素角度
-const onRotateChange = (rotate) => {
+const onRotateChange = rotate => {
   app.updateActiveElementRotate(rotate)
 }
 
 // 数字输入框聚焦事件
 const onInputNumberFocus = () => {
   // 解绑快捷键按键事件，防止冲突
-  app.keyCommand.unBindEvent();
-};
+  app.keyCommand.unBindEvent()
+}
 
 // 数字输入框失焦事件
 const onInputNumberBlur = () => {
   // 重新绑定快捷键按键事件
-  app.keyCommand.bindEvent();
-};
+  app.keyCommand.bindEvent()
+}
 
 // 更新样式
 const updateStyle = (key, value) => {
   app.setCurrentElementsStyle({
-    [key]: value,
-  });
-};
+    [key]: value
+  })
+}
 
 // 类型变化
 const onCurrentTypeChange = () => {
   // 清除激活项
-  app.cancelActiveElement();
-};
+  app.cancelActiveElement()
+}
 
 // 删除元素
 const deleteElement = () => {
-  app.deleteCurrentElements();
-};
+  app.deleteCurrentElements()
+}
 
 // 复制元素
 const copyElement = () => {
-  app.copyPasteCurrentElements();
-};
+  app.copyPasteCurrentElements()
+}
 
 // 放大
 const zoomIn = () => {
-  app.zoomIn();
-};
+  app.zoomIn()
+}
 
 // 缩小
 const zoomOut = () => {
-  app.zoomOut();
-};
+  app.zoomOut()
+}
 
 // 恢复初始缩放
 const resetZoom = () => {
-  app.setZoom(1);
-};
+  app.setZoom(1)
+}
 
 // 橡皮擦
 const toggleEraser = () => {
-  currentType.value = currentType.value === "eraser" ? "selection" : "eraser";
-};
+  currentType.value = currentType.value === 'eraser' ? 'selection' : 'eraser'
+}
 
 // 回退
 const undo = () => {
-  app.undo();
-};
+  app.undo()
+}
 
 // 前进
 const redo = () => {
-  app.redo();
-};
+  app.redo()
+}
 
 // 清空
 const empty = () => {
-  app.empty();
-};
+  app.empty()
+}
 
 // 导入
 const importFromJson = () => {
-  let el = document.createElement("input");
-  el.type = "file";
-  el.accept = "application/json";
-  el.addEventListener("input", () => {
-    let reader = new FileReader();
+  let el = document.createElement('input')
+  el.type = 'file'
+  el.accept = 'application/json'
+  el.addEventListener('input', () => {
+    let reader = new FileReader()
     reader.onload = () => {
-      el.value = null;
+      el.value = null
       if (reader.result) {
-        app.setData(JSON.parse(reader.result));
+        app.setData(JSON.parse(reader.result))
       }
-    };
-    reader.readAsText(el.files[0]);
-  });
-  el.click();
-};
+    }
+    reader.readAsText(el.files[0])
+  })
+  el.click()
+}
 
 // 导出
-const handleExportCommand = (type) => {
-  if (type === "png") {
+const handleExportCommand = type => {
+  if (type === 'png') {
     exportImageUrl.value = app.exportImage({
       renderBg: exportRenderBackground.value,
       paddingX: exportImagePaddingX.value,
       paddingY: exportImagePaddingY.value,
       onlySelected: exportOnlySelected.value
-    });
-    exportImageDialogVisible.value = true;
-  } else if (type === "json") {
-    exportJsonData.value = app.exportJson();
-    exportJsonDialogVisible.value = true;
+    })
+    exportImageDialogVisible.value = true
+  } else if (type === 'json') {
+    exportJsonData.value = app.exportJson()
+    exportJsonDialogVisible.value = true
     nextTick(() => {
       if (!tree.value) {
-        tree.value = jsonTree.create(
-          exportJsonData.value,
-          jsonPreviewBox.value
-        );
+        tree.value = jsonTree.create(exportJsonData.value, jsonPreviewBox.value)
       } else {
-        tree.value.loadData(exportJsonData.value);
+        tree.value.loadData(exportJsonData.value)
       }
-    });
+    })
   }
-};
+}
 
 // 重新生成导出图片
 const reRenderExportImage = () => {
@@ -661,128 +656,128 @@ const reRenderExportImage = () => {
     paddingX: exportImagePaddingX.value,
     paddingY: exportImagePaddingY.value,
     onlySelected: exportOnlySelected.value
-  });
-};
+  })
+}
 
 // 下载导出的图片
 const downloadExportImage = () => {
   TinyWhiteboard.utils.downloadFile(
     exportImageUrl.value,
-    exportFileName.value + ".png"
-  );
-};
+    exportFileName.value + '.png'
+  )
+}
 
 // 下载导出的json
 const downloadExportJson = () => {
-  let str = JSON.stringify(exportJsonData.value, null, 4);
-  let blob = new Blob([str]);
+  let str = JSON.stringify(exportJsonData.value, null, 4)
+  let blob = new Blob([str])
   TinyWhiteboard.utils.downloadFile(
     URL.createObjectURL(blob),
-    exportFileName.value + ".json"
-  );
-};
+    exportFileName.value + '.json'
+  )
+}
 
 // 更新背景颜色
-const setBackgroundColor = (value) => {
-  app.setBackgroundColor(value);
-};
+const setBackgroundColor = value => {
+  app.setBackgroundColor(value)
+}
 
 // 滚动至中心
 const scrollToCenter = () => {
-  app.scrollToCenter();
-};
+  app.scrollToCenter()
+}
 
 // 切换显示网格
 const toggleGrid = () => {
   if (showGrid.value) {
-    showGrid.value = false;
-    app.hideGrid();
+    showGrid.value = false
+    app.hideGrid()
   } else {
-    showGrid.value = true;
-    app.showGrid();
+    showGrid.value = true
+    app.showGrid()
   }
-};
+}
 
 // 模式切换
 const toggleMode = () => {
   if (readonly.value) {
-    readonly.value = false;
-    app.setEditMode();
+    readonly.value = false
+    app.setEditMode()
   } else {
-    readonly.value = true;
-    app.setReadonlyMode();
+    readonly.value = true
+    app.setReadonlyMode()
   }
-};
+}
 
 // dom元素挂载完成
 onMounted(() => {
   // 创建实例
   app = new TinyWhiteboard({
     container: box.value,
-    drawType: currentType.value,
-  });
-  let storeData = localStorage.getItem("TINY_WHITEBOARD_DATA");
+    drawType: currentType.value
+  })
+  let storeData = localStorage.getItem('TINY_WHITEBOARD_DATA')
   if (storeData) {
-    storeData = JSON.parse(storeData);
-    currentZoom.value = parseInt(storeData.state.scale * 100);
-    scroll.x = parseInt(storeData.state.scrollX);
-    scroll.y = parseInt(storeData.state.scrollY);
-    showGrid.value = storeData.state.showGrid;
-    readonly.value = storeData.state.readonly;
-    app.setData(storeData);
+    storeData = JSON.parse(storeData)
+    currentZoom.value = parseInt(storeData.state.scale * 100)
+    scroll.x = parseInt(storeData.state.scrollX)
+    scroll.y = parseInt(storeData.state.scrollY)
+    showGrid.value = storeData.state.showGrid
+    readonly.value = storeData.state.readonly
+    app.setData(storeData)
   }
   // 监听app内部修改类型事件
-  app.on("currentTypeChange", (type) => {
-    currentType.value = type;
-  });
+  app.on('currentTypeChange', type => {
+    currentType.value = type
+  })
   // 监听元素激活事件
-  app.on("activeElementChange", (element) => {
+  app.on('activeElementChange', element => {
     if (activeElement.value) {
-      activeElement.value.off("elementRotateChange", onElementRotateChange);
+      activeElement.value.off('elementRotateChange', onElementRotateChange)
     }
-    activeElement.value = element;
+    activeElement.value = element
     if (element) {
-      let { style, rotate: elementRotate } = element;
-      lineWidth.value = style.lineWidth;
-      lineDash.value = style.lineDash;
-      globalAlpha.value = style.globalAlpha;
-      rotate.value = elementRotate;
-      element.on("elementRotateChange", onElementRotateChange);
+      let { style, rotate: elementRotate } = element
+      lineWidth.value = style.lineWidth
+      lineDash.value = style.lineDash
+      globalAlpha.value = style.globalAlpha
+      rotate.value = elementRotate
+      element.on('elementRotateChange', onElementRotateChange)
     }
-  });
+  })
   // 元素多选变化
-  app.on("multiSelectChange", (elements) => {
-    selectedElements.value = elements;
-  });
+  app.on('multiSelectChange', elements => {
+    selectedElements.value = elements
+  })
   // 缩放变化
-  app.on("zoomChange", (scale) => {
-    currentZoom.value = parseInt(scale * 100);
-  });
+  app.on('zoomChange', scale => {
+    currentZoom.value = parseInt(scale * 100)
+  })
   // 监听前进后退事件
-  app.on("shuttle", (index, length) => {
-    canUndo.value = index > 0;
-    canRedo.value = index < length - 1;
-  });
+  app.on('shuttle', (index, length) => {
+    canUndo.value = index > 0
+    canRedo.value = index < length - 1
+  })
   // 监听数据变化
-  app.on("change", (data) => {
-    showGrid.value = data.state.showGrid;
-    localStorage.setItem("TINY_WHITEBOARD_DATA", JSON.stringify(data));
-  });
+  app.on('change', data => {
+    showGrid.value = data.state.showGrid
+    localStorage.setItem('TINY_WHITEBOARD_DATA', JSON.stringify(data))
+  })
   // 监听滚动变化
-  app.on("scrollChange", (x, y) => {
-    scroll.y = parseInt(y);
-    scroll.x = parseInt(x);
-  });
-  appInstance.value = app;
+  app.on('scrollChange', (x, y) => {
+    scroll.y = parseInt(y)
+    scroll.x = parseInt(x)
+  })
+  appInstance.value = app
   // 窗口尺寸变化
-  let resizeTimer = null;
-  window.addEventListener("resize", () => {
-    clearTimeout(resizeTimer);
+  let resizeTimer = null
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer)
     resizeTimer = setTimeout(() => {
-      app.resize();
-    }, 300);
-  });
-});
+      app.resize()
+    }, 300)
+  })
+})
 </script>
 
 <style lang="less">
@@ -934,7 +929,7 @@ ol {
 .exportImageContainer {
   .imagePreviewBox {
     height: 400px;
-    background: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAMUlEQVQ4T2NkYGAQYcAP3uCTZhw1gGGYhAGBZIA/nYDCgBDAm9BGDWAAJyRCgLaBCAAgXwixzAS0pgAAAABJRU5ErkJggg==")
+    background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAMUlEQVQ4T2NkYGAQYcAP3uCTZhw1gGGYhAGBZIA/nYDCgBDAm9BGDWAAJyRCgLaBCAAgXwixzAS0pgAAAABJRU5ErkJggg==')
       0;
     padding: 10px;
 
@@ -962,7 +957,7 @@ ol {
     color: #000;
 
     /deep/ .jsontree_tree {
-      font-family: "Trebuchet MS", Arial, sans-serif !important;
+      font-family: 'Trebuchet MS', Arial, sans-serif !important;
     }
   }
 
