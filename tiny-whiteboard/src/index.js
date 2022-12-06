@@ -400,7 +400,6 @@ class TinyWhiteboard extends EventEmitter {
             event.mouseOffset.x,
             event.mouseOffset.y
           )
-          this.render.render()
         }
       } else if (['rectangle', 'diamond', 'triangle'].includes(this.drawType)) {
         // 类矩形元素绘制模式

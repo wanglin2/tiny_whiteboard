@@ -462,6 +462,7 @@ export default class Elements {
       return
     }
     this.resizingElement.resize(...args)
+    this.app.render.render()
   }
 
   // 结束元素调整操作
