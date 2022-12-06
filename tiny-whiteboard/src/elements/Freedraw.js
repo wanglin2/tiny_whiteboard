@@ -38,6 +38,7 @@ export default class Freedraw extends BaseMultiPointElement {
   // 绘制单条线段
   singleRender(mx, my, tx, ty, lineWidth) {
     this.app.ctx.save()
+    this.setStyle(this.style)
     drawLineSegment(this.app.ctx, mx, my, tx, ty, lineWidth)
     this.app.ctx.restore()
   }

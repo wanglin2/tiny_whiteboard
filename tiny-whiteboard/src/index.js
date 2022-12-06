@@ -62,6 +62,11 @@ class TinyWhiteboard extends EventEmitter {
       scrollY: 0, // 垂直方向的滚动偏移量
       scrollStep: 50, // 滚动步长
       backgroundColor: '', // 背景颜色
+      strokeStyle: '#000000', // 默认线条颜色
+      fillStyle: 'transparent', // 默认填充颜色
+      fontFamily: '微软雅黑, Microsoft YaHei', // 默认文字字体
+      fontSize: 18, // 默认文字字号
+      dragStrokeStyle: '#666', // 选中元素的拖拽元素的默认线条颜色
       showGrid: false, // 是否显示网格
       readonly: false, // 是否是只读模式
       gridConfig: {

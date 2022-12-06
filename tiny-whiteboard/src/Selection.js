@@ -232,6 +232,10 @@ export default class Selection {
     Object.keys(style).forEach(key => {
       this.getSelectionElements().forEach(element => {
         element.style[key] = style[key]
+        if (key === 'fontSize' && element.type === 'text') {
+          element.updateTextSize()
+          this.multiSelectElement.updateRect()
+        }
       })
     })
     this.app.render.render()

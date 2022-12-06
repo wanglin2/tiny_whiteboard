@@ -422,6 +422,9 @@ export default class Elements {
     }
     Object.keys(style).forEach(key => {
       this.activeElement.style[key] = style[key]
+      if (key === 'fontSize' && this.activeElement.type === 'text') {
+        this.activeElement.updateTextSize()
+      }
     })
     return this
   }

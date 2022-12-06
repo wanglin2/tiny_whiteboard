@@ -54,3 +54,67 @@ export const backgroundColorList = [
   'rgb(255, 249, 219)',
   'rgb(255, 244, 230)'
 ]
+
+// 字体列表
+export const fontFamilyList = [
+  {
+    name: '微软雅黑',
+    value: '微软雅黑, Microsoft YaHei'
+  },
+  {
+    name: '宋体',
+    value: '宋体, SimSun, Songti SC'
+  },
+  {
+    name: '楷体',
+    value: '楷体, 楷体_GB2312, SimKai, STKaiti'
+  },
+  {
+    name: '黑体',
+    value: '黑体, SimHei, Heiti SC'
+  },
+  {
+    name: '隶书',
+    value: '隶书, SimLi'
+  },
+  {
+    name: 'Andale Mono',
+    value: 'andale mono'
+  },
+  {
+    name: 'Arial',
+    value: 'arial, helvetica, sans-serif'
+  },
+  {
+    name: 'arialBlack',
+    value: 'arial black, avant garde'
+  },
+  {
+    name: 'Comic Sans Ms',
+    value: 'comic sans ms'
+  },
+  {
+    name: 'Impact',
+    value: 'impact, chicago'
+  },
+  {
+    name: 'Times New Roman',
+    value: 'times new roman'
+  },
+  {
+    name: 'Sans-Serif',
+    value: 'sans-serif'
+  },
+  {
+    name: 'serif',
+    value: 'serif'
+  }
+]
+
+// 字号
+export const fontSizeList = [10, 12, 16, 18, 24, 32, 48].map(item => {
+  return {
+    name: item,
+    value: item
+  }
+})
