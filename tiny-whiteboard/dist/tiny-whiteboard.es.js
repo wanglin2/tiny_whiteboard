@@ -2244,6 +2244,7 @@ class Elements$1 {
       return;
     }
     this.resizingElement.resize(...args);
+    this.app.render.render();
   }
   endResize() {
     this.isResizing = false;
@@ -3932,6 +3933,7 @@ class Elements {
       return;
     }
     this.resizingElement.resize(...args);
+    this.app.render.render();
   }
   endResize() {
     this.isResizing = false;
@@ -4321,7 +4323,6 @@ class TinyWhiteboard extends EventEmitter {
           this.selection.onMousemove(e, event);
         } else {
           this.elements.handleResize(e, mx, my, event.mouseOffset.x, event.mouseOffset.y);
-          this.render.render();
         }
       } else if (["rectangle", "diamond", "triangle"].includes(this.drawType)) {
         this.elements.creatingRectangleLikeElement(this.drawType, mx, my, offsetX, offsetY);
