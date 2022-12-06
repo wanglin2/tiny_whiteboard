@@ -1083,8 +1083,8 @@ class BaseElement extends EventEmitter {
     this.rotate = opts.rotate || 0;
     this.noRender = false;
     this.style = __spreadValues({
-      strokeStyle: "#000000",
-      fillStyle: "transparent",
+      strokeStyle: "",
+      fillStyle: "",
       lineWidth: "small",
       lineDash: 0,
       globalAlpha: 1
@@ -1136,6 +1136,11 @@ class BaseElement extends EventEmitter {
           style[key] = 4;
         } else if (style[key] === "large") {
           style[key] = 6;
+        }
+      }
+      if (style[key] === "") {
+        if (this.app.state[key] !== void 0 && this.app.state[key] !== null && this.app.state[key] !== "") {
+          style[key] = this.app.state[key];
         }
       }
     });
@@ -1253,7 +1258,7 @@ class DragElement extends BaseElement {
       lockRatio: false
     }, opts);
     this.style = {
-      strokeStyle: "#666",
+      strokeStyle: this.app.state.dragStrokeStyle,
       fillStyle: "transparent",
       lineWidth: "small",
       lineDash: 0,
@@ -1790,6 +1795,7 @@ class Freedraw extends BaseMultiPointElement {
   }
   singleRender(mx, my, tx, ty, lineWidth) {
     this.app.ctx.save();
+    this.setStyle(this.style);
     drawLineSegment(this.app.ctx, mx, my, tx, ty, lineWidth);
     this.app.ctx.restore();
   }
@@ -1882,10 +1888,10 @@ class Text extends BaseElement {
       lockRatio: true
     });
     this.text = opts.text || "";
-    this.style.fillStyle = ((_a = opts.style) == null ? void 0 : _a.fillStyle) || "#000";
-    this.style.fontSize = ((_b = opts.style) == null ? void 0 : _b.fontSize) || 18;
+    this.style.fillStyle = ((_a = opts.style) == null ? void 0 : _a.fillStyle) || this.app.state.strokeStyle || "#000";
+    this.style.fontSize = ((_b = opts.style) == null ? void 0 : _b.fontSize) || this.app.state.fontSize || 18;
     this.style.lineHeightRatio = ((_c = opts.style) == null ? void 0 : _c.lineHeightRatio) || 1.5;
-    this.style.fontFamily = ((_d = opts.style) == null ? void 0 : _d.fontFamily) || "\u5FAE\u8F6F\u96C5\u9ED1, Microsoft YaHei";
+    this.style.fontFamily = ((_d = opts.style) == null ? void 0 : _d.fontFamily) || this.app.state.fontFamily || "\u5FAE\u8F6F\u96C5\u9ED1, Microsoft YaHei";
   }
   serialize() {
     let base = super.serialize();
@@ -1908,6 +1914,11 @@ class Text extends BaseElement {
     let fontSize = Math.floor(height / splitTextLines(text).length / style.lineHeightRatio);
     this.style.fontSize = fontSize;
     super.updateRect(x, y, width, height);
+  }
+  updateTextSize() {
+    let { width, height } = getTextElementSize(this);
+    this.width = width;
+    this.height = height;
   }
 }
 class Elements$1 {
@@ -2211,6 +2222,9 @@ class Elements$1 {
     }
     Object.keys(style).forEach((key) => {
       this.activeElement.style[key] = style[key];
+      if (key === "fontSize" && this.activeElement.type === "text") {
+        this.activeElement.updateTextSize();
+      }
     });
     return this;
   }
@@ -2955,6 +2969,10 @@ class Selection {
     Object.keys(style).forEach((key) => {
       this.getSelectionElements().forEach((element) => {
         element.style[key] = style[key];
+        if (key === "fontSize" && element.type === "text") {
+          element.updateTextSize();
+          this.multiSelectElement.updateRect();
+        }
       });
     });
     this.app.render.render();
@@ -3900,6 +3918,9 @@ class Elements {
     }
     Object.keys(style).forEach((key) => {
       this.activeElement.style[key] = style[key];
+      if (key === "fontSize" && this.activeElement.type === "text") {
+        this.activeElement.updateTextSize();
+      }
     });
     return this;
   }
@@ -4094,6 +4115,11 @@ class TinyWhiteboard extends EventEmitter {
       scrollY: 0,
       scrollStep: 50,
       backgroundColor: "",
+      strokeStyle: "#000000",
+      fillStyle: "transparent",
+      fontFamily: "\u5FAE\u8F6F\u96C5\u9ED1, Microsoft YaHei",
+      fontSize: 18,
+      dragStrokeStyle: "#666",
       showGrid: false,
       readonly: false,
       gridConfig: {
