@@ -40,8 +40,8 @@ export default class BaseElement extends EventEmitter {
     this.noRender = false
     // 样式
     this.style = {
-      strokeStyle: '#000000', // 线条颜色
-      fillStyle: 'transparent', // 填充颜色
+      strokeStyle: '', // 线条颜色
+      fillStyle: '', // 填充颜色
       lineWidth: 'small', // 线条宽度
       lineDash: 0, // 线条虚线大小
       globalAlpha: 1, // 透明度
@@ -115,6 +115,15 @@ export default class BaseElement extends EventEmitter {
           style[key] = 4
         } else if (style[key] === 'large') {
           style[key] = 6
+        }
+      }
+      if (style[key] === '') {
+        if (
+          this.app.state[key] !== undefined &&
+          this.app.state[key] !== null &&
+          this.app.state[key] !== ''
+        ) {
+          style[key] = this.app.state[key]
         }
       }
     })

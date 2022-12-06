@@ -1,7 +1,11 @@
 import BaseElement from './BaseElement'
 import { drawText } from '../utils/draw'
 import DragElement from './DragElement'
-import { transformPointOnElement, splitTextLines } from '../utils'
+import {
+  transformPointOnElement,
+  splitTextLines,
+  getTextElementSize
+} from '../utils'
 import { checkIsAtRectangleInner } from '../utils/checkHit'
 
 // 文本元素类
@@ -13,11 +17,14 @@ export default class Text extends BaseElement {
       lockRatio: true
     })
     this.text = opts.text || ''
-    this.style.fillStyle = opts.style?.fillStyle || '#000'
-    this.style.fontSize = opts.style?.fontSize || 18
+    this.style.fillStyle =
+      opts.style?.fillStyle || this.app.state.strokeStyle || '#000'
+    this.style.fontSize = opts.style?.fontSize || this.app.state.fontSize || 18
     this.style.lineHeightRatio = opts.style?.lineHeightRatio || 1.5
     this.style.fontFamily =
-      opts.style?.fontFamily || '微软雅黑, Microsoft YaHei'
+      opts.style?.fontFamily ||
+      this.app.state.fontFamily ||
+      '微软雅黑, Microsoft YaHei'
   }
 
   // 序列化
@@ -55,5 +62,12 @@ export default class Text extends BaseElement {
     )
     this.style.fontSize = fontSize
     super.updateRect(x, y, width, height)
+  }
+
+  // 字号改不了更新尺寸
+  updateTextSize() {
+    let { width, height } = getTextElementSize(this)
+    this.width = width
+    this.height = height
   }
 }

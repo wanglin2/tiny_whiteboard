@@ -31,7 +31,7 @@ export default class DragElement extends BaseElement {
 
     // 样式
     this.style = {
-      strokeStyle: '#666', // 线条颜色
+      strokeStyle: this.app.state.dragStrokeStyle, // 线条颜色
       fillStyle: 'transparent', // 填充颜色
       lineWidth: 'small', // 线条宽度
       lineDash: 0, // 线条虚线大小

@@ -53,6 +53,54 @@
               ></ColorPicker>
             </div>
           </div>
+          <!-- 字体 -->
+          <div
+            class="styleBlock"
+            v-if="['text'].includes(activeElement?.type) || hasSelectedElements"
+          >
+            <div class="styleBlockTitle">字体</div>
+            <div class="styleBlockContent">
+              <el-select
+                size="mini"
+                v-model="fontFamily"
+                placeholder="字体"
+                @change="updateStyle('fontFamily', $event)"
+              >
+                <el-option
+                  v-for="item in fontFamilyList"
+                  :key="item.value"
+                  :label="item.name"
+                  :value="item.value"
+                  :style="{ fontFamily: item.value }"
+                >
+                </el-option>
+              </el-select>
+            </div>
+          </div>
+          <!-- 字号 -->
+          <div
+            class="styleBlock"
+            v-if="['text'].includes(activeElement?.type) || hasSelectedElements"
+          >
+            <div class="styleBlockTitle">字号</div>
+            <div class="styleBlockContent">
+              <el-select
+                size="mini"
+                v-model="fontSize"
+                placeholder="字号"
+                @change="updateStyle('fontSize', $event)"
+              >
+                <el-option
+                  v-for="item in fontSizeList"
+                  :key="item.value"
+                  :label="item.name"
+                  :value="item.value"
+                  :style="{ fontSize: item.value }"
+                >
+                </el-option>
+              </el-select>
+            </div>
+          </div>
           <!-- 描边宽度 -->
           <div
             class="styleBlock"
@@ -420,6 +468,7 @@ import {
   QuestionFilled
 } from '@element-plus/icons-vue'
 import Contextmenu from './components/Contextmenu.vue'
+import { fontFamilyList, fontSizeList } from './constants'
 
 // 当前操作类型
 const currentType = ref('selection')
@@ -439,6 +488,10 @@ const hasSelectedElements = computed(() => {
 })
 // 描边宽度
 const lineWidth = ref('small')
+// 字体
+const fontFamily = ref('微软雅黑, Microsoft YaHei')
+// 字号
+const fontSize = ref(18)
 // 边框样式
 const lineDash = ref(0)
 // 透明度
@@ -714,7 +767,13 @@ onMounted(() => {
   // 创建实例
   app = new TinyWhiteboard({
     container: box.value,
-    drawType: currentType.value
+    drawType: currentType.value,
+    state: {
+      // backgroundColor: '#121212',
+      // strokeStyle: '#fff',
+      // fontFamily: '楷体, 楷体_GB2312, SimKai, STKaiti',
+      // dragStrokeStyle: '#999'
+    }
   })
   let storeData = localStorage.getItem('TINY_WHITEBOARD_DATA')
   if (storeData) {
@@ -739,6 +798,8 @@ onMounted(() => {
     if (element) {
       let { style, rotate: elementRotate } = element
       lineWidth.value = style.lineWidth
+      fontFamily.value = style.fontFamily
+      fontSize.value = style.fontSize
       lineDash.value = style.lineDash
       globalAlpha.value = style.globalAlpha
       rotate.value = elementRotate
