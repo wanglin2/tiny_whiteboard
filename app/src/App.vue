@@ -778,6 +778,11 @@ onMounted(() => {
   let storeData = localStorage.getItem('TINY_WHITEBOARD_DATA')
   if (storeData) {
     storeData = JSON.parse(storeData)
+    ;[['backgroundColor', ''],['strokeStyle', '#000000'],['fontFamily', '微软雅黑, Microsoft YaHei'],['dragStrokeStyle', '#666'], ['fillStyle', 'transparent'], ['fontSize', 18]].forEach((item) => {
+      if (storeData.state[item[0]] === undefined) {
+        storeData.state[item[0]] = item[1]
+      }
+    })
     currentZoom.value = parseInt(storeData.state.scale * 100)
     scroll.x = parseInt(storeData.state.scrollX)
     scroll.y = parseInt(storeData.state.scrollY)
