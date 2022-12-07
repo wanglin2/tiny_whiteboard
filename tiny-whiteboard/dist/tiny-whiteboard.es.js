@@ -3565,7 +3565,7 @@ class Render {
     this.app.emit("zoomChange", this.app.state.scale);
   }
   setZoom(zoom) {
-    if (zoom < 0 || zoom > 1) {
+    if (zoom < 0) {
       return;
     }
     this.app.updateState({
@@ -3583,6 +3583,7 @@ class Render {
     let width = maxx - minx;
     let height = maxy - miny;
     let maxScale = Math.min(this.app.width / width, this.app.height / height);
+    console.log(maxScale);
     this.setZoom(maxScale);
   }
   scrollTo(scrollX, scrollY) {

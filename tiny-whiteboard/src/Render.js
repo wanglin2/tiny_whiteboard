@@ -306,7 +306,7 @@ export default class Render {
 
   // 设置指定缩放值
   setZoom(zoom) {
-    if (zoom < 0 || zoom > 1) {
+    if (zoom < 0) {
       return
     }
     this.app.updateState({
@@ -329,6 +329,7 @@ export default class Render {
     let width = maxx - minx
     let height = maxy - miny
     let maxScale = Math.min(this.app.width / width, this.app.height / height)
+    console.log(maxScale);
     this.setZoom(maxScale)
   }
 
