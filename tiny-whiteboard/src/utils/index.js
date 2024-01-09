@@ -241,17 +241,12 @@ export const splitTextLines = text => {
 let textCheckEl = null
 export const getTextActWidth = (text, style) => {
   if (!textCheckEl) {
-    textCheckEl = document.createElement('div')
-    textCheckEl.style.position = 'fixed'
-    textCheckEl.style.left = '-99999px'
-    document.body.appendChild(textCheckEl)
+    textCheckEl = createCanvas(300,200)
+    textCheckEl.ctx.textBaseline = "middle"
   }
-  let { fontSize, fontFamily } = style
-  textCheckEl.innerText = text
-  textCheckEl.style.fontSize = fontSize + 'px'
-  textCheckEl.style.fontFamily = fontFamily
-  let { width } = textCheckEl.getBoundingClientRect()
-  return width
+  textCheckEl.ctx.font = `${style.fontSize}px ${style.fontFamily}`
+  textCheckEl.ctx.fillText(text, 0, 0)
+  return textCheckEl.ctx.measureText(text).width
 }
 
 // 计算固定宽度内能放下所有文字的最大字号
@@ -277,6 +272,10 @@ export const getWrapTextActWidth = element => {
     let width = getTextActWidth(textRow, element.style)
     if (width > maxWidth) {
       maxWidth = width
+    }
+    if (textCheckEl) {
+      const {canvas, ctx} = textCheckEl
+      ctx.clearRect(-canvas.width / 2, -canvas.width / 2, canvas.width * 2, canvas.width * 2)
     }
   })
   return maxWidth
